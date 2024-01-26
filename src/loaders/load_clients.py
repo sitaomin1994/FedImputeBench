@@ -1,8 +1,25 @@
-import src.client.client_jm as client_jm
+from src.client import (
+    Client,
+    ICEClient,
+    JMClient
+)
+
+
+def load_client(
+        client_type, client_id, train_data, test_data, X_train_ms, data_config, imp_model, client_config, seed,
+)-> Client:
+    if client_type == 'ice':
+        return ICEClient(
+            client_id, train_data, test_data, X_train_ms, data_config, imp_model, client_config, seed
+        )
+    elif client_type == 'jm':
+        raise NotImplementedError
+    else:
+        raise ValueError(f'client type {client_type} is not supported')
 
 
 def setup_clients(
-    clients_train_data_list, clients_train_data_ms_list, test_data, data_config, imp_models, seeds
+        clients_train_data_list, clients_train_data_ms_list, test_data, data_config, imp_models, seeds
 ):
     num_clients = len(clients_train_data_list)
     clients = []

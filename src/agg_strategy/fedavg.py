@@ -7,7 +7,10 @@ from .strategy import Strategy
 from copy import deepcopy
 
 
-class FedAvg(Strategy):
+class FedAvgStrategy(Strategy):
+
+    def __init__(self, **kwargs):
+        super().__init__(name = 'fedavg')
 
     def aggregate(
             self, local_model_parameters: List[dict], fit_res: List[dict], *args, **kwargs

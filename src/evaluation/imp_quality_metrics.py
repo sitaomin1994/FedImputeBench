@@ -4,6 +4,7 @@ import numpy as np
 from scipy.stats import wasserstein_distance
 import ot
 
+
 def mae(X: np.ndarray, X_true: np.ndarray, mask: np.ndarray) -> Union[int, Any]:
     """
     Mean Absolute Error (MAE) between imputed variables and ground truth.

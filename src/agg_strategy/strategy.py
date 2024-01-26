@@ -5,6 +5,9 @@ from typing import Dict, Union, List, Tuple
 
 class Strategy(ABC):
 
+    def __init__(self, name: str):
+        self.name = name
+
     @abstractmethod
     def aggregate(
             self, local_model_parameters: List[dict], fit_res: List[dict], *args, **kwargs
@@ -13,6 +16,6 @@ class Strategy(ABC):
 
     @abstractmethod
     def update_local_model(
-            self, global_model: dict, local_model:dict, client: Client, *args, **kwargs
+            self, global_model: dict, local_model: dict, client: Client, *args, **kwargs
     ) -> dict:
         pass

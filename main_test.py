@@ -4,34 +4,63 @@ from src.experiment import Experiment
 import json
 
 config = {
+    # basic setting
     "num_clients": 2,
-    "num_rounds": 1,
     "seed": 2180279,
-    "dataset_name": "codon",
-    "test_size": 0.1,
-    "data_partition": 'iid-even2',
+    # dataset
+    "data": {
+        "dataset_name": "codon",
+        "test_size": 0.1,
+        "data_partition": 'iid-even2',
+    },
     # "missing_simulate": 'fixed2@mr=0.5-mm=mnar_quantile-mfunc=lr-k=0.9',
     "missing_simulate": 'fixed2@mr=0.5-mm=mnar_quantile-mfunc=lr-k=0.5',
-    "imp_model": 'not-miwae',
-    "imp_model_params": {
-        "latent_size": 16,
-        "n_hidden": 128,
-        "K": 20
+    # imputation models
+    "imputation": {
+        "imp_model": 'not-miwae',
+        "imp_model_params": {
+            "latent_size": 16,
+            "n_hidden": 128,
+            "K": 20
+        },
+        "imp_params": {
+            "global_epochs": 1,
+            "local_epochs": 5000,
+            "batch_size": 128,
+            "weight_decay": 0.001,
+            "lr": 1e-3,
+            "L": 1000,
+            "imp_interval": 1,
+            "verbose": 3,
+            "verbose_interval": 1,
+            "eval_interval": 1,
+            "optimizer": "adam"
+        },
     },
-    "server": 'local',
-    "server_config": {},
-    "imp_params": {
-        "global_epochs": 1,
-        "local_epochs": 5000,
-        "batch_size": 128,
-        "weight_decay": 0.001,
-        "lr": 1e-3,
-        "L": 1000,
-        "imp_interval": 1,
-        "verbose": 3,
-        "verbose_interval": 1,
-        "eval_interval": 1,
-        "optimizer": "adam"
+    # client
+    "client": {
+        "client_type": "ice",
+        "client_config": {},
+    },
+    # "aggregation strategy
+    "agg_strategy": {
+        "agg_strategy_name": 'local',
+        "agg_strategy_params": {},
+    },
+    # federated server
+    "server": {
+        "server_type": 'ice',
+        "server_config": {},
+        "server_imp_workflow_params": {
+            "imp_iterations": 20,
+            "initial_imp_num": "mean",
+            "initial_imp_cat": "mode",
+        },
+    },
+    # experiment settings
+    "experiment": {
+        "num_rounds": 1,
+        "mtp": False
     }
 }
 
