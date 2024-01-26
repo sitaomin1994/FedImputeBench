@@ -1,0 +1,11 @@
+{
+  "data_dir": "data",
+  "exp_config_dir": "config",
+  "result_dir": {
+    "base": "results",
+    "processed": "processed_results",
+    "raw": "raw_results"
+  },
+  "notebook_dir": "notebooks",
+  "script_dir": "scripts"
+}
