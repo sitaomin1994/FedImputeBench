@@ -1,0 +1,14 @@
+
+
+imp_model_params:
+  latent_size: 16,
+  n_hidden: 128,
+  K: 20
+imp_training_params:
+  lr: 1e-3
+  batch_size: 128
+  weight_decay: 0.001
+  imp_interval: 100
+  L: 1000
+  verbose: 10
+  optimizer: adam

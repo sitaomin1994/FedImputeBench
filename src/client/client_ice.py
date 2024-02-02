@@ -12,14 +12,12 @@ class ICEClient(Client):
             client_id: int,
             train_data: np.ndarray, test_data: np.ndarray, X_train_ms: np.ndarray, data_config: dict,
             imp_model: ICEImputer, client_config:dict, seed=0,
-            initial_imp_num: str = 'mean', initial_imp_cat: str = 'mode',
     ) -> None:
 
         # initialize data and initial imputation
         super().__init__(
             client_id, train_data, test_data, X_train_ms, data_config,
             imp_model, client_config, seed,
-            initial_imp_num, initial_imp_cat
         )
 
         # initialize imputation model
@@ -30,12 +28,14 @@ class ICEClient(Client):
         """
         Fit local imputation model
         """
-        model_parameter, fit_res = self.imp_model.fit(
+        fit_res = self.imp_model.fit(
             self.X_train_ms, self.y_train, self.X_train_mask, feature_idx
         )
 
-        fit_res = self.data_utils
-        return model_parameter, fit_res
+        model_parameters = self.imp_model.get_imp_model_params(feature_idx)
+        fit_res.update(self.data_utils)
+
+        return model_parameters, fit_res
 
     def imputation(self, updated_local_model:dict, feature_idx: int):
         """

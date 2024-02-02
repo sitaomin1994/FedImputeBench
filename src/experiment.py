@@ -18,8 +18,8 @@ class Experiment:
         self.name = name
 
     def run(self, config):
-        num_clients = config['num_clients']
-        seed = config['seed']
+        num_clients = config['experiment']['num_clients']
+        seed = config['experiment']['seed']
         num_rounds = config["experiment"]['num_rounds']
 
         ##########################################################################################
@@ -83,7 +83,13 @@ class Experiment:
         server = load_server(server, server_config)
         imp_workflow_params = config['server']['server_imp_workflow_params']
 
+        ##########################################################################################
+        # run federated imputation
         server.run_fed_imputation(clients, agg_strategy, imp_workflow_params)
+        result = server.save_results()
+
+        return result
+
 
         ##########################################################################################
         # evaluation

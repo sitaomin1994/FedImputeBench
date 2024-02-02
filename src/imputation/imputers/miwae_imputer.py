@@ -14,9 +14,11 @@ class MIWAEImputer:
     def __init__(
             self,
             model_params: dict,
+            imp_training_params: dict,
     ):
         self.name = "miwae"
         self.model = MIWAE(**model_params)
+        self.imp_training_params = imp_training_params
 
     def get_model_params(self) -> dict:
         """
@@ -28,8 +30,8 @@ class MIWAEImputer:
 
     def local_train(
             self, X_train_imp: np.ndarray, X_train_mask: np.ndarray, X_train_full: np.ndarray, y_train: np.ndarray,
-            params: dict, init: bool = True, global_z: Union[np.ndarray, None] = None,
-            global_decoder: Union[List[np.ndarray], None] = None, global_encoder: Union[List[np.ndarray], None] = None
+            init: bool = True, global_z: Union[np.ndarray, None] = None, global_decoder: Union[List[np.ndarray], None] = None,
+            global_encoder: Union[List[np.ndarray], None] = None
     ) -> Dict[str, float]:
         """
         Local training of imputation model for local epochs
@@ -41,15 +43,16 @@ class MIWAEImputer:
         # 	self.model.init()
 
         # optimizer and params
-        lr = params['lr']
-        weight_decay = params['weight_decay']
-        local_epochs = params['local_epochs']
-        imputation_interval = params['imp_interval']
-        batch_size = params['batch_size']
-        L = params['L']
-        verbose = params['verbose']
+        lr = self.imp_training_params['lr']
+        weight_decay = self.imp_training_params['weight_decay']
+        local_epochs = self.imp_training_params['local_epochs']
+        imputation_interval = self.imp_training_params['imp_interval']
+        batch_size = self.imp_training_params['batch_size']
+        L = self.imp_training_params['L']
+        verbose = self.imp_training_params['verbose']
+        optimizer_name = self.imp_training_params['optimizer']
 
-        if params['optimizer'] == 'adam':
+        if optimizer_name == 'adam':
             optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, weight_decay=weight_decay, amsgrad=True)
         else:
             raise NotImplementedError

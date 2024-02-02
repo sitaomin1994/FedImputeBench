@@ -12,29 +12,15 @@ class ICEImputer(BaseImputer):
 
     def __init__(
             self,
-            estimator_num,
-            estimator_cat,
-            clip: bool = True,
-            use_y: bool = False
     ):
-
         super().__init__()
-        self.estimator_num = estimator_num
-        self.estimator_cat = estimator_cat
-        self.clip = clip
-        self.min_values = None
-        self.max_values = None
-        self.use_y = use_y
-
-        # estimators
-        self.imp_models = []
 
     @abstractmethod
     def initialize(self, data_utils, seed):
         pass
 
     @abstractmethod
-    def fit(self, X, y, missing_mask, feature_idx) -> Tuple[dict, dict]:
+    def fit(self, X, y, missing_mask, feature_idx) -> dict:
         pass
 
     @abstractmethod
@@ -42,7 +28,7 @@ class ICEImputer(BaseImputer):
         pass
 
     @abstractmethod
-    def get_imp_model_params(self, feature_idx):
+    def get_imp_model_params(self, feature_idx) -> dict:
         pass
 
     @abstractmethod

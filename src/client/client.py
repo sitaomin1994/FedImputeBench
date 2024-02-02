@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.impute import SimpleImputer
 from scipy import stats
+
 from src.imputation.base import BaseImputer
 
 
@@ -11,7 +12,6 @@ class Client:
             client_id: int,
             train_data: np.ndarray, test_data: np.ndarray, X_train_ms: np.ndarray, data_config: dict,
             imp_model: BaseImputer, client_config: dict, seed=0,
-            initial_imp_num: str = 'mean', initial_imp_cat: str = 'mode',
     ) -> None:
 
         # client id
@@ -24,10 +24,6 @@ class Client:
         self.X_train_mask = np.isnan(self.X_train_ms)  # missing data mask
         self.X_train_imp = self.X_train_ms.copy()  # imputed data
 
-        # initial imputation
-        self.initial_imp_num = initial_imp_num
-        self.initial_imp_cat = initial_imp_cat
-
         # calculate data stats
         self.data_utils = self.calculate_data_utils(data_config)
 
@@ -36,7 +32,7 @@ class Client:
         self.seed = seed
         self.client_config = client_config
 
-    def initial_impute(self, imp_values: np.ndarray, col_type:str ='num'):
+    def initial_impute(self, imp_values: np.ndarray, col_type: str = 'num'):
         """
         Initial imputation
         """

@@ -1,0 +1,10 @@
+
+estimator_num: 'rigdge_cv',
+estimator_cat: 'logistic_cv',
+mm_model: 'logistic',
+mm_model_params:
+  class_weight: 'balanced',
+  Cs: [1e-1],
+  cv: 3,
+clip: True,
+use_y: False

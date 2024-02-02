@@ -59,7 +59,7 @@ class ServerICE(Server):
                 # local training of imputation model
                 local_models, clients_fit_res = [], []
                 for client in clients:
-                    model_parameter, fit_res = client.fit_local_imputation_model(
+                    model_parameter, fit_res = client.fit_local_imputation_model(  # TODO: dynamic local training
                         feature_idx=feature_idx, imp_params={})
                     local_models.append(model_parameter)
                     clients_fit_res.append(fit_res)

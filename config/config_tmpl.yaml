@@ -1,0 +1,38 @@
+
+# experiment settings
+experiment:
+  num_clients: 2
+  seed: 2180279
+  num_rounds: 1
+  mtp: False
+  persist_data: False
+
+# dataset
+data:
+  dataset_name: codon
+  test_size: 0.1
+  data_partition: iid-even2
+
+# missing data
+missing_simulate: fixed2@mr=0.5-mm=mnar_quantile-mfunc=lr-k=0.5
+
+# imputation models
+imputation:
+  imp_model: 'not-miwae',
+  imp_model_params: {}
+# client
+client:
+  client_type: "ice"
+  client_config": {}
+# "aggregation strategy
+agg_strategy:
+  agg_strategy_name: 'local'
+  agg_strategy_params: {}
+# federated server
+server:
+  server_type: 'ice'
+  server_config: {}
+  server_imp_workflow_params:
+    imp_iterations: 20
+    initial_imp_num: "mean"
+    initial_imp_cat: "mode"

@@ -12,18 +12,26 @@ class LinearICEImputer(ICEImputer):
             self,
             estimator_num,
             estimator_cat,
+            mm_model,
+            mm_model_params,
             clip: bool = True,
             use_y: bool = False,
     ):
-        super().__init__(estimator_num, estimator_cat, clip, use_y)
+        super().__init__()
 
-        # MM model
-        self.mm_model = LogisticRegressionCV(
-            Cs=[1e-1], cv=StratifiedKFold(3), random_state=0, max_iter=1000, n_jobs=-1, class_weight='balanced'
-        )  # TODO: add more options
+        # estimator for numerical and categorical columns
+        self.estimator_num = estimator_num
+        self.estimator_cat = estimator_cat
+        self.mm_model_name = mm_model
+        self.mm_model_params = mm_model_params
+        self.clip = clip
+        self.min_values = None
+        self.max_values = None
+        self.use_y = use_y
 
         # Imputation models
         self.imp_models = None
+        self.mm_model = None
         self.data_utils_info = None
         self.seed = None
 
@@ -38,6 +46,15 @@ class LinearICEImputer(ICEImputer):
                 estimator = self.estimator_cat
 
             self.imp_models.append(load_linear_model(estimator))
+
+        # Missing Mechanism Model
+        if self.mm_model_name == 'logistic':  # TODO: make mechanism model as a separate component
+            self.mm_model = LogisticRegressionCV(
+                Cs=self.mm_model_params['Cs'], class_weight=self.mm_model_params['class_weight'],
+                cv=StratifiedKFold(self.mm_model_params['cv']), random_state=seed, max_iter=1000, n_jobs=-1
+            )
+        else:
+            raise ValueError("Invalid missing mechanism model")
 
         # initialize min max values for clipping threshold
         self.min_values, self.max_values = self.get_clip_thresholds(data_utils)
