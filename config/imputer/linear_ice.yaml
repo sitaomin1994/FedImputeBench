@@ -1,10 +1,16 @@
+defaults:
+  - /client@_group_: ice
+  - /server@_group_: ice
 
-estimator_num: 'rigdge_cv',
-estimator_cat: 'logistic_cv',
-mm_model: 'logistic',
-mm_model_params:
-  class_weight: 'balanced',
-  Cs: [1e-1],
-  cv: 3,
-clip: True,
-use_y: False
+# configuration for linear ice imputation
+imp_name: 'linear_ice'
+imp_params:
+  estimator_num: 'ridge_cv'
+  estimator_cat: 'logistic_cv'
+  mm_model: 'logistic'
+  mm_model_params:
+    class_weight: 'balanced'
+    Cs: [1e-1]
+    cv: 3
+  clip: True
+  use_y: False

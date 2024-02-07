@@ -47,6 +47,7 @@ class MIWAE(nn.Module):
             n_hidden: int = 1,
             seed: int = 0,
             K: int = 20,
+            L: int = 1000,
     ) -> None:
         super().__init__()
         set_seed(seed)
@@ -55,6 +56,7 @@ class MIWAE(nn.Module):
         self.n_hidden = n_hidden  # number of hidden units in (same for all MLPs)
         self.latent_size = latent_size  # dimension of the latent space
         self.K = K  # number of IS during training
+        self.L = L  # number of samples for imputation
 
         # encoder
         self.encoder = nn.Sequential(
@@ -87,7 +89,8 @@ class MIWAE(nn.Module):
     def name() -> str:
         return "miwae"
 
-    def init(self):
+    def init(self, seed):
+        set_seed(seed)
         self.encoder.apply(weights_init)
         self.decoder.apply(weights_init)
 
@@ -129,7 +132,8 @@ class MIWAE(nn.Module):
 
         return neg_bound, {}
 
-    def impute(self, x: torch.Tensor, mask: torch.Tensor, L: int) -> torch.Tensor:
+    def impute(self, x: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+        L = self.L
         batch_size = x.shape[0]
         p = x.shape[1]
 

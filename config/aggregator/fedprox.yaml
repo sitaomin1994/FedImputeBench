@@ -1,0 +1,8 @@
+agg_strategy_name: 'fedprox'
+agg_strategy_params: {}
+fed_train_params:
+  global_epochs: 100
+  local_epochs: 5
+  lr: 0.01
+  optimizer: 'fedprox'
+  weight_decay: 0.001

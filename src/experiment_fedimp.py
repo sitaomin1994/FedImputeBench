@@ -1,5 +1,5 @@
 import numpy as np
-
+from emf.base_experiment import BaseExperiment
 from src.loaders.load_agg_strategy import load_agg_strategy
 from src.loaders.load_data import load_data
 from src.modules.data_prep.utils import split_train_test
@@ -12,15 +12,17 @@ from src.loaders.load_clients import load_client
 from src.loaders.load_server import load_server
 
 
-class Experiment:
+class Experiment(BaseExperiment):
 
-    def __init__(self, name='experiment'):
-        self.name = name
+    def __init__(self):
+        self.exp_name = 'exp'
+        self.exp_type = 'federated_imputation'
+        super().__init__(self.exp_name, self.exp_type)
 
     def run(self, config):
-        num_clients = config['experiment']['num_clients']
         seed = config['experiment']['seed']
         num_rounds = config["experiment"]['num_rounds']
+        num_clients = config['num_clients']
 
         ##########################################################################################
         # setup seeds for each client
@@ -34,12 +36,14 @@ class Experiment:
         train_data, test_data = split_train_test(
             data, data_config, test_size=test_size, seed=seed, output_format='dataframe_merge'
         )
+        test_data = test_data.values
+        train_data = train_data.values
 
         ##########################################################################################
         # data partition
-        data_partition_strategy = config["data"]['data_partition']
+        data_partition_strategy = config['data_partition']
         clients_train_data_list = load_data_partition(
-            data_partition_strategy, train_data.values, num_clients, {}, seed=seed
+            data_partition_strategy, train_data, num_clients, {}, seed=seed
         )
 
         ##########################################################################################
@@ -50,8 +54,8 @@ class Experiment:
 
         ##########################################################################################
         # setup imputation models
-        imp_model_name = config['imp_model']
-        imp_model_params = config['imp_model_params']
+        imp_model_name = config['imputer']['imp_name']
+        imp_model_params = config['imputer']['imp_params']
         imputers = [
             load_imputer(imp_model_name, imp_model_params) for _ in range(num_clients)
         ]
@@ -89,7 +93,6 @@ class Experiment:
         result = server.save_results()
 
         return result
-
 
         ##########################################################################################
         # evaluation

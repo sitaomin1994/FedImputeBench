@@ -7,7 +7,7 @@ from src.imputation.imputers import (
 
 def load_imputer(name, imputer_params):
     if name == 'miwae':
-        return MIWAEImputer(imputer_params)
+        return MIWAEImputer(**imputer_params)
     elif name == 'not-miwae':
         return NOTMIWAEImputer(imputer_params)
     elif name == 'linear_ice':

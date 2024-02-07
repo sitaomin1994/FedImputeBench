@@ -1,6 +1,4 @@
 import os
-
-from src.experiment import Experiment
 import json
 
 config = {

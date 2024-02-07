@@ -1,0 +1,35 @@
+
+defaults:
+  - _self_
+  - imputer: linear_ice
+    agg_strategy: local
+
+########################################################################################################################
+# Experiment Meta
+debug: false
+experiment:
+  # name of prefix of experiments e.g. fed_imp, fed_pred etc.
+  experiment_name: fed_imp_pc2
+  # configuration of output path to save the results
+  output_path: ${data.dataset_name}/${data_partition}/${missing_simulate}/${imputer.imp_name}/${agg_strategy.agg_strategy_name}
+  # Other Options
+  seed: 2180279
+  num_rounds: 1
+  mtp: False
+  persist_data: False
+
+########################################################################################################################
+# Experiment Configuration Content
+# dataset, data_partition, missing_simulation
+data:
+  dataset_name: codon
+  test_size: 0.1
+num_clients: 2
+data_partition: iid-even2
+missing_simulate: fixed2@mr=0.5-mm=mnar_quantile-mfunc=lr-k=0.5
+
+# imputer, client, server
+imputer: null
+client: null
+server: null
+agg_strategy: null

@@ -118,8 +118,8 @@ class LinearICEImputer(ICEImputer):
     def impute(self, X, y, missing_mask, feature_idx):
 
         if self.clip:
-            min_values = self.min_values[feature_idx]
-            max_values = self.max_values[feature_idx]
+            min_values = self.min_values
+            max_values = self.max_values
         else:
             min_values = np.full((X.shape[1],), 0)
             max_values = np.full((X.shape[1],), 1)

@@ -1,0 +1,9 @@
+agg_strategy_name: 'fedavg'
+agg_strategy_params: {}
+
+fed_train_params:
+  global_epochs: 100
+  local_epochs: 5
+  lr: 0.01
+  weight_decay: 0.001
+  optimizer: 'adam'

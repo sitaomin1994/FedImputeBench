@@ -29,11 +29,13 @@ class ICEClient(Client):
         Fit local imputation model
         """
         fit_res = self.imp_model.fit(
-            self.X_train_ms, self.y_train, self.X_train_mask, feature_idx
+            self.X_train_imp, self.y_train, self.X_train_mask, feature_idx
         )
 
         model_parameters = self.imp_model.get_imp_model_params(feature_idx)
         fit_res.update(self.data_utils)
+        fit_res['sample_size'] = self.data_utils['missing_stats_cols'][feature_idx]['sample_size_obs']
+        # TODO: design a consistent structure for fit_res, fit_params, imp_res, imp_params and document it
 
         return model_parameters, fit_res
 

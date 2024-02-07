@@ -2,9 +2,9 @@ from typing import Dict, Union, List, Tuple
 
 import numpy as np
 from torch.utils.data import DataLoader
-from .model.notmiwae import NOTMIWAE
+from ..models.vae_models.notmiwae import NOTMIWAE
 import torch
-from src.modules.evaluation.imp_quality_metrics import rmse
+from src.evaluation.imp_quality_metrics import rmse
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

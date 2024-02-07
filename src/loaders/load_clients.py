@@ -13,6 +13,8 @@ def load_client(
             client_id, train_data, test_data, X_train_ms, data_config, imp_model, client_config, seed
         )
     elif client_type == 'jm':
-        raise NotImplementedError
+        return JMClient(
+            client_id, train_data, test_data, X_train_ms, data_config, imp_model, client_config, seed
+        )
     else:
         raise ValueError(f'client type {client_type} is not supported')

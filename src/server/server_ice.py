@@ -7,6 +7,8 @@ from src.agg_strategy import Strategy
 from src.imputation.initial_imputation import initial_imputation_num, initial_imputation_cat
 from ..evaluation.evaluator import Evaluator
 
+from tqdm.auto import tqdm, trange
+
 
 class ServerICE(Server):
 
@@ -15,14 +17,14 @@ class ServerICE(Server):
 
     def run_fed_imputation(
             self, clients: List[ICEClient], agg_strategy: Strategy, workflow_params: dict
-    ) -> dict:
+    ):
         """
         Imputation workflow for MICE
         """
         ############################################################################################################
         # Workflow Parameters
-        data_dim = workflow_params['data_dim']
-        iterations = workflow_params['iterations']
+        data_dim = clients[0].data_utils['n_features']
+        iterations = workflow_params['imp_iterations']
 
         ############################################################################################################
         # Update Global clip thresholds
@@ -40,22 +42,26 @@ class ServerICE(Server):
         # Initial Imputation
         initial_imp_num = workflow_params['initial_imp_num']
         initial_imp_cat = workflow_params['initial_imp_cat']
-        initial_imputation_num(initial_imp_num, [client.data_utils for client in clients])
-        initial_imputation_cat(initial_imp_cat, [client.data_utils for client in clients])
+        initial_data_num = initial_imputation_num(initial_imp_num, [client.data_utils for client in clients])
+        initial_data_cat = initial_imputation_cat(initial_imp_cat, [client.data_utils for client in clients])
+        for client_idx, client in enumerate(clients):
+            client.initial_impute(initial_data_num[client_idx], col_type='num')
+            client.initial_impute(initial_data_cat[client_idx], col_type='cat')
 
         ############################################################################################################
         # Federated Imputation Workflow
         ret = {}
-        for epoch in range(iterations):
+        for epoch in trange(iterations, desc='ICE Iterations', colour = 'blue'):
 
             ########################################################################################################
             # Evaluation
-            self.tracker.imp_quality.append((0, self.evaluator.evaluate_imputation(clients)))
+            evaluation_results = self.evaluator.evaluate_imputation(clients)
+            self.tracker.imp_quality.append((0, evaluation_results))
+            tqdm.write(f"Epoch {epoch}: rmse - {evaluation_results['imp_rmse_avg']} ws - {evaluation_results['imp_ws_avg']}")
 
             ########################################################################################################
             # federated imputation for each feature
-            for feature_idx in range(data_dim):
-
+            for feature_idx in trange(data_dim, desc='Feature_idx', leave=False, colour='blue'):
                 # local training of imputation model
                 local_models, clients_fit_res = [], []
                 for client in clients:
@@ -76,6 +82,10 @@ class ServerICE(Server):
 
         ########################################################################################################
         # Final Evaluation
-        self.tracker.imp_quality.append((iterations, self.evaluator.evaluate_imputation(clients)))
+        evaluation_results = self.evaluator.evaluate_imputation(clients)
+        self.tracker.imp_quality.append((iterations, evaluation_results))
+        tqdm.write(
+            f"Final: rmse - {evaluation_results['imp_rmse_avg']} ws - {evaluation_results['imp_ws_avg']}")
 
-        return ret
+        # TODO: data persistence
+        # TODO: results analysis and plots
