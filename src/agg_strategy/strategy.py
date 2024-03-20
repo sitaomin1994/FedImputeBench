@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from src.client import Client
+from src.client import BaseClient
 from typing import Dict, Union, List, Tuple
 
 
@@ -16,6 +16,6 @@ class Strategy(ABC):
 
     @abstractmethod
     def update_local_model(
-            self, global_model: dict, local_model: dict, client: Client, *args, **kwargs
+            self, global_model: dict, local_model: dict, client: BaseClient, *args, **kwargs
     ) -> dict:
         pass

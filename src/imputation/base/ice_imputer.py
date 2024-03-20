@@ -16,24 +16,25 @@ class ICEImputer(BaseImputer):
         super().__init__()
 
     @abstractmethod
-    def initialize(self, data_utils, seed):
+    def get_imp_model_params(self, params) -> dict:
         pass
 
     @abstractmethod
-    def fit(self, X, y, missing_mask, feature_idx) -> dict:
+    def update_imp_model(self, updated_model, params):
         pass
 
     @abstractmethod
-    def impute(self, X, y, missing_mask, feature_idx):
+    def initialize(self, data_utils, params, seed):
         pass
 
     @abstractmethod
-    def get_imp_model_params(self, feature_idx) -> dict:
+    def fit(self, X, y, missing_mask, params) -> dict:
         pass
 
     @abstractmethod
-    def update_imp_model(self, updated_model, feature_idx):
+    def impute(self, X, y, missing_mask, params):
         pass
+
 
     @staticmethod
     def get_clip_thresholds(data_utils):

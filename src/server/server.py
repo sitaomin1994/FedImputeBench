@@ -1,24 +1,28 @@
-from abc import ABC, abstractmethod
 from typing import Dict, Union, List, Tuple
-from src.client import Client
-from src.agg_strategy import Strategy
 from src.evaluation.evaluator import Evaluator
+from src.loaders.load_agg_strategy import load_agg_strategy
 from src.utils.tracker import Tracker
 
 
-class Server(ABC):
+class Server:
 
-    def __init__(self):
+    def __init__(
+            self,
+            agg_strategy_name: str,
+            agg_strategy_params: Dict[str, Union[str, int, float]],
+            server_config: Dict[str, Union[str, int, float]],
+    ):
+        self.aggregation_strategy = load_agg_strategy(agg_strategy_name, agg_strategy_params)
         self.evaluator: Evaluator = Evaluator()
         self.tracker: Tracker = Tracker()
+        self.server_config = server_config
 
-    @abstractmethod
-    def run_fed_imputation(
-            self, clients: List[Client], agg_strategy: Strategy, workflow_params: dict
-    ):
-        pass
+    def aggregate(self, local_model_parameters: List[dict], fit_res: List[dict]) -> Tuple[List[dict], dict]:
+        """
+        Aggregate local imputation models
+        """
+        raise NotImplementedError
 
-    def save_results(self):
-        return self.tracker.to_dict()
-
-    # TODO: result analyzer
+    def global_evaluation(self, eval_res: dict) -> dict:
+        # global evaluation of imputation models
+        raise NotImplementedError

@@ -1,15 +1,15 @@
 import numpy as np
 from emf.base_experiment import BaseExperiment
-from src.loaders.load_agg_strategy import load_agg_strategy
+from src.evaluation.evaluator import Evaluator
+from src.utils.tracker import Tracker
 from src.loaders.load_data import load_data
-from src.modules.data_prep.utils import split_train_test
 from src.utils.setup_seeds import setup_clients_seed
 
 from src.loaders.load_data_partition import load_data_partition
 from src.loaders.load_missing_simulation import add_missing
-from src.loaders.load_imputer import load_imputer
-from src.loaders.load_clients import load_client
-from src.loaders.load_server import load_server
+from src.server import Server
+from src.client import Client
+from src.loaders.load_workflow import load_workflow
 
 
 class Experiment(BaseExperiment):
@@ -22,75 +22,55 @@ class Experiment(BaseExperiment):
     def run(self, config):
         seed = config['experiment']['seed']
         num_rounds = config["experiment"]['num_rounds']
-        num_clients = config['num_clients']
 
-        ##########################################################################################
-        # setup seeds for each client
-        client_seeds = setup_clients_seed(num_clients, seed=seed)
-
-        ##########################################################################################
-        # load data and split train/test
+        ###########################################################################################################
+        # Data loading
         dataset_name = config["data"]['dataset_name']
         test_size = config["data"]['test_size']
-        data, data_config = load_data(dataset_name)
-        train_data, test_data = split_train_test(
-            data, data_config, test_size=test_size, seed=seed, output_format='dataframe_merge'
-        )
-        test_data = test_data.values
-        train_data = train_data.values
+        train_data, test_data, data_config = load_data(dataset_name, test_size, seed)
 
-        ##########################################################################################
-        # data partition
+        ###########################################################################################################
+        # Scenario setup
+        num_clients = config['num_clients']
         data_partition_strategy = config['data_partition']
-        clients_train_data_list = load_data_partition(
-            data_partition_strategy, train_data, num_clients, {}, seed=seed
+        ms_simulate_strategy = config["missing_simulate"]
+        clients_train_data_list, client_train_data_ms_list, client_seeds = self.setup_scenario(
+            train_data, data_partition_strategy, ms_simulate_strategy, num_clients, seed
         )
 
-        ##########################################################################################
-        # simulate missing data
-        ms_simulate_strategy = config["missing_simulate"]
-        cols = np.arange(data.shape[1] - 1)
-        client_train_data_ms_list = add_missing(clients_train_data_list, ms_simulate_strategy, cols, seeds=client_seeds)
-
-        ##########################################################################################
-        # setup imputation models
+        ###########################################################################################################
+        # Setup Clients and Server (imputation models and agg strategy)
         imp_model_name = config['imputer']['imp_name']
         imp_model_params = config['imputer']['imp_params']
-        imputers = [
-            load_imputer(imp_model_name, imp_model_params) for _ in range(num_clients)
-        ]
 
-        ##########################################################################################
-        # setup clients
-        client_type = config['client']['client_type']
-        client_config = config['client']['client_config']
-        clients = []
-        for i in range(num_clients):
-            clients.append(
-                load_client(
-                    client_type = client_type, client_id=i, train_data=clients_train_data_list[i], test_data=test_data,
-                    X_train_ms=client_train_data_ms_list[i][:, :-1], data_config=data_config, imp_model=imputers[i],
-                    client_config=client_config.copy(), seed=client_seeds[i]
-                )
-            )
-
-        ##########################################################################################
-        # setup federated aggregation strategy
-        agg_strategy = config['agg_strategy']['agg_strategy_name']
+        agg_strategy_name = config['agg_strategy']['agg_strategy_name']
         agg_strategy_params = config['agg_strategy']['agg_strategy_params']
-        agg_strategy = load_agg_strategy(agg_strategy, agg_strategy_params)
 
-        ##########################################################################################
-        # setup federated workflow and aggregation strategy
-        server = config['server']['server_type']
-        server_config = config['server']['server_config']
-        server = load_server(server, server_config)
-        imp_workflow_params = config['server']['server_imp_workflow_params']
+        workflow_name = config['server']['server_imp_workflow']  # todo
+        workflow_params = config['server']['server_imp_workflow_params']  # todo
+        workflow_run_type = config['server']['server_imp_workflow_run_type']  # todo
 
-        ##########################################################################################
-        # run federated imputation
-        server.run_fed_imputation(clients, agg_strategy, imp_workflow_params)
-        result = server.save_results()
+        clients, server, workflow = self.setup_workflow(
+            clients_train_data_list, client_train_data_ms_list, client_seeds,
+            imp_model_name, imp_model_params,
+            agg_strategy_name, agg_strategy_params,
+            workflow_name, workflow_params,
+            test_data, data_config,
+        )
+
+        evaluator_params = config['evaluator_params']
+        tracker_params = config['tracker_params']
+        evaluator = Evaluator(evaluator_params)  # initialize evaluator
+        tracker = Tracker(tracker_params)  # initialize tracker
+        workflow.run_fed_imp(clients, server, evaluator, tracker, workflow_run_type)
+
+        # TODO: data persistence
+        # TODO: results analysis and plots
+        # server.run_fed_imputation(clients, agg_strategy, imp_workflow_params)
+        # result = server.save_results()
+        result = {}
+
+        # TODO: result analyzer
 
         return result
 
@@ -106,3 +86,59 @@ class Experiment(BaseExperiment):
         #     'history': history,
         #     'eval_history': eval_history,
         # }
+
+    @staticmethod
+    def setup_scenario(
+            train_data, data_partition_strategy, ms_simulate_strategy, num_clients, seed
+    ):
+        # ========================================================================================
+        # setup clients seeds
+        client_seeds = setup_clients_seed(num_clients, seed=seed)
+
+        # ========================================================================================
+        # data partition
+        clients_train_data_list = load_data_partition(
+            data_partition_strategy, train_data, num_clients, {}, seed=seed
+        )
+
+        # ========================================================================================
+        # simulate missing data
+        cols = np.arange(train_data.shape[1] - 1)
+        client_train_data_ms_list = add_missing(
+            clients_train_data_list, ms_simulate_strategy, cols, seeds=client_seeds
+        )
+
+        return clients_train_data_list, client_train_data_ms_list, client_seeds
+
+    @staticmethod
+    def setup_workflow(
+            clients_train_data_list, client_train_data_ms_list, client_seeds,
+            imp_model_name, imp_model_params,
+            agg_strategy_name, agg_strategy_params,
+            workflow_name, workflow_params,
+            test_data, data_config,
+    ):
+
+        clients = []
+        for i in range(len(clients_train_data_list)):
+            clients.append(
+                Client(
+                    client_id=i,
+                    train_data=clients_train_data_list[i],
+                    test_data=test_data,
+                    X_train_ms=client_train_data_ms_list[i][:, :-1],
+                    data_config=data_config,
+                    imp_model_name=imp_model_name,
+                    imp_model_params=imp_model_params,
+                    client_config={},
+                    seed=client_seeds[i]
+                )
+            )
+
+        # ========================================================================================
+        server = Server(agg_strategy_name, agg_strategy_params, server_config={})
+
+        # ========================================================================================
+        workflow = load_workflow(workflow_name, workflow_params)
+
+        return clients, server, workflow

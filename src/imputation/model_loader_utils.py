@@ -9,9 +9,12 @@ from sklearn.linear_model import (
 
 from sklearn.neural_network import MLPRegressor, MLPClassifier
 from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier
+from sklearn.base import BaseEstimator
+
+from torch import nn
 
 
-def load_linear_model(estimator_name):
+def load_sklearn_model(estimator_name) -> BaseEstimator:
     # TODO: ADD SEEDED RANDOM STATE
     if estimator_name == 'bayesian_ridge':
         return BayesianRidge()
@@ -33,21 +36,11 @@ def load_linear_model(estimator_name):
         return LogisticRegression(penalty='l1', n_jobs=-1)
     elif estimator_name == 'logistic_cv':
         return LogisticRegressionCV(Cs=[0.1, 1.0, 10.0], penalty='l1', solver='saga')
-    else:
-        raise ValueError('Unknown estimator name: {}'.format(estimator_name))
-
-
-def load_mlp_model(estimator_name):
-    if estimator_name == 'mlp_reg':
+    elif estimator_name == 'mlp_reg':
         return MLPRegressor(hidden_layer_sizes=(16, 16), max_iter=1000, random_state=0)
     elif estimator_name == 'mlp_clf':
         return MLPClassifier(hidden_layer_sizes=(16, 16), max_iter=1000, random_state=0)
-    else:
-        raise ValueError('Unknown estimator name: {}'.format(estimator_name))
-
-
-def load_tree_model(estimator_name):
-    if estimator_name == 'dt_reg':
+    elif estimator_name == 'dt_reg':
         return DecisionTreeRegressor(random_state=0)
     elif estimator_name == 'dt_clf':
         return DecisionTreeClassifier(random_state=0)
@@ -69,3 +62,16 @@ def load_tree_model(estimator_name):
         raise NotImplementedError
     else:
         raise ValueError('Unknown estimator name: {}'.format(estimator_name))
+
+
+def load_pytorch_model(model_name, model_params) -> nn.Module:
+    if model_name == 'nn_reg':
+        raise NotImplementedError
+    elif model_name == 'nn_clf':
+        raise NotImplementedError
+    elif model_name == 'ridge':
+        raise NotImplementedError
+    elif model_name == 'logistic':
+        raise NotImplementedError
+    else:
+        raise ValueError('Unknown model name: {}'.format(model_name))

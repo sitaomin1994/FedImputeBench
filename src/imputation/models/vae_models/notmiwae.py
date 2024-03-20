@@ -9,6 +9,8 @@ import torch.distributions as td
 
 # hyperimpute absolute
 from emf.reproduce_utils import set_seed
+from decoder import GaussianDecoder, BernoulliDecoder, StudentTDecoder
+from encoder import BaseEncoder
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -111,16 +113,23 @@ class NOTMIWAE(nn.Module):
             num_features: int,
             latent_size: int = 1,
             n_hidden: int = 1,
+            n_hidden_layers: int = 2,
+            out_dist='studentt',
             seed: int = 0,
             K: int = 20,
+            L: int = 1000,
     ) -> None:
+
         super().__init__()
         set_seed(seed)
 
+        # parameters
         self.num_features = num_features
         self.n_hidden = n_hidden  # number of hidden units in (same for all MLPs)
+        self.n_hidden_layers = n_hidden_layers  # number of hidden layers in (same for all MLPs)
         self.latent_size = latent_size  # dimension of the latent space
         self.K = K  # number of IS during training
+        self.L = L  # number of samples for imputation
 
         # mask encoder
         self.mask_enc_dim = 0
@@ -131,30 +140,33 @@ class NOTMIWAE(nn.Module):
         )
 
         # encoder
-        self.encoder = nn.Sequential(
-            torch.nn.Linear(num_features + self.mask_enc_dim, self.n_hidden),
-            torch.nn.Tanh(),
-            torch.nn.Linear(self.n_hidden, self.n_hidden),
-            torch.nn.Tanh(),
-            torch.nn.Linear(
-                self.n_hidden, 2 * self.latent_size
-            ),  # the encoder will output both the mean and the diagonal covariance
+        self.encoder = BaseEncoder(
+            self.num_features, 2 * self.latent_size, [self.n_hidden for _ in range(self.n_hidden_layers)],
         ).to(DEVICE)
 
         # decoder
-        self.decoder = nn.Sequential(
-            torch.nn.Linear(self.latent_size, self.n_hidden),
-            torch.nn.Tanh(),
-            torch.nn.Linear(self.n_hidden, self.n_hidden),
-            torch.nn.Tanh(),
-            torch.nn.Linear(
-                self.n_hidden, 3 * num_features
-            ),
-            # the decoder will output both the mean, the scale, and the number of degrees of freedoms (hence the 3*p)
-        ).to(DEVICE)
+        self.out_dist = out_dist
+        if out_dist == 'studentt':
+            self.decoder = StudentTDecoder(
+                self.latent_size, self.num_features, [self.n_hidden for _ in range(self.n_hidden_layers)],
+            )
+        elif out_dist == 'gaussian':
+            self.decoder = GaussianDecoder(
+                self.latent_size, self.num_features, [self.n_hidden for _ in range(self.n_hidden_layers)],
+            )
+        elif out_dist == 'bernoulli':
+            self.decoder = BernoulliDecoder(
+                self.latent_size, self.num_features, [self.n_hidden for _ in range(self.n_hidden_layers)],
+            )
+        else:
+            raise ValueError("Invalid output distribution")
 
+        self.decoder = self.decoder.to(DEVICE)
+
+        # mask net
         self.mask_net = MaskNet(num_features).to(DEVICE)
 
+        # prior for z
         self.p_z = td.Independent(
             td.Normal(loc=torch.zeros(self.latent_size).to(DEVICE), scale=torch.ones(self.latent_size).to(DEVICE)), 1
         )
@@ -171,48 +183,44 @@ class NOTMIWAE(nn.Module):
         x, mask = inputs  # x - data, mask - missing mask
         batch_size = x.shape[0]
 
-        # encoder
+        # encoder and z distribution
         mask_ = self.mask_enc(mask)
         x_ = torch.concat([x, mask_], dim=1)
-        out_encoder = self.encoder(x)
-        mu, logvar = out_encoder[..., :self.latent_size], out_encoder[..., self.latent_size:(2 * self.latent_size)]
+        mu, logvar = self.encoder(x)
 
-        q_zgivenxobs = td.Independent(td.Normal(loc=mu, scale=torch.nn.Softplus()(logvar)), 1)
+        # q(z|x)
+        q_zgivenxobs = td.Independent(td.Normal(loc=mu, scale=logvar), 1)
         zgivenx = q_zgivenxobs.rsample([self.K])
         zgivenx_flat = zgivenx.reshape([self.K * batch_size, self.latent_size])
 
-        # decoder
+        # decoder and x distribution
         out_decoder = self.decoder(zgivenx_flat)
-        recon_x_means = out_decoder[..., :self.num_features]
-        recon_x_scale = torch.nn.Softplus()(out_decoder[..., self.num_features:(2 * self.num_features)]) + 0.001
-        recon_x_degree_freedom = torch.nn.Softplus()(out_decoder[..., (2 * self.num_features):]) + 3
 
-        # compute loss
+        # data and mask
+        recon_x_means = self.decoder.l_out_mu(out_decoder)
         data = torch.Tensor.repeat(x, [self.K, 1]).to(DEVICE)
         data_flat = torch.Tensor.repeat(x, [self.K, 1]).reshape([-1, 1]).to(DEVICE)
         tiled_mask = torch.Tensor.repeat(mask, [self.K, 1]).to(DEVICE)
-
-        # mask net
         recon_x_tiled = recon_x_means * (1 - tiled_mask) + data * tiled_mask  # (K * batch_size, p)
         mask_recon = self.mask_net(recon_x_tiled).to(DEVICE).reshape([-1, 1])  # (K * batch_size*p, 1)
-        p_mgivenx = td.Bernoulli(logits=mask_recon)  # (K * batch_size*p, 1)
 
         # compute loss
-        all_log_pxgivenz_flat = torch.distributions.StudentT(
-            loc=recon_x_means.reshape([-1, 1]),
-            scale=recon_x_scale.reshape([-1, 1]),
-            df=recon_x_degree_freedom.reshape([-1, 1]),
-        ).log_prob(data_flat)
+        # p(x|z)
+        all_log_pxgivenz_flat = self.decoder.dist_xgivenz(out_decoder, flat = True).log_prob(data_flat)
         all_log_pxgivenz = all_log_pxgivenz_flat.reshape([self.K * batch_size, self.num_features])
+
+        # p(m|x)
+        p_mgivenx = td.Bernoulli(logits=mask_recon)  # (K * batch_size*p, 1)
         all_logp_mgivenx = p_mgivenx.log_prob(tiled_mask.reshape([-1, 1])).reshape(
             [self.K * batch_size, self.num_features])
 
+        # final loss
         logpxobsgivenz = torch.sum(all_log_pxgivenz * tiled_mask, 1).reshape([self.K, batch_size])
         logpz = self.p_z.log_prob(zgivenx)
         logq = q_zgivenxobs.log_prob(zgivenx)
         logpmgivenx = torch.sum(all_logp_mgivenx, 1).reshape([self.K, batch_size])
 
-        neg_bound = -torch.mean(torch.logsumexp(logpxobsgivenz + 5*logpmgivenx + logpz - logq, 0))
+        neg_bound = -torch.mean(torch.logsumexp(logpxobsgivenz + logpmgivenx + logpz - logq, 0))
 
         return neg_bound, {}
 
@@ -227,11 +235,7 @@ class NOTMIWAE(nn.Module):
         self.mask_enc.to(DEVICE)
         mask_ = self.mask_enc(mask)
         x_ = torch.concat([x, mask_], dim=1)
-        out_encoder = self.encoder(x)
-        # out_encoder = self.encoder(x_)
-        mu = out_encoder[..., : self.latent_size]  # (batch_size, latent_size)
-        logvar = torch.nn.Softplus()(
-            out_encoder[..., self.latent_size: (2 * self.latent_size)])  # (batch_size, latent_size)
+        mu, logvar = self.encoder(x)
         q_zgivenxobs = td.Independent(td.Normal(loc=mu, scale=logvar), 1)
 
         zgivenx = q_zgivenxobs.rsample([L])  # (L, batch_size, latent_size)
@@ -239,9 +243,7 @@ class NOTMIWAE(nn.Module):
 
         # decoder
         out_decoder = self.decoder(zgivenx_flat)
-        recon_x_means = out_decoder[..., :p]  # (L*batch_size, p)
-        recon_x_scale = torch.nn.Softplus()(out_decoder[..., p: (2 * p)]) + 0.001  # (L*batch_size, p)
-        recon_x_df = torch.nn.Softplus()(out_decoder[..., (2 * p): (3 * p)]) + 3  # (L*batch_size, p)
+        recon_x_means = self.decoder.l_out_mu(out_decoder)
 
         # ground truth data
         data = torch.Tensor.repeat(x, [L, 1]).to(DEVICE)  # (L * batch_size, p)
@@ -254,11 +256,7 @@ class NOTMIWAE(nn.Module):
         p_mgivenx = td.Bernoulli(logits=mask_recon)  # (L * batch_size*p, 1)
 
         # loss
-        all_log_pxgivenz_flat = torch.distributions.StudentT(
-            loc=recon_x_means.reshape([-1, 1]),
-            scale=recon_x_scale.reshape([-1, 1]),
-            df=recon_x_df.reshape([-1, 1]),
-        ).log_prob(data_flat)  # (L * batch_size, 1)
+        all_log_pxgivenz_flat = self.decoder.dist_xgivenz(out_decoder, flat=True).log_prob(data_flat)  # (L * batch_size, 1)
         all_log_pxgivenz = all_log_pxgivenz_flat.reshape([L * batch_size, p])  # (L * batch_size, p)
         all_log_p_mgivenx = p_mgivenx.log_prob(tiled_mask.reshape([-1, 1])).reshape(
             [L * batch_size, p])  # (L * batch_size, p)
@@ -269,18 +267,11 @@ class NOTMIWAE(nn.Module):
         logpmgivenx = torch.sum(all_log_p_mgivenx, 1).reshape([L, batch_size])
 
         # imputation weighted samples
-        xgivenz = td.Independent(
-            td.StudentT(
-                loc=recon_x_means,
-                scale=recon_x_scale,
-                df=recon_x_df,
-            ),
-            1
-        )
-
         imp_weights = torch.nn.functional.softmax(
-            logpxobsgivenz + 5*logpmgivenx + logpz - logq, 0
+            logpxobsgivenz + logpmgivenx + logpz - logq, 0
         )  # these are w_1,....,w_L for all observations in the batch
+
+        xgivenz = self.decoder.imp_dist_xgivenz(out_decoder)  # torch independent to specify batch dimension
         xms = xgivenz.sample().reshape([L, batch_size, p])
         xm = torch.einsum("ki,kij->ij", imp_weights, xms)
 

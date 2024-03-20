@@ -6,11 +6,23 @@ from src.evaluation.imp_quality_metrics import rmse, sliced_ws
 
 class Evaluator:
 
-    def __init__(self):
-        pass
+    def __init__(self, evaluator_params: dict):
+        self.evaluator_params = evaluator_params
 
     @staticmethod
-    def evaluate_imputation(clients: List[Client]):
+    def evaluate_imputation_local(X_train_imp:np.ndarray, X_train_origin:np.ndarray, X_train_mask:np.ndarray) -> dict:
+        imp_rmse = rmse(X_train_imp, X_train_origin, X_train_mask)
+        imp_ws = sliced_ws(X_train_imp, X_train_origin)
+        return {
+            'imp_rmse': imp_rmse,
+            'imp_ws': imp_ws
+        }
+
+    @staticmethod
+    def evaluate_imputation(
+            X_train_imps: List[np.ndarray], X_train_origins: List[np.ndarray], X_train_masks: List[np.ndarray]
+    ) -> dict:
+
         evaluation_results = {
             'imp_rmse_clients': [],
             'imp_ws_clients': [],
@@ -21,9 +33,9 @@ class Evaluator:
         }
 
         # imputation quality evaluation
-        for client_id, client in enumerate(clients):
-            imp_rmse = rmse(client.X_train_imp, client.X_train, client.X_train_mask)
-            imp_ws = sliced_ws(client.X_train_imp, client.X_train)
+        for X_train_imp, X_train_origin, X_train_mask in zip(X_train_imps, X_train_origins, X_train_masks):
+            imp_rmse = rmse(X_train_imp, X_train_origin, X_train_mask)
+            imp_ws = sliced_ws(X_train_imp, X_train_origin)
             evaluation_results['imp_rmse_clients'].append(imp_rmse)
             evaluation_results['imp_ws_clients'].append(imp_ws)
 
@@ -31,9 +43,9 @@ class Evaluator:
         evaluation_results['imp_ws_avg'] = float(np.mean(evaluation_results['imp_ws_clients']))
 
         # global imputation quality evaluation
-        merged_X_imp = np.concatenate([client.X_train_imp for client in clients], axis=0)
-        merged_X_origin = np.concatenate([client.X_train for client in clients], axis=0)
-        merged_X_mask = np.concatenate([client.X_train_mask for client in clients], axis=0)
+        merged_X_imp = np.concatenate(X_train_imps, axis=0)
+        merged_X_origin = np.concatenate(X_train_origins, axis=0)
+        merged_X_mask = np.concatenate(X_train_masks, axis=0)
         imp_rmse = rmse(merged_X_imp, merged_X_origin, merged_X_mask)
         imp_ws = sliced_ws(merged_X_imp, merged_X_origin)
         evaluation_results['imp_rmse_global'] = imp_rmse

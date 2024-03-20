@@ -1,4 +1,4 @@
-class ResultParser:
+class ResultAnalyzer:
     def __init__(self):
         pass
 

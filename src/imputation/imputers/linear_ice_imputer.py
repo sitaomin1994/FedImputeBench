@@ -3,7 +3,7 @@ from sklearn.preprocessing import OneHotEncoder
 from src.imputation.base.ice_imputer import ICEImputer
 import numpy as np
 from sklearn.linear_model import LogisticRegressionCV
-from ..model_loader_utils import load_linear_model
+from ..model_loader_utils import load_sklearn_model
 
 
 class LinearICEImputer(ICEImputer):
@@ -45,7 +45,7 @@ class LinearICEImputer(ICEImputer):
             else:
                 estimator = self.estimator_cat
 
-            self.imp_models.append(load_linear_model(estimator))
+            self.imp_models.append(load_sklearn_model(estimator))
 
         # Missing Mechanism Model
         if self.mm_model_name == 'logistic':  # TODO: make mechanism model as a separate component

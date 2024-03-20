@@ -1,6 +1,6 @@
 from collections import OrderedDict
 
-from src.client import Client
+from src.client import BaseClient
 from typing import Dict, Union, List, Tuple
 from .strategy import Strategy
 from copy import deepcopy
@@ -18,7 +18,7 @@ class LocalStrategy(Strategy):
         return local_model_parameters, {}
 
     def update_local_model(
-            self, global_model: dict, local_model:dict, client: Client, *args, **kwargs
+            self, global_model: dict, local_model:dict, client: BaseClient, *args, **kwargs
     ) -> dict:
 
         return global_model

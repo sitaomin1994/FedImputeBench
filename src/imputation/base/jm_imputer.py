@@ -10,24 +10,23 @@ class JMImputer(BaseImputer):
         super().__init__()
 
     @abstractmethod
-    def get_imp_model_params(self) -> dict:
+    def get_imp_model_params(self, params) -> dict:
         pass
 
     @abstractmethod
-    def update_imp_model(self, updated_model: dict) -> None:
+    def update_imp_model(self, updated_model: dict, params) -> None:
         pass
 
     @abstractmethod
-    def initialize(self, data_utils, seed) -> None:
+    def initialize(self, data_utils, params, seed) -> None:
         pass
 
     @abstractmethod
-    def fit_local_imp_model(
-            self, X_train_imp: np.ndarray, X_train_mask: np.ndarray, X_train_full: np.ndarray, y_train: np.ndarray,
-            params: dict
+    def fit(
+            self, X, y: np.ndarray, missing_mask: np.ndarray, params: dict
     ) -> dict:
         pass
 
     @abstractmethod
-    def imputation(self, X_train_ms: np.ndarray, X_train_mask: np.ndarray, params: dict) -> np.ndarray:
+    def impute(self, X: np.ndarray, y: np.ndarray, missing_mask:np.ndarray, params: dict) -> np.ndarray:
         pass

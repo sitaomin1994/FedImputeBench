@@ -3,7 +3,8 @@ import torch
 import os
 import random
 
-def setup_clients_seed(num_clients, seed=0):
+
+def setup_clients_seed(num_clients, seed=0):  # TODO: need to use seed
     """
     Setup seeds for each client
     """

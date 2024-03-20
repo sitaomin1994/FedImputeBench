@@ -1,3 +1,5 @@
+from src.modules.data_prep.utils import split_train_test
+
 from src.modules.data_prep.data_prep_his import (
     process_NHIS_income, process_heart, process_codrna, process_skin, process_codon, process_sepsis,
     process_diabetic, process_diabetic2, process_cardio, process_mimiciii_mortality, process_genetic,
@@ -25,168 +27,181 @@ from src.modules.data_prep.data_prep_reg import (
 )
 
 
-def load_data(dataset_name, normalize=True, verbose=False, threshold=None):
-
+def load_data(dataset_name, normalize=True, verbose=False, threshold=None, test_size=None, seed=0):
     # ##################################################################################################################
     # Classification
     # ##################################################################################################################
     if dataset_name == 'iris':
-        return process_iris(normalize, verbose, threshold)
+        data, data_config = process_iris(normalize, verbose, threshold)
     elif dataset_name == 'breast':
-        return process_breast(normalize, verbose, threshold)
+        data, data_config = process_breast(normalize, verbose, threshold)
     elif dataset_name == 'ecoli':
-        return process_ecoli(normalize, verbose, threshold)
+        data, data_config = process_ecoli(normalize, verbose, threshold)
     elif dataset_name == 'white':
-        return process_white(normalize, verbose, threshold)
+        data, data_config = process_white(normalize, verbose, threshold)
     elif dataset_name == 'red':
-        return process_red(normalize, verbose, threshold)
+        data, data_config = process_red(normalize, verbose, threshold)
     elif dataset_name == 'wine_quality_all':
-        return process_wine_three(normalize, verbose, threshold)
+        data, data_config = process_wine_three(normalize, verbose, threshold)
     elif dataset_name == 'spam':
-        return process_spam(normalize, verbose, threshold)
+        data, data_config = process_spam(normalize, verbose, threshold)
     elif dataset_name == 'blocks':
-        return process_blocks(normalize, verbose, threshold)
+        data, data_config = process_blocks(normalize, verbose, threshold)
     elif dataset_name == 'glass':
-        return process_glass(normalize, verbose, threshold)
+        data, data_config = process_glass(normalize, verbose, threshold)
     elif dataset_name == 'optdigits':
-        return process_optdigits(normalize, verbose, threshold)
+        data, data_config = process_optdigits(normalize, verbose, threshold)
     elif dataset_name == 'segmentation':
-        return process_segmentation(normalize, verbose, threshold)
+        data, data_config = process_segmentation(normalize, verbose, threshold)
     elif dataset_name == 'sonar':
-        return process_sonar(normalize, verbose, threshold)
+        data, data_config = process_sonar(normalize, verbose, threshold)
     elif dataset_name == 'sensor':
-        return process_sensor(normalize, verbose, threshold)
+        data, data_config = process_sensor(normalize, verbose, threshold)
     elif dataset_name == 'sensor_pca':
-        return process_sensor(normalize, verbose, threshold, pca=True)
+        data, data_config = process_sensor(normalize, verbose, threshold, pca=True)
     elif dataset_name == 'waveform':
-        return process_waveform(normalize, verbose, threshold)
+        data, data_config = process_waveform(normalize, verbose, threshold)
     elif dataset_name == 'yeast':
-        return process_yeast(normalize, verbose, threshold)
+        data, data_config = process_yeast(normalize, verbose, threshold)
     elif dataset_name == 'letter':
-        return process_letter(normalize, verbose, threshold)
+        data, data_config = process_letter(normalize, verbose, threshold)
     elif dataset_name == 'raisin':
-        return process_raisin(normalize, verbose, threshold)
+        data, data_config = process_raisin(normalize, verbose, threshold)
     elif dataset_name == 'telugu_vowel':
-        return process_telugu_vowel(normalize, verbose, threshold)
+        data, data_config = process_telugu_vowel(normalize, verbose, threshold)
     elif dataset_name == 'telugu_tabular':
-        return process_telugu_tabular(normalize, verbose, threshold)
+        data, data_config = process_telugu_tabular(normalize, verbose, threshold)
     elif dataset_name == 'wine':
-        return process_wine(normalize, verbose, threshold)
+        data, data_config = process_wine(normalize, verbose, threshold)
     elif dataset_name == 'wifi':
-        return process_wifi(normalize, verbose, threshold)
+        data, data_config = process_wifi(normalize, verbose, threshold)
     elif dataset_name == 'default_credit':
-        return process_default_credit(normalize, verbose, threshold)
+        data, data_config = process_default_credit(normalize, verbose, threshold)
     elif dataset_name == 'firewall':
-        return process_firewall(normalize, verbose, threshold)
+        data, data_config = process_firewall(normalize, verbose, threshold)
     elif dataset_name == 'dry_bean':
-        return process_dry_bean(normalize, verbose, threshold)
+        data, data_config = process_dry_bean(normalize, verbose, threshold)
     elif dataset_name == 'dry_bean_g':
-        return process_dry_bean(normalize, verbose, threshold, guassian=True)
+        data, data_config = process_dry_bean(normalize, verbose, threshold, guassian=True)
 
     ####################################################################################################################
     # Large Dataset
     ####################################################################################################################
     elif dataset_name == 'adult':
-        return process_adult(normalize, verbose, threshold)
+        data, data_config = process_adult(normalize, verbose, threshold)
     elif dataset_name == 'adult_pca':
-        return process_adult(normalize, verbose, threshold, sample=False, pca=True, gaussian=True)
+        data, data_config = process_adult(normalize, verbose, threshold, sample=False, pca=True, gaussian=True)
     elif dataset_name == 'adult_balanced':
-        return process_adult(normalize, verbose, threshold, sample=True)
+        data, data_config = process_adult(normalize, verbose, threshold, sample=True)
     elif dataset_name == 'adult_balanced_pca':
-        return process_adult(normalize, verbose, threshold, sample=True, pca=True, gaussian=True)
+        data, data_config = process_adult(normalize, verbose, threshold, sample=True, pca=True, gaussian=True)
     elif dataset_name == 'bank_marketing':
-        return process_bank_market(normalize, verbose, threshold)
+        data, data_config = process_bank_market(normalize, verbose, threshold)
     elif dataset_name == 'bank_marketing_balanced':
-        return process_bank_market(normalize, verbose, threshold, sample=True)
+        data, data_config = process_bank_market(normalize, verbose, threshold, sample=True)
     elif dataset_name == 'bank_balanced_pca':
-        return process_bank_market(normalize, verbose, threshold, sample=True, pca=True, gaussian=True)
+        data, data_config = process_bank_market(normalize, verbose, threshold, sample=True, pca=True, gaussian=True)
     elif dataset_name == 'ijcnn':
-        return process_ijcnn(normalize, verbose, threshold)
+        data, data_config = process_ijcnn(normalize, verbose, threshold)
     elif dataset_name == 'ijcnn_balanced':
-        return process_ijcnn(normalize, verbose, threshold, sample=True)
+        data, data_config = process_ijcnn(normalize, verbose, threshold, sample=True)
     elif dataset_name == 'ijcnn_balanced_pca':
-        return process_ijcnn(normalize, verbose, threshold, sample=True, pca=True, gaussian=True)
+        data, data_config = process_ijcnn(normalize, verbose, threshold, sample=True, pca=True, gaussian=True)
     elif dataset_name == 'svm':
-        return process_svm(normalize, verbose, threshold)
+        data, data_config = process_svm(normalize, verbose, threshold)
     elif dataset_name == 'svm_g':
-        return process_svm(normalize, verbose, threshold, gaussian=True)
+        data, data_config = process_svm(normalize, verbose, threshold, gaussian=True)
     elif dataset_name == 'pendigits':
-        return process_pendigits(normalize, verbose, threshold)
+        data, data_config = process_pendigits(normalize, verbose, threshold)
     elif dataset_name == 'pendigits_g':
-        return process_pendigits(normalize, verbose, threshold, gaussian=True)
+        data, data_config = process_pendigits(normalize, verbose, threshold, gaussian=True)
     elif dataset_name == 'statlog':
-        return process_statlog(normalize, verbose, threshold)
+        data, data_config = process_statlog(normalize, verbose, threshold)
     elif dataset_name == 'statlog_pca':
-        return process_statlog(normalize, verbose, threshold, pca=True, gaussian=True)
+        data, data_config = process_statlog(normalize, verbose, threshold, pca=True, gaussian=True)
     elif dataset_name == 'avila':
-        return process_avila(normalize, verbose, threshold)
+        data, data_config = process_avila(normalize, verbose, threshold)
     elif dataset_name == 'susy':
-        return process_susy(normalize, verbose, threshold)
+        data, data_config = process_susy(normalize, verbose, threshold)
     elif dataset_name == 'susy_g':
-        return process_susy(normalize, verbose, threshold, gaussian=True)
+        data, data_config = process_susy(normalize, verbose, threshold, gaussian=True)
     elif dataset_name == 'higgs':
-        return process_higgs(verbose, threshold)
+        data, data_config = process_higgs(verbose, threshold)
 
     ####################################################################################################################
     # Healthcare Dataset
     ####################################################################################################################
     elif dataset_name == 'nhis_income':
-        return process_NHIS_income(pca=False)
+        data, data_config = process_NHIS_income(pca=False)
     elif dataset_name == 'nhis_income_pca':
-        return process_NHIS_income(pca=True)
+        data, data_config = process_NHIS_income(pca=True)
     elif dataset_name == 'heart':
-        return process_heart(pca=True, sample=False)
+        data, data_config = process_heart(pca=True, sample=False)
     elif dataset_name == 'heart_balanced':
-        return process_heart(pca=True, sample=True)
+        data, data_config = process_heart(pca=True, sample=True)
     elif dataset_name == 'skin':
-        return process_skin(normalize, verbose, threshold, sample=False)
+        data, data_config = process_skin(normalize, verbose, threshold, sample=False)
     elif dataset_name == 'skin_balanced':
-        return process_skin(normalize, verbose, threshold, sample=True)
+        data, data_config = process_skin(normalize, verbose, threshold, sample=True)
     elif dataset_name == 'codrna':
-        return process_codrna(normalize, verbose, threshold, sample=False)
+        data, data_config = process_codrna(normalize, verbose, threshold, sample=False)
     elif dataset_name == 'codrna_balanced':
-        return process_codrna(normalize, verbose, threshold, sample=True)
+        data, data_config = process_codrna(normalize, verbose, threshold, sample=True)
     elif dataset_name == 'codon':
-        return process_codon(verbose, threshold)
+        data, data_config = process_codon(verbose, threshold)
     elif dataset_name == 'sepsis':
-        return process_sepsis(verbose, threshold)
+        data, data_config = process_sepsis(verbose, threshold)
     elif dataset_name == 'diabetic':
-        return process_diabetic(verbose, threshold)
+        data, data_config = process_diabetic(verbose, threshold)
     elif dataset_name == 'diabetic_balanced':
-        return process_diabetic(verbose, threshold, sample=True)
+        data, data_config = process_diabetic(verbose, threshold, sample=True)
     elif dataset_name == 'diabetic2':
-        return process_diabetic2(verbose, threshold, sample=True)
+        data, data_config = process_diabetic2(verbose, threshold, sample=True)
     elif dataset_name == 'cardio':
-        return process_cardio(verbose, threshold)
+        data, data_config = process_cardio(verbose, threshold)
     elif dataset_name == 'mimiciii_mo':
-        return process_mimiciii_mortality()
+        data, data_config = process_mimiciii_mortality()
     elif dataset_name == 'mimiciii_icd':
-        return process_mimic_icd2()
+        data, data_config = process_mimic_icd2()
     elif dataset_name == 'mimiciii_mo2':
-        return process_mimic_mo()
+        data, data_config = process_mimic_mo()
     elif dataset_name == 'mimiciii_los':
-        return process_mimic_los()
+        data, data_config = process_mimic_los()
     elif dataset_name == 'genetic':
-        return process_genetic(sample=False)
+        data, data_config = process_genetic(sample=False)
     elif dataset_name == 'genetic_balanced':
-        return process_genetic(sample=True)
+        data, data_config = process_genetic(sample=True)
     elif dataset_name == 'dermatology':
-        return process_dermatology(normalize, verbose, threshold)
+        data, data_config = process_dermatology(normalize, verbose, threshold)
     elif dataset_name == "pima_diabetes":
-        return process_pima_diabetes(normalize, verbose, threshold)
+        data, data_config = process_pima_diabetes(normalize, verbose, threshold)
 
     ####################################################################################################################
     # Regression
     ####################################################################################################################
     elif dataset_name == 'diabetes':
-        return process_diabetes(normalize, verbose, threshold)
+        data, data_config = process_diabetes(normalize, verbose, threshold)
     elif dataset_name == 'california_housing':
-        return process_california_housing(normalize, verbose, threshold)
+        data, data_config = process_california_housing(normalize, verbose, threshold)
     elif dataset_name == 'housing':
-        return process_housing(normalize, verbose, threshold)
+        data, data_config = process_housing(normalize, verbose, threshold)
     elif dataset_name == 'red_reg':
-        return process_red_reg(normalize, verbose, threshold)
+        data, data_config = process_red_reg(normalize, verbose, threshold)
     elif dataset_name == 'white_reg':
-        return process_white_reg(normalize, verbose, threshold)
+        data, data_config = process_white_reg(normalize, verbose, threshold)
     else:
         raise Exception("Unknown dataset name {}".format(dataset_name))
+
+    ####################################################################################################################
+    # Split train and test
+    if test_size is not None:
+        train_data, test_data = split_train_test(
+            data, data_config, test_size=test_size, seed=seed, output_format='dataframe_merge'
+        )
+        test_data = test_data.values
+        train_data = train_data.values
+    else:
+        train_data = data.values
+        test_data = None
+
+    return train_data, test_data, data_config

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 
-from src.client import Client
+from src.client import BaseClient
 from typing import Dict, Union, List, Tuple
 from .strategy import Strategy
 from copy import deepcopy
@@ -35,7 +35,7 @@ class FedAvgStrategy(Strategy):
         return agg_model_parameters, agg_res
 
     def update_local_model(
-            self, global_model: dict, local_model:dict, client: Client, *args, **kwargs
+            self, global_model: dict, local_model:dict, client: BaseClient, *args, **kwargs
     ) -> dict:
 
         return global_model

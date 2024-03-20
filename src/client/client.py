@@ -1,8 +1,11 @@
+from abc import ABC, abstractmethod
+from typing import Tuple
+
 import numpy as np
 from sklearn.impute import SimpleImputer
 from scipy import stats
-
 from src.imputation.base import BaseImputer
+from src.loaders.load_imputer import load_imputer
 
 
 class Client:
@@ -11,7 +14,7 @@ class Client:
             self,
             client_id: int,
             train_data: np.ndarray, test_data: np.ndarray, X_train_ms: np.ndarray, data_config: dict,
-            imp_model: BaseImputer, client_config: dict, seed=0,
+            imp_model_name, imp_model_params, client_config: dict, seed=0,
     ) -> None:
 
         # client id
@@ -27,10 +30,40 @@ class Client:
         # calculate data stats
         self.data_utils = self.calculate_data_utils(data_config)
 
+        # imputation model
+        self.imp_model = load_imputer(imp_model_name, imp_model_params)
+        self.imp_model.initialize(self.data_utils, seed)
+
         # others
-        self.imp_model = imp_model
         self.seed = seed
         self.client_config = client_config
+
+    def fit_local_imp_model(self, params: dict) -> Tuple[dict, dict]:
+        """
+        Fit local imputation model
+        """
+        fit_res = self.imp_model.fit(
+            self.X_train_imp, self.y_train, self.X_train_mask, params
+        )
+        model_parameters = self.imp_model.get_imp_model_params(params)
+        fit_res.update(self.data_utils)
+        # fit_res['sample_size'] = self.data_utils['missing_stats_cols'][feature_idx]['sample_size_obs'] todo: add sample size
+        # TODO: design a consistent structure for fit_res, fit_params, imp_res, imp_params and document it
+
+        return model_parameters, fit_res
+
+    def update_local_imp_model(self, updated_local_model: dict, params: dict):
+        """
+        Fit local imputation model
+        """
+        self.imp_model.update_imp_model(updated_local_model, params)
+
+    def local_imputation(self, params: dict):
+        """
+        Imputation
+        """
+        feature_idx = params['feature_idx']
+        self.imp_model.impute(self.X_train_imp, self.y_train, self.X_train_mask, params)
 
     def initial_impute(self, imp_values: np.ndarray, col_type: str = 'num'):
         """
