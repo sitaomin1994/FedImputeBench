@@ -2,6 +2,7 @@ import numpy as np
 from emf.base_experiment import BaseExperiment
 from src.evaluation.evaluator import Evaluator
 from src.utils.tracker import Tracker
+from src.utils.result_analyzer import ResultAnalyzer
 from src.loaders.load_data import load_data
 from src.utils.setup_seeds import setup_clients_seed
 
@@ -19,9 +20,14 @@ class Experiment(BaseExperiment):
         self.exp_type = 'federated_imputation'
         super().__init__(self.exp_name, self.exp_type)
 
-    def run(self, config):
+    def run(self, config: dict) -> dict:
+        """
+        Run the single round experiment
+        :param config: configuration of the experiment
+        :return: results dictionary
+        """
+
         seed = config['experiment']['seed']
-        num_rounds = config["experiment"]['num_rounds']
 
         ###########################################################################################################
         # Data loading
@@ -58,34 +64,30 @@ class Experiment(BaseExperiment):
             test_data, data_config,
         )
 
+        ###########################################################################################################
+        # Evaluator and Tracker
         evaluator_params = config['evaluator_params']
         tracker_params = config['tracker_params']
+        ret_analyze_params = config['ret_analyze_params']
         evaluator = Evaluator(evaluator_params)  # initialize evaluator
         tracker = Tracker(tracker_params)  # initialize tracker
-        workflow.run_fed_imp(clients, server, evaluator, tracker, workflow_run_type)
+        result_analyzer = ResultAnalyzer(ret_analyze_params)  # initialize result analyzer
 
-        # TODO: data persistence
-        # TODO: results analysis and plots
-        # server.run_fed_imputation(clients, agg_strategy, imp_workflow_params)
-        # result = server.save_results()
-        result = {}
+        ###########################################################################################################
+        # Run Federated Imputation
+        tracker = workflow.run_fed_imp(clients, server, evaluator, tracker, workflow_run_type)
+        ret = result_analyzer.clean_and_analyze_results(tracker)  # TODO: result analyzer
 
-        # TODO: result analyzer
+        return ret
 
-        return result
-
-        ##########################################################################################
-        # evaluation
-        # rets = {}
-        # for client in clients:
-        #     client.local_evaluate({})
-        #     rets[client.client_id] = client.eval_ret
-
-        # return {
-        #     'rets': rets,
-        #     'history': history,
-        #     'eval_history': eval_history,
-        # }
+    def multiple_rounds_run(self, config: dict) -> dict:  # todo
+        """
+        Run multiple rounds of the experiment
+        :param config: configuration files
+        :return: multiple runs results dictionary
+        """
+        num_rounds = config["experiment"]['num_rounds']
+        return {}
 
     @staticmethod
     def setup_scenario(

@@ -1,6 +1,6 @@
 from collections import OrderedDict
 
-from src.client import BaseClient
+from src.client import Client
 from typing import Dict, Union, List, Tuple
 from .strategy import Strategy
 from copy import deepcopy

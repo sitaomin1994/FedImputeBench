@@ -1,6 +1,15 @@
+from src.utils.tracker import Tracker
+
+
 class ResultAnalyzer:
-    def __init__(self):
+    def __init__(self, params: dict):
         pass
 
-    def clean_imp_result(self, imp_result: dict):
+    def clean_and_analyze_results(self, tracker: Tracker) -> dict:
         return {}
+
+    # return {
+    #     'rets': rets,
+    #     'history': history,
+    #     'eval_history': eval_history,
+    # }
