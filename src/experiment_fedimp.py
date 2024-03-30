@@ -20,14 +20,23 @@ class Experiment(BaseExperiment):
         self.exp_type = 'federated_imputation'
         super().__init__(self.exp_name, self.exp_type)
 
-    def run(self, config: dict) -> dict:
+    def run(self, config: dict, experiment_meta: dict) -> dict:
+
+        n_rounds = config['experiment']['n_rounds']
+        seed = config['experiment']['seed']
+        mtp = config['experiment']['mtp']
+        if n_rounds == 1:
+            return self.single_run(config, seed)
+        else:
+            results = self.multiple_runs(config, seed, n_rounds, mtp = mtp)
+            return self.merge_results(results)
+
+    def single_run(self, config: dict, seed) -> dict:
         """
         Run the single round experiment
         :param config: configuration of the experiment
         :return: results dictionary
         """
-
-        seed = config['experiment']['seed']
 
         ###########################################################################################################
         # Data loading
@@ -52,9 +61,9 @@ class Experiment(BaseExperiment):
         agg_strategy_name = config['agg_strategy']['agg_strategy_name']
         agg_strategy_params = config['agg_strategy']['agg_strategy_params']
 
-        workflow_name = config['server']['server_imp_workflow']  # todo
-        workflow_params = config['server']['server_imp_workflow_params']  # todo
-        workflow_run_type = config['server']['server_imp_workflow_run_type']  # todo
+        workflow_name = config['imp_workflow']['workflow_name']
+        workflow_params = config['imp_workflow']['workflow_params']
+        workflow_run_type = config['imp_workflow']['workflow_runtype']
 
         clients, server, workflow = self.setup_workflow(
             clients_train_data_list, client_train_data_ms_list, client_seeds,
@@ -79,15 +88,6 @@ class Experiment(BaseExperiment):
         ret = result_analyzer.clean_and_analyze_results(tracker)  # TODO: result analyzer
 
         return ret
-
-    def multiple_rounds_run(self, config: dict) -> dict:  # todo
-        """
-        Run multiple rounds of the experiment
-        :param config: configuration files
-        :return: multiple runs results dictionary
-        """
-        num_rounds = config["experiment"]['num_rounds']
-        return {}
 
     @staticmethod
     def setup_scenario(

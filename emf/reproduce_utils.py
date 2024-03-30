@@ -14,3 +14,7 @@ def set_seed(seed):
     random.seed(seed)
     os.environ['PYTHONHASHSEED'] = str(seed)
     torch.use_deterministic_algorithms(True)
+
+
+def setup_seeds(seed, n):
+    return [seed + i * 1247 for i in range(n)]

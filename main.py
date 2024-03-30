@@ -16,7 +16,9 @@ def my_app(cfg: DictConfig) -> None:
     print(config_dict)
 
     exp_manager = FedMissExpManager()
-    exp_manager.execute_experiment('federated_imputation', config_dict)
+    exp_manager.execute_experiment(
+        'federated_imputation', config_dict, experiment_meta = config_dict['experiment']
+    )
 
 
 if __name__ == "__main__":

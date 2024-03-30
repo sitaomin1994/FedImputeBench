@@ -1,6 +1,0 @@
-server_type: 'jm'
-server_config: {}
-server_imp_workflow_params:
-  imp_iterations: 5
-  initial_imp_num: "local_mean"
-  initial_imp_cat: "local_mode"

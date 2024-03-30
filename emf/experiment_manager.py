@@ -9,11 +9,11 @@ class ExperimentManager(ABC):
     def load_experiment_obj(self, exp_type) -> BaseExperiment:
         raise NotImplementedError
 
-    def execute_experiment(self, exp_type: str, config: dict):
+    def execute_experiment(self, exp_type: str, config: dict, experiment_meta: dict):
         experiment = self.load_experiment_obj(exp_type)
         # TODO: add logging
         start = timeit.default_timer()
-        result = experiment.run(config)
+        result = experiment.run(config, experiment_meta)
         end = timeit.default_timer()
 
         result['results']['execution_time'] = end - start

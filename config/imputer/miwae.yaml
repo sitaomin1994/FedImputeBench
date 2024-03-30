@@ -1,6 +1,5 @@
 defaults:
-  - /client@_group_: jm
-  - /server@_group_: jm
+  - /imp_workflow@_group_: vae
 
 imp_name: miwae
 imp_params:

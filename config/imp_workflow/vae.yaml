@@ -1,0 +1,9 @@
+workflow_name: 'vae'
+workflow_params:
+  imp_iterations: 200
+  initial_imp_num: 'local_mean'
+  initial_imp_cat: 'local_mode'
+  evaluation_interval: 1
+  # learning rate
+  # optimizer
+workflow_runtype: sequential

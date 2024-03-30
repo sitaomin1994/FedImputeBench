@@ -16,7 +16,7 @@ def load_workflow(
         return WorkflowICE(workflow_params)
     elif workflow_name == 'icegrad':
         return WorkflowICEGrad(workflow_params)
-    elif workflow_name == 'jm':
+    elif workflow_name == 'vae':
         return WorkflowJM(workflow_params)
     else:
         raise ValueError(f"Workflow {workflow_name} not supported")

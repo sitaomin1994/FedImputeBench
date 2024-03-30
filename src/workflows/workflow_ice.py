@@ -30,7 +30,7 @@ class WorkflowICE(BaseWorkflow):
         """
         ############################################################################################################
         # Workflow Parameters
-        data_dim = self.workflow_params['data_dim']
+        data_dim = clients[0].X_train.shape[1]
         iterations = self.workflow_params['imp_iterations']
         initial_imp_num = self.workflow_params['initial_imp_num']
         initial_imp_cat = self.workflow_params['initial_imp_cat']

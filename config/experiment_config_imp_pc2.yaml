@@ -1,8 +1,7 @@
-
 defaults:
   - _self_
   - imputer: linear_ice
-    agg_strategy: local
+  - agg_strategy: local
 
 ########################################################################################################################
 # Experiment Meta
@@ -16,20 +15,30 @@ experiment:
   seed: 2180279
   num_rounds: 1
   mtp: False
-  persist_data: False
 
 ########################################################################################################################
 # Experiment Configuration Content
-# dataset, data_partition, missing_simulation
+# dataset
 data:
   dataset_name: codon
   test_size: 0.1
+# scenarios
 num_clients: 2
 data_partition: iid-even2
 missing_simulate: fixed2@mr=0.5-mm=mnar_quantile-mfunc=lr-k=0.5
 
-# imputer, client, server
+# imputer, agg_strategy, imp_workflow
 imputer: null
-client: null
-server: null
 agg_strategy: null
+imp_workflow: null
+
+# client, server, evaluator, tracker, result analyzer
+client: { }  # todo
+server: { }  # todo
+evaluator_params: { } # todo
+tracker_params:
+  track_data: False
+  track_model_params: True
+  track_misc: True
+  persist: 'final'
+ret_analyze_params: null

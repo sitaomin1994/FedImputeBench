@@ -1,2 +1,15 @@
-imp_name: mlp_ice
-imp_params: {}
+idefaults:
+  - /imp_workflow@_group_: icegrad
+
+# configuration for linear ice imputation
+imp_name: 'mlp_ice'
+imp_params:
+  estimator_num: 'ridge_cv'
+  estimator_cat: 'logistic_cv'
+  mm_model: 'logistic'
+  mm_model_params:
+    class_weight: 'balanced'
+    Cs: [1e-1]
+    cv: 3
+  clip: True
+  use_y: False

@@ -30,7 +30,7 @@ class WorkflowICEGrad(BaseWorkflow):
         """
         ############################################################################################################
         # Workflow Parameters
-        data_dim = self.workflow_params['data_dim']
+        data_dim = clients[0].X_train.shape[1]
         iterations = self.workflow_params['imp_iterations']
         model_epochs = self.workflow_params['model_epochs']
         model_converge_tol = self.workflow_params['model_converge_tol']  # TODO: not used
