@@ -8,33 +8,12 @@ from abc import ABC, abstractmethod
 from .base_imputer import BaseImputer
 
 
-class ICEImputer(BaseImputer):
+class ICEImputer():
 
     def __init__(
             self,
     ):
         super().__init__()
-
-    @abstractmethod
-    def get_imp_model_params(self, params) -> dict:
-        pass
-
-    @abstractmethod
-    def update_imp_model(self, updated_model, params):
-        pass
-
-    @abstractmethod
-    def initialize(self, data_utils, params, seed):
-        pass
-
-    @abstractmethod
-    def fit(self, X, y, missing_mask, params) -> dict:
-        pass
-
-    @abstractmethod
-    def impute(self, X, y, missing_mask, params):
-        pass
-
 
     @staticmethod
     def get_clip_thresholds(data_utils):

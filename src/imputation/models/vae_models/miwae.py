@@ -9,8 +9,8 @@ import torch.distributions as td
 
 # hyperimpute absolute
 from emf.reproduce_utils import set_seed
-from decoder import GaussianDecoder, BernoulliDecoder, StudentTDecoder
-from encoder import BaseEncoder
+from .decoder import GaussianDecoder, BernoulliDecoder, StudentTDecoder
+from .encoder import BaseEncoder
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -67,7 +67,7 @@ class MIWAE(nn.Module):
 
         # encoder
         self.encoder = BaseEncoder(
-            self.num_features, 2 * self.latent_size, [self.n_hidden for _ in range(self.n_hidden_layers)],
+            self.num_features, self.latent_size, [self.n_hidden for _ in range(self.n_hidden_layers)],
         ).to(DEVICE)
 
         # decoder

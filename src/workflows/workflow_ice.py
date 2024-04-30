@@ -92,7 +92,7 @@ class WorkflowICE(BaseWorkflow):
                 for global_model, client in zip(global_models, clients):
                     # TODO: see how to do this when using new strategies
                     # updated_local_model = self.server.update_local_model(global_model, local_model, client)
-                    client.update_imp_model(global_model, params={'feature_idx': feature_idx})
+                    client.set_imp_model_params(global_model, params={'feature_idx': feature_idx})
                     client.local_imputation(params={'feature_idx': feature_idx})
 
         ########################################################################################################

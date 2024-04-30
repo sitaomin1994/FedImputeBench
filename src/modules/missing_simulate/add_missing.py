@@ -3,6 +3,7 @@ import src.modules.missing_simulate.mcar_simulate as mcar_simulate
 import src.modules.missing_simulate.mar_simulate as mar_simulate
 import src.modules.missing_simulate.mnar_simulate as mnar_simulate
 from typing import List, Union
+from emf.params_utils import parse_strategy_params
 
 
 ########################################################################################################################
@@ -12,8 +13,27 @@ def simulate_nan(
         X_train: np.ndarray, y_train: np.ndarray, cols: list, mech_type: str, missing_ratio: Union[float, list, dict],
         mechanism_func: Union[str, list, dict], seed: int = 201030
 ) -> np.ndarray:
+
+    # mar_quantile@obs=True-strict=True
+    # mar_sigmoid@obs=True-strict=True-association=all-beta=random_uniform
+    '''
+    params:
+        - missing_mech: mcar, mar_quantile, mar_sigmoid, mnar_quantile, mnar_sigmoid
+        - obs: True, False
+        - strict: True, False
+        - association: all, random, random_uniform
+        - beta: random, random_uniform
+
+    '''
+    mech_type, mech_params = parse_strategy_params(mech_type)
+
     if mech_type == 'mcar':
         X_train_ms = mcar_simulate.simulate_nan_mcar(X_train, cols, missing_ratio, seed=seed)
+    elif mech_type == 'mar_quantile':
+        X_train_ms = mar_simulate.simulate_nan_mar_quantile(
+            X_train, cols, missing_ratio=missing_ratio, missing_func=mechanism_func, seed=seed, **mech_params
+        )
+
     elif mech_type == 'mnar_quantile':
         X_train_ms = mnar_simulate.simulate_nan_mnar_quantile(
             X_train, cols, missing_ratio=missing_ratio, missing_func=mechanism_func, seed=seed

@@ -98,7 +98,7 @@ class WorkflowICEGrad(BaseWorkflow):
                     # updates local imputation model and do imputation
                     for global_model, client in zip(global_models, clients):
                         # updated_local_model = agg_strategy.update_local_model(global_model, local_model, client)
-                        client.update_imp_model(global_model, params={'feature_idx': feature_idx})
+                        client.set_imp_model_params(global_model, params={'feature_idx': feature_idx})
 
                     # TODO: how about some clients are already converged? -> client need to be check convergence locally
 

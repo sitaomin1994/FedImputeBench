@@ -35,7 +35,7 @@ class FedAvgStrategy(Strategy):
         return agg_model_parameters, agg_res
 
     def update_local_model(
-            self, global_model: dict, local_model:dict, client: BaseClient, *args, **kwargs
+            self, global_model: dict, local_model:dict, client: Client, *args, **kwargs
     ) -> dict:
 
         return global_model

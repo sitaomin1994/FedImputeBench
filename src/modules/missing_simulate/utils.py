@@ -54,6 +54,9 @@ def fit_intercepts(
 	return intercepts
 
 
+
+
+
 def show_missing_information(clients):
 	import missingno
 	import matplotlib.pyplot as plt

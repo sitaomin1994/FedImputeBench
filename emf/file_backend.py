@@ -29,20 +29,36 @@ class FileBackend:
         self.config_dir_path = settings['exp_config_dir']
 
     def consolidate_save_path(self, experiment_name: str, output_path: str):
+        """
+        Consolidate the save path for the experiment results
+        :param experiment_name: experiment name
+        :param output_path: output path in configuration
+        :return: following format -> ROOT_DIR/result_dir_path/experiment_name/output_path/date/
+        """
         date = datetime.now().strftime("%m%d")
         return f"{ROOT_DIR}/{self.result_dir_path}/{experiment_name}/{output_path}/{date}/"
 
     @staticmethod
     def save(dir_path: str, experiment_results: dict):
+        """
+        Save the experiment results to the directory
+        :param dir_path: experiment directory path
+        :param experiment_results: experiment results dictionary
+        :return:
+        """
 
         # create directory if not exists
         Path(dir_path).mkdir(parents=True, exist_ok=True)
 
-        ###############################################################################################
-        # save configurations
+        ################################################################################################
+        # save experiment meta
+        assert "experiment_meta" in experiment_results, "experiment meta is not found in the experiment results"
         assert "config" in experiment_results, "configurations are not found in the experiment results"
         with open(dir_path + '/config.json', 'w') as f:
-            json.dump(experiment_results['config'], f)
+            json.dump({
+                "experiment": experiment_results['experiment_meta'],
+                "config":experiment_results['config']
+            }, f)
 
         ################################################################################################
         # save experiment results

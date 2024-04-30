@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
-from src.client import BaseClient
+from src.client import Client
 from typing import Dict, Union, List, Tuple
 
 
-class Strategy(ABC):
+class AggStrategy(ABC):
 
     def __init__(self, name: str):
         self.name = name
@@ -16,6 +16,6 @@ class Strategy(ABC):
 
     @abstractmethod
     def update_local_model(
-            self, global_model: dict, local_model: dict, client: BaseClient, *args, **kwargs
+            self, global_model: dict, local_model: dict, client: Client, *args, **kwargs
     ) -> dict:
         pass

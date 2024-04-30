@@ -3,6 +3,7 @@ from copy import deepcopy
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import OneHotEncoder
 from src.imputation.base.ice_imputer import ICEImputer
+from src.imputation.base.base_imputer import BaseImputer
 import numpy as np
 from sklearn.linear_model import LogisticRegressionCV
 from ..model_loader_utils import load_pytorch_model
@@ -40,7 +41,7 @@ class MLPICEImputer(ICEImputer):
         self.data_utils_info = None
         self.seed = None
 
-    def initialize(self, data_utils, seed):
+    def initialize(self, data_utils, params, seed):
 
         # initialized imputation models
         self.imp_models = []
@@ -69,7 +70,7 @@ class MLPICEImputer(ICEImputer):
         self.seed = seed
         self.data_utils_info = data_utils
 
-    def update_imp_model(self, updated_model: OrderedDict, feature_idx):
+    def set_imp_model_params(self, updated_model: OrderedDict, feature_idx):
         self.imp_models[feature_idx].load_state_dict(updated_model)
 
     def get_imp_model_params(self, feature_idx):

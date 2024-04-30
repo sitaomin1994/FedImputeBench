@@ -1,12 +1,13 @@
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import OneHotEncoder
 from src.imputation.base.ice_imputer import ICEImputer
+from src.imputation.base.base_imputer import BaseImputer
 import numpy as np
 from sklearn.linear_model import LogisticRegressionCV
 from ..model_loader_utils import load_sklearn_model
 
 
-class LinearICEImputer(ICEImputer):
+class LinearICEImputer(ICEImputer, BaseImputer):
 
     def __init__(
             self,
@@ -35,7 +36,7 @@ class LinearICEImputer(ICEImputer):
         self.data_utils_info = None
         self.seed = None
 
-    def initialize(self, data_utils, seed):
+    def initialize(self, data_utils, params, seed):
 
         # initialized imputation models
         self.imp_models = []
@@ -63,7 +64,7 @@ class LinearICEImputer(ICEImputer):
         self.seed = seed
         self.data_utils_info = data_utils
 
-    def update_imp_model(self, updated_model: dict, feature_idx):
+    def set_imp_model_params(self, updated_model: dict, feature_idx):
         updated_model['w_b'] = np.array(updated_model['w_b'])
         # TODO: make imp model as a class that has get_params() interface so it can using non-sklearn models
         self.imp_models[feature_idx].coef_ = updated_model['w_b'][:-1]

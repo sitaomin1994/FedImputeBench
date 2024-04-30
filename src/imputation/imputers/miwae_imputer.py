@@ -7,13 +7,13 @@ from torch.utils.data import DataLoader
 from ..models.vae_models.miwae import MIWAE
 import torch
 from src.evaluation.imp_quality_metrics import rmse
-from src.imputation.base import JMImputer
+from src.imputation.base import JMImputer, BaseImputer
 from tqdm.auto import tqdm, trange
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-class MIWAEImputer(JMImputer):
+class MIWAEImputer(JMImputer, BaseImputer):
 
     def __init__(self, imp_model_params: dict, imp_params: dict):
 

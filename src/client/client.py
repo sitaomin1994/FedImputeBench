@@ -56,7 +56,7 @@ class Client:
         """
         Fit local imputation model
         """
-        self.imp_model.update_imp_model(updated_local_model, params)
+        self.imp_model.set_imp_model_params(updated_local_model, params)
 
     def local_imputation(self, params: dict):
         """

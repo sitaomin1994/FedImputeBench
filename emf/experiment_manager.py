@@ -7,7 +7,7 @@ class ExperimentManager(ABC):
 
     @abstractmethod
     def load_experiment_obj(self, exp_type) -> BaseExperiment:
-        raise NotImplementedError
+        pass
 
     def execute_experiment(self, exp_type: str, config: dict, experiment_meta: dict):
         experiment = self.load_experiment_obj(exp_type)
@@ -18,5 +18,6 @@ class ExperimentManager(ABC):
 
         result['results']['execution_time'] = end - start
         print(f"Execution time: {result['results']['execution_time']}")
-        experiment.save(result, config)
+        experiment.save(result, config, experiment_meta)
         print("Storing experiment results ... Experiment completed!")
+
