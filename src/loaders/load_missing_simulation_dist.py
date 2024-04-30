@@ -24,8 +24,8 @@ def add_missing(
         missing_feature = ret[i]['missing_features']
         seed = seeds[i]
         X_train_ms = simulate_nan(
-            X_train, y_train, cols=missing_feature, mech_type=missing_mech_type, missing_ratio=missing_ratio,
-            mechanism_func=missing_mech_func, seed=seed
+            X_train, y_train, missing_features=missing_feature, mech_type=missing_mech_type, missing_ratios=missing_ratio,
+            mechanism_funcs=missing_mech_func, seed=seed
         )
         clients_data_ms.append(np.concatenate([X_train_ms, y_train.reshape(-1, 1)], axis=1).copy())
 

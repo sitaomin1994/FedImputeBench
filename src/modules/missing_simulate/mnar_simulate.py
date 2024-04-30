@@ -11,8 +11,8 @@ from src.modules.missing_simulate.ms_mech_funcs import (
 ########################################################################################################################
 def simulate_nan_mnar_sigmoid(
         data: np.ndarray, cols: list, missing_ratio: Union[str, list, dict],
-        missing_func: Union[str, list, dict], strict: bool = False, cols_selection_option='all',
-        cols_beta_option: str = 'sphere', seed: int = 1002031,
+        missing_func: Union[str, list, dict], strict: bool = False, mm_feature_option='all',
+        mm_beta_option: str = 'sphere', seed: int = 1002031,
 ) -> np.ndarray:
     """
     sigmoid based MNAR missing values
@@ -21,8 +21,8 @@ def simulate_nan_mnar_sigmoid(
     :param missing_ratio: missing ratio of each column
     :param missing_func: missing mech function of each column
     :param strict: whether to strictly follow the missing ratio or with probability
-    :param cols_selection_option: strategies of missing data associated columns
-    :param cols_beta_option: how to set beta in logistic function
+    :param mm_feature_option: strategies of missing data associated columns
+    :param mm_beta_option: how to set beta in logistic function
     :param seed: random seed
     :return: data with missing data - same dimension as data
     """
@@ -54,15 +54,15 @@ def simulate_nan_mnar_sigmoid(
         seed = (seed + 1203941) % (2 ^ 32 - 1)
 
         # missing is associated with column itself
-        if cols_selection_option == 'self':
+        if mm_feature_option == 'self':
             data_corr = data[:, col]
-        elif cols_selection_option == 'others':
+        elif mm_feature_option == 'others':
             data_corr = data[:, [i for i in cols if i != col]]
-        elif cols_selection_option == 'all':
+        elif mm_feature_option == 'all':
             data_corr = data
-        elif cols_selection_option.startswith('allk'):
+        elif mm_feature_option.startswith('allk'):
             np.random.seed(seed)
-            k = max(int(float(cols_selection_option.split('allk')[-1]) * data.shape[1]), 1)
+            k = max(int(float(mm_feature_option.split('allk')[-1]) * data.shape[1]), 1)
             mi = np.corrcoef(data, rowvar=False)[col]
             mi_idx = np.argsort(mi)[::-1][:k + 1]
             data_corr = data[:, mi_idx]
@@ -76,7 +76,7 @@ def simulate_nan_mnar_sigmoid(
         #################################################################################
         mask = mask_sigmoid(
             mask, col, data_corr, missing_ratio_, missing_func_, strict=strict, mechanism='mnar',
-            beta_corr=cols_beta_option, seed=seed
+            beta_corr=mm_beta_option, seed=seed
         )
 
     # assign the missing values

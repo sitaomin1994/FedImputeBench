@@ -106,7 +106,7 @@ def simulate_nan_mar_quantile(
 # Sigmoid based MAR simulation
 def simulate_nan_mar_sigmoid(
         data: np.ndarray, cols: list, missing_ratio: Union[str, list, dict], missing_func: Union[str, list, dict],
-        strict: bool = False, obs: bool = False, cols_selection_option='all', cols_beta_option: str = 'random_uniform',
+        strict: bool = False, obs: bool = False, mm_feature_option='all', mm_beta_option: str = 'random_uniform',
         seed: int = 1002031
 ) -> np.ndarray:
     """
@@ -117,8 +117,8 @@ def simulate_nan_mar_sigmoid(
     :param missing_func: missing function of each column
     :param strict: whether to strictly add missing or missing with probability
     :param obs: whether to add missing values based on only set of observed columns or all columns
-    :param cols_selection_option: how to select missing data with associated columns
-    :param cols_beta_option: how to set coefficients beta of associated columns
+    :param mm_feature_option: how to select missing data with associated columns
+    :param mm_beta_option: how to set coefficients beta of associated columns
     :param seed: random seed
     :return: data with missingness added - same dimension of data
     """
@@ -156,12 +156,12 @@ def simulate_nan_mar_sigmoid(
 
         #################################################################################
         # get k most correlated columns or all columns
-        if cols_selection_option == 'all':
+        if mm_feature_option == 'all':
             data_corr = X_rest
-        elif cols_selection_option.startswith('allk'):
+        elif mm_feature_option.startswith('allk'):
             np.random.seed(seed)
             X = np.concatenate([data[:, col].reshape(-1, 1), X_rest], axis=1)
-            k = max(int(float(cols_selection_option.split('allk')[-1]) * X_rest.shape[1]), 1)
+            k = max(int(float(mm_feature_option.split('allk')[-1]) * X_rest.shape[1]), 1)
             k = min(k, X_rest.shape[1])
             mi = np.abs(np.corrcoef(X, rowvar=False)[0])
             mi_idx = np.argsort(mi)[::-1][1:k + 1]
@@ -176,7 +176,7 @@ def simulate_nan_mar_sigmoid(
         #################################################################################
         mask = mask_sigmoid(
             mask, col, data_corr, missing_ratio_, missing_func_, strict=strict, mechanism='mar',
-            beta_corr=cols_beta_option, seed=seed
+            beta_corr=mm_beta_option, seed=seed
         )
 
     # assign the missing values

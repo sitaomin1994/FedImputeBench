@@ -1,0 +1,20 @@
+
+# missing features
+mf_strategy: "all"
+
+# missing ratio
+mr_dist: "uniform"
+mr_lower: 0.1
+mr_upper: 0.9
+
+# missing mechanism type
+mm_mech: "mar_quantile"
+mm_strictness: True
+mm_obs: True
+mm_feature_option: 'allk=0.2'
+mm_beta_option: "sphere"
+
+# missing mechanism distribution
+mm_dist: "uniform"
+mm_funcs_bank: "lr"
+
