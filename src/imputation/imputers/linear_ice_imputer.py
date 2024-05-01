@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import OneHotEncoder
 from src.imputation.base.ice_imputer import ICEImputer
@@ -36,7 +38,14 @@ class LinearICEImputer(ICEImputer, BaseImputer):
         self.data_utils_info = None
         self.seed = None
 
-    def initialize(self, data_utils, params, seed):
+    def initialize(self, data_utils: dict, params: dict, seed: int) -> None:
+        """
+        Initialize imputer - statistics imputation models etc.
+        :param data_utils: data utils dictionary - contains information about data
+        :param params: params for initialization
+        :param seed: int - seed for randomization
+        :return: None
+        """
 
         # initialized imputation models
         self.imp_models = []
@@ -64,19 +73,50 @@ class LinearICEImputer(ICEImputer, BaseImputer):
         self.seed = seed
         self.data_utils_info = data_utils
 
-    def set_imp_model_params(self, updated_model: dict, feature_idx):
-        updated_model['w_b'] = np.array(updated_model['w_b'])
+    def set_imp_model_params(self, updated_model_dict: OrderedDict, params: dict) -> None:
+        """
+        Set model parameters
+        :param updated_model_dict: global model parameters dictionary
+        :param params: parameters for set parameters function
+            - feature idx
+        :return: None
+        """
+        if 'feature_idx' not in params:
+            raise ValueError("Feature index not found in params")
+        feature_idx = params['feature_idx']
+        updated_model_dict['w_b'] = np.array(updated_model_dict['w_b'])
         # TODO: make imp model as a class that has get_params() interface so it can using non-sklearn models
-        self.imp_models[feature_idx].coef_ = updated_model['w_b'][:-1]
-        self.imp_models[feature_idx].intercept_ = updated_model['w_b'][-1]
+        self.imp_models[feature_idx].coef_ = updated_model_dict['w_b'][:-1]
+        self.imp_models[feature_idx].intercept_ = updated_model_dict['w_b'][-1]
 
-    def get_imp_model_params(self, feature_idx):
+    def get_imp_model_params(self, params: dict) -> OrderedDict:
+        """
+        Return model parameters
+        :param params: dict contains parameters for get_imp_model_params
+            - feature_idx
+        :return: OrderedDict - model parameters dictionary
+        """
+        if 'feature_idx' not in params:
+            raise ValueError("Feature index not found in params")
+        feature_idx = params['feature_idx']
         imp_model = self.imp_models[feature_idx]
         # TODO: make imp model as a class that has get_params() interface so it can using non-sklearn models
         parameters = np.concatenate([imp_model.coef_, np.expand_dims(imp_model.intercept_, 0)])
-        return {"w_b": parameters}
+        return OrderedDict({"w_b": parameters})
 
-    def fit(self, X, y, missing_mask, feature_idx):
+    def fit(self, X: np.array, y: np.array, missing_mask: np.array, params: dict) -> dict:
+        """
+        Fit imputer to train local imputation models
+        :param X: features - float numpy array
+        :param y: target
+        :param missing_mask: missing mask
+        :param params: parameters for local training
+            - feature_idx
+        :return: fit results of local training
+        """
+        if 'feature_idx' not in params:
+            raise ValueError("Feature index not found in params")
+        feature_idx = params['feature_idx']
 
         # get feature based train test
         num_cols = self.data_utils_info['num_cols']
@@ -116,7 +156,19 @@ class LinearICEImputer(ICEImputer, BaseImputer):
             'loss': {},  # TODO: add loss
         }
 
-    def impute(self, X, y, missing_mask, feature_idx):
+    def impute(self, X: np.array, y: np.array, missing_mask: np.array, params: dict) -> np.ndarray:
+        """
+        Impute missing values using imputation model
+        :param X: numpy array of features
+        :param y: numpy array of target
+        :param missing_mask: missing mask
+        :param params: parameters for imputation
+        :return: imputed data - numpy array - same dimension as X
+        """
+
+        if 'feature_idx' not in params:
+            raise ValueError("Feature index not found in params")
+        feature_idx = params['feature_idx']
 
         if self.clip:
             min_values = self.min_values

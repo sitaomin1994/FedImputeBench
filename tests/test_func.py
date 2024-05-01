@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
-
+from sklearn.preprocessing import KBinsDiscretizer
+import matplotlib.pyplot as plt
 
 def test_func_kcorr():
     seed = 102020
@@ -25,3 +26,26 @@ def test_func_kcorr():
     print(mi_idx)
     print(X[:, mi_idx], data[:, [2, 6]])
     assert np.array_equal(X[:, mi_idx], data[:, [2, 6]])
+
+
+def test_binning():
+    seed = 102020
+    np.random.seed(seed)
+    y = np.random.randn(20,)
+    y = np.exp(y)
+    plt.hist(y, bins=10)
+    plt.show()
+    print(y)
+    y = y.copy().reshape(-1, 1)
+    reg_bins = 10
+    est = KBinsDiscretizer(
+        n_bins=reg_bins, encode='ordinal', strategy='kmeans',
+        subsample=None, random_state=seed
+    )
+    y = est.fit_transform(y)
+
+    plt.hist(y, bins=10)
+    plt.show()
+
+    print(y)
+    assert True

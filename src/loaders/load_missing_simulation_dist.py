@@ -4,7 +4,7 @@ import numpy as np
 from emf.params_utils import parse_strategy_params
 import scipy.stats as stats
 
-from src.modules.missing_simulate.missing_scenario_utils import (
+from src.modules.missing_simulate.add_missing_utils import (
     generate_missing_ratios, generate_missing_mech, generate_missing_mech_funcs
 )
 

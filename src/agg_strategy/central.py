@@ -1,25 +1,25 @@
-from abc import ABC, abstractmethod
-from src.client import Client
-from typing import Dict, Union, List, Tuple
-from collections import OrderedDict
+from copy import deepcopy
+from typing import List, OrderedDict, Tuple
+from src.agg_strategy.agg_strategy import AggStrategy
 from src.client.client import Client
 
 
-class AggStrategy(ABC):
+class CentralStrategy(AggStrategy):
 
     def __init__(self, name: str):
+        super().__init__(name='central')
         self.name = name
 
-    @abstractmethod
     def local_train_instruction(self, Clients: List[Client]) -> List[dict]:
         """
         Local training instructions
-        :param Clients: List of clients
-        :return: List of dictionaries containing local training instructions
+        :return:
         """
-        pass
+        local_instructions = [deepcopy({'fit_local': False}) for _ in range(len(Clients))]
+        local_instructions[-1]['fit_local'] = True  # only last client (contains all data) fits local model
 
-    @abstractmethod
+        return local_instructions
+
     def aggregate(
             self, local_model_parameters: List[OrderedDict], fit_res: List[dict], *args, **kwargs
     ) -> Tuple[List[OrderedDict], dict]:
@@ -31,10 +31,9 @@ class AggStrategy(ABC):
         :param kwargs: other params dict
         :return: List of aggregated model parameters, dict of aggregated results
         """
-        pass
+        central_model_params = local_model_parameters[-1]
 
-    # @abstractmethod
-    # def update_local_model(
-    #         self, global_model: dict, local_model: dict, client: Client, *args, **kwargs
-    # ) -> dict:
-    #     pass
+        agg_model_parameters = [deepcopy(central_model_params) for _ in range(len(local_model_parameters))]
+        agg_res = {}
+
+        return agg_model_parameters, agg_res

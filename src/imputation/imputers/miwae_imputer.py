@@ -1,6 +1,5 @@
-from abc import ABC
 from copy import deepcopy
-from typing import Dict, Union, List, Tuple
+from typing import Dict, Union, List, Tuple, OrderedDict
 
 import numpy as np
 from torch.utils.data import DataLoader
@@ -33,26 +32,49 @@ class MIWAEImputer(JMImputer, BaseImputer):
         self.verbose = imp_params['verbose']
         self.optimizer_name = imp_params['optimizer']
 
-    def get_imp_model_params(self) -> dict:
+    def get_imp_model_params(self, params: dict) -> OrderedDict:
+        """
+        Return model parameters
+        :param params: dict contains parameters for get_imp_model_params
+        :return: OrderedDict - model parameters dictionary
+        """
         """
         Return model parameters
         """
         return deepcopy(self.model.state_dict())
 
-    def update_imp_model(self, updated_model: dict) -> None:
+    def set_imp_model_params(self, updated_model_dict: OrderedDict, params: dict) -> None:
+        """
+        Set model parameters
+        :param updated_model_dict: global model parameters dictionary
+        :param params: parameters for set parameters function
+        :return: None
+        """
         params = self.model.state_dict()
-        params.update(updated_model)
+        params.update(deepcopy(updated_model_dict))
         self.model.load_state_dict(params)
 
-    def initialize(self, data_utils, seed) -> None:
+    def initialize(self, data_utils: dict, params: dict, seed: int) -> None:
+        """
+        Initialize imputer - statistics imputation models etc.
+        :param data_utils: data utils dictionary - contains information about data
+        :param params: params for initialization
+        :param seed: int - seed for randomization
+        :return: None
+        """
         # TODO: handling categorical data
         self.model = MIWAE(num_features=data_utils['n_features'], **self.imp_model_params)
         self.model.init(seed)
 
-    def fit_local_imp_model(
-            self, X_train_imp: np.ndarray, X_train_mask: np.ndarray, X_train_full: np.ndarray,
-            y_train: np.ndarray, params: dict
-    ) -> Dict[str, float]:
+    def fit(self, X: np.array, y: np.array, missing_mask: np.array, params: dict) -> dict:
+        """
+        Fit imputer to train local imputation models
+        :param X: features - float numpy array
+        :param y: target
+        :param missing_mask: missing mask
+        :param params: parameters for local training
+        :return: fit results of local training
+        """
         """
         Local training of imputation model for local epochs
         """
@@ -77,9 +99,9 @@ class MIWAEImputer(JMImputer, BaseImputer):
             raise NotImplementedError
 
         # data
-        n = X_train_imp.shape[0]
-        X_imp = X_train_imp.copy()
-        X_mask = X_train_mask.copy()
+        n = X.shape[0]
+        X_imp = X.copy()
+        X_mask = missing_mask.copy()
         bs = min(batch_size, n)
 
         # training
@@ -88,19 +110,19 @@ class MIWAEImputer(JMImputer, BaseImputer):
         for ep in trange(local_epochs, desc='Client Local Epoch', leave=False, colour='blue'):
 
             # evaluation
-            if ep % imputation_interval == 0:
-                with torch.no_grad():
-                    X_imp_new = self.model.impute(
-                        torch.from_numpy(X_imp).float().to(DEVICE), torch.from_numpy(~X_mask).float().to(DEVICE)
-                    )
-                    rmse_value = rmse(X_imp_new.detach().clone().cpu().numpy(), X_train_full, X_mask)
-                    rmses.append(rmse_value)
+            # if ep % imputation_interval == 0:
+            #     with torch.no_grad():
+            #         X_imp_new = self.model.impute(
+            #             torch.from_numpy(X_imp).float().to(DEVICE), torch.from_numpy(~X_mask).float().to(DEVICE)
+            #         )
+            #         rmse_value = rmse(X_imp_new.detach().clone().cpu().numpy(), X_train_full, X_mask)
+            #         rmses.append(rmse_value)
 
             # shuffle data
             perm = np.random.permutation(n)  # We use the "random reshuffling" version of SGD
             batches_data = np.array_split(X_imp[perm,], int(n / bs), )
             batches_mask = np.array_split(X_mask[perm,], int(n / bs), )
-            batches_y = np.array_split(y_train[perm,], int(n / bs), )
+            batches_y = np.array_split(y[perm,], int(n / bs), )
             total_loss, total_iters = 0, 0
             kd_loss = 0
             self.model.train()
@@ -155,29 +177,32 @@ class MIWAEImputer(JMImputer, BaseImputer):
         self.model.to("cpu")
 
         # evaluation on the end of the training
-        with torch.no_grad():
-            X_imp_new = self.model.impute(
-                torch.from_numpy(X_imp).float().to(DEVICE), torch.from_numpy(~X_mask).float().to(DEVICE)
-            )
-            rmse_value = rmse(X_imp_new.detach().clone().cpu().numpy(), X_train_full, X_mask)
-            rmses.append(rmse_value)
+        # with torch.no_grad():
+        #     X_imp_new = self.model.impute(
+        #         torch.from_numpy(X_imp).float().to(DEVICE), torch.from_numpy(~X_mask).float().to(DEVICE)
+        #     )
+        #     rmse_value = rmse(X_imp_new.detach().clone().cpu().numpy(), X_train_full, X_mask)
+        #     rmses.append(rmse_value)
 
         # self.imputation(X_train_imp, X_train_mask, {'L': L})
 
         return {'loss': final_loss, 'rmse': rmses}
 
-    def imputation(
-            self, X_train_ms: np.ndarray, X_train_mask: np.ndarray, params: dict
-    ) -> np.ndarray:
+    def impute(self, X: np.array, y: np.array, missing_mask: np.array, params: dict) -> np.ndarray:
         """
-        Impute missing values of client data
+        Impute missing values using imputation model
+        :param X: numpy array of features
+        :param y: numpy array of target
+        :param missing_mask: missing mask
+        :param params: parameters for imputation
+        :return: imputed data - numpy array - same dimension as X
         """
         # make complete
-        X_train_imp = X_train_ms.copy()
-        X_train_imp[X_train_mask] = 0
+        X_train_imp = X.copy()
+        X_train_imp[missing_mask] = 0
         self.model.to(DEVICE)
         x = torch.from_numpy(X_train_imp.copy()).float().to(DEVICE)
-        mask = torch.from_numpy(~X_train_mask.copy()).float().to(DEVICE)
+        mask = torch.from_numpy(~missing_mask.copy()).float().to(DEVICE)
         with torch.no_grad():
             x_imp = self.model.impute(x, mask)
 

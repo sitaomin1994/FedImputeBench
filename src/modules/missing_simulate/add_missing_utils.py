@@ -147,7 +147,7 @@ def generate_missing_mech_funcs(
     mm_list = generate_missing_funcs_list(mm_funcs)
     np.random.seed(seed)
     # homogenous missing mechanism distribution
-    if mm_dist == "homo":
+    if mm_dist == "identity":
         missing_mechanism_dist_cols = np.random.choice(mm_list, (num_cols,))
         missing_mechanism_dist = [list(missing_mechanism_dist_cols.copy()) for _ in range(num_clients)]
     # random missing mechanism distribution

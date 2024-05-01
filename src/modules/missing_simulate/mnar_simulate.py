@@ -56,8 +56,6 @@ def simulate_nan_mnar_sigmoid(
         # missing is associated with column itself
         if mm_feature_option == 'self':
             data_corr = data[:, col]
-        elif mm_feature_option == 'others':
-            data_corr = data[:, [i for i in cols if i != col]]
         elif mm_feature_option == 'all':
             data_corr = data
         elif mm_feature_option.startswith('allk'):

@@ -2,17 +2,87 @@ import numpy as np
 import src.modules.missing_simulate.mcar_simulate as mcar_simulate
 import src.modules.missing_simulate.mar_simulate as mar_simulate
 import src.modules.missing_simulate.mnar_simulate as mnar_simulate
-from typing import List
+from typing import List, Union
 from src.modules.missing_simulate.add_missing_utils import (
     generate_missing_cols, generate_missing_ratios, generate_missing_mech_funcs
 )
 
 
+# TODO: make this to be a class
+def add_missing(
+        clients_data: List[np.ndarray], cols: List[int], seeds: List[int],
+        global_missing: bool = False,
+        mf_strategy: str = 'all',
+        mr_dist: str = 'uniform_int',
+        mr_lower: float = 0.3,
+        mr_upper: float = 0.7,
+        mm_funcs_dist: str = 'identity',
+        mm_funcs_bank: str = 'lr',
+        mm_mech: str = 'mcar',
+        mm_strictness: bool = True,
+        mm_obs: bool = True,
+        mm_feature_option: str = 'allk=0.2',
+        mm_beta_option: str = None,
+        seed: int = 20030331
+) -> List[np.array]:
+    """
+    Simulate Missing data
+    :param clients_data: List of clients data
+    :param cols: columns to be considered
+    :param seeds:  seed for each client
+    :param global_missing: whether simulate missing data globally or locally
+    :param mf_strategy: missing features strategy
+    :param mr_dist: missing ratio distribution
+    :param mr_lower: missing ratio lower bound
+    :param mr_upper: missing ratio upper bound
+    :param mm_funcs_dist: missing mechanism functions distribution across clients and features
+    :param mm_funcs_bank: missing mechanism functions banks
+    :param mm_mech: missing mechanism
+    :param mm_strictness: missing adding probailistic or deterministic
+    :param mm_obs:  missing adding based on observed data
+    :param mm_feature_option: missing mechanism associated with which features
+    :param mm_beta_option: missing mechanism beta coefficient option
+    :param seed: randomness
+    :return: list of datasets with missing values
+    """
+
+    # add missing to global data then split
+    if global_missing:
+        global_data = np.concatenate(clients_data, axis=0)
+        split_indices = np.cumsum([item.shape[0] for item in clients_data])[:-1]
+        global_data_ms = _add_missing_central(
+            global_data, cols, mf_strategy=mf_strategy, mr_dist=mr_dist, mr_lower=mr_lower, mr_upper=mr_upper,
+            mm_funcs_bank=mm_funcs_bank, mm_mech=mm_mech, mm_strictness=mm_strictness, mm_obs=mm_obs,
+            mm_feature_option=mm_feature_option, mm_beta_option=mm_beta_option, seed=seed
+        )
+
+        clients_data_ms = np.array_split(global_data_ms, split_indices)
+
+    # add missing to separately
+    else:
+        clients_data_ms = _add_missing_dist(
+            clients_data, cols, seeds, mf_strategy=mf_strategy, mr_dist=mr_dist, mr_lower=mr_lower, mr_upper=mr_upper,
+            mm_funcs_dist=mm_funcs_dist, mm_funcs_bank=mm_funcs_bank, mm_mech=mm_mech, mm_strictness=mm_strictness,
+            mm_obs=mm_obs, mm_feature_option=mm_feature_option, mm_beta_option=mm_beta_option, seed=seed
+        )
+
+    return clients_data_ms
+
+
 ########################################################################################################################
-def add_missing_central(
-        data: np.ndarray, cols: List[int], mf_strategy: str, mr_dist: str, mr_lower: float, mr_upper: float,
-        mm_funcs_bank: str, mm_mech: str, mm_strictness: bool, mm_obs: bool, mm_feature_option: str,
-        mm_beta_option: str, seed: int
+def _add_missing_central(
+        data: np.ndarray, cols: List[int],
+        mf_strategy: str = 'all',
+        mr_dist: str = 'uniform_int',
+        mr_lower: float = 0.3,
+        mr_upper: float = 0.7,
+        mm_funcs_bank: str = 'lr',
+        mm_mech: str = 'mcar',
+        mm_strictness: bool = True,
+        mm_obs: bool = True,
+        mm_feature_option: str = 'allk=0.2',
+        mm_beta_option: Union[str, None] = None,
+        seed: int = 102031
 ) -> np.ndarray:
     """
     Add missing data for global dataset
@@ -52,7 +122,7 @@ def add_missing_central(
     # missing_mechs = generate_missing_mech(mm_mech, num_clients=1, num_cols=num_cols, seed=seed)
     # missing mechanism functions - e.g. 'lr'
     mm_funcs = generate_missing_mech_funcs(
-        'homo', mm_funcs_bank, num_clients=1, num_cols=num_cols, seed=seed
+        'identity', mm_funcs_bank, num_clients=1, num_cols=num_cols, seed=seed
     )
     mm_funcs = mm_funcs[0]
 
@@ -69,16 +139,26 @@ def add_missing_central(
 
 
 ########################################################################################################################
-def add_missing_dist(
-        data: np.ndarray, cols: List[int], num_clients: int, mf_strategy: str,
-        mr_dist: str, mr_lower: float, mr_upper: float, mm_funcs_dist: str, mm_funcs_bank: str,
-        mm_mech: str, mm_strictness: bool, mm_obs: bool, mm_feature_option: str, mm_beta_option: str, seed: int
+def _add_missing_dist(
+        clients_data: List[np.ndarray], cols: List[int], seeds: List[int],
+        mf_strategy: str = 'all',
+        mr_dist: str = 'uniform_int',
+        mr_lower: float = 0.3,
+        mr_upper: float = 0.7,
+        mm_funcs_dist: str = 'homo',
+        mm_funcs_bank: str = 'lr',
+        mm_mech: str = 'mcar',
+        mm_strictness: bool = True,
+        mm_obs: bool = True,
+        mm_feature_option: str = 'allk=0.2',
+        mm_beta_option: str = None,
+        seed: int = 20030331
 ) -> List[np.ndarray]:
     """
         Add missing data for each client's dataset
-        :param data: data array
+        :param clients_data: List of data array for clients
         :param cols: columns to add missing values
-        :param num_clients: number of clients
+        :param seeds: list seed for missing data simulation for each client
         :param mm_funcs_dist: missing mechanism functions distribution across clients and features
         :param mm_funcs_bank: missing mechanism functions banks
         :param mf_strategy: missing features strategy
@@ -93,6 +173,8 @@ def add_missing_dist(
         :param seed: randonness
         :return: list of datasets with missing values
         """
+
+    num_clients = len(seeds)
 
     # missing features - e.g. 'all'
     clients_missing_cols = generate_missing_cols(mf_strategy, num_clients, cols, seed=seed)
@@ -122,11 +204,11 @@ def add_missing_dist(
 
         print(i, missing_cols, missing_ratios, mm_funcs, "\n")
 
-        X_train, y_train = data[:, :-1], data[:, -1]
+        X_train, y_train = clients_data[i][:, :-1], clients_data[i][:, -1]
         X_train_ms = simulate_nan(
             X_train, y_train, mm_mech=mm_mech, missing_features=missing_cols, missing_ratios=missing_ratios,
             mechanism_funcs=mm_funcs, mm_obs=mm_obs, mm_strictness=mm_strictness,
-            mm_feature_option=mm_feature_option, mm_beta_option=mm_beta_option, seed=seed
+            mm_feature_option=mm_feature_option, mm_beta_option=mm_beta_option, seed=seeds[i]
         )
 
         clients_data_ms.append(np.concatenate([X_train_ms, y_train.reshape(-1, 1)], axis=1))

@@ -18,8 +18,9 @@ def split_train_test(data, data_config, test_size=0.2, stratify=True, seed=42, o
     X = data.drop(columns=target)
     y = data[target]
     if task_type == 'classification':
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size,
-                                                            random_state=seed, stratify=y)
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=test_size, random_state=seed, stratify=y
+        )
     else:
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=seed)
 

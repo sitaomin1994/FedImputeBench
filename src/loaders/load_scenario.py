@@ -2,15 +2,48 @@ from typing import Tuple, List
 
 import numpy as np
 from src.loaders.load_data_partition import load_data_partition
-from src.loaders.load_missing_simulation_dist import add_missing
-from src.loaders.load_missing_simulation_cent import add_missing_central
+from src.modules.missing_simulate.add_missing import add_missing
 from src.utils.setup_seeds import setup_clients_seed
 
 
-def setup_scenario(
-        train_data: np.array, data_config:dict, data_partition_strategy: str, ms_simulate_strategy: str,
-        num_clients: int, seed: int
-) -> Tuple[List[np.array], List[np.array], List[int]]:
+def simulate_scenario(
+        data: np.array, data_config:dict, num_clients,
+        data_partition_params: dict,
+        missing_simulate_params: dict,
+        seed: int = 100330201
+) -> Tuple[List[Tuple[np.array, np.ndarray, np.ndarray]], np.array, List[int], List[List[Tuple[int, int]]]]:
+    """
+    Simulate missing data scenario
+    :param data: data
+    :param data_config: data configuration
+    :param num_clients: number of clients
+    :param data_partition_params: data partition parameters
+        - partition_strategy: partition strategy - iid, niid_dir
+        - size_strategy: size strategy - even, even2, dir, hs
+        - size_niid_alpha: size niid alpha
+        - min_samples: minimum samples
+        - max_samples: maximum samples
+        - niid_alpha: non-iid alpha dirichlet
+        - even_sample_size: even sample size
+        - local_test_size: local test ratio
+        - global_test_size: global test ratio
+        - reg_bins: regression bins
+    :param missing_simulate_params: missing data simulation parameters
+        - global_missing: whether simulate missing data globally or locally
+        - mf_strategy: missing features strategy - all
+        - mr_dist: missing ratio distribution - fixed, uniform, uniform_int, gaussian, gaussian_int
+        - mr_lower: missing ratio lower bound
+        - mr_upper: missing ratio upper bound
+        - mm_funcs_dist: missing mechanism functions distribution - identity, random, random2,
+        - mm_funcs_bank: missing mechanism functions banks - None, 'lr', 'mt', 'all'
+        - mm_mech: missing mechanism - 'mcar', 'mar_quantile', 'mar_sigmoid', 'mnar_quantile', 'mnar_sigmoid'
+        - mm_strictness: missing adding probailistic or deterministic
+        - mm_obs:  missing adding based on observed data
+        - mm_feature_option: missing mechanism associated with which features - self, all, allk=0.1
+        - mm_beta_option: mechanism beta coefficient option - (mnar) self, sphere, randu, (mar) fixed, randu, randn
+    :param seed:
+    :return:
+    """
 
     # ========================================================================================
     # setup clients seeds
@@ -18,77 +51,26 @@ def setup_scenario(
 
     # ========================================================================================
     # data partition
-    clients_train_data_list = load_data_partition(
-        data_partition_strategy, train_data, num_clients, {}, seed=seed
+    clients_train_data_list, clients_test_data_list, global_test_data, stats = load_data_partition(
+        data, data_config, num_clients, seed=seed, **data_partition_params
     )
 
     # ========================================================================================
-    # simulate missing data
+    # simulate missing data globally
     if 'ms_cols' in data_config:
         cols = data_config['ms_cols']
     else:
-        cols = np.arange(train_data.shape[1] - 1)
+        cols = np.arange(data.shape[1] - 1)
     client_train_data_ms_list = add_missing(
-        clients_train_data_list, ms_simulate_strategy, cols, seeds=client_seeds
+        clients_train_data_list, cols, client_seeds, seed=seed, **missing_simulate_params
     )
 
-    return clients_train_data_list, client_train_data_ms_list, client_seeds
-
-
-def load_scenario(scenario_name: str, train_data: np.ndarray, num_clients: int, seed: int = 201030) -> dict:
-    ###################################################################################################################
-    # Main benchmark scenarios
-    # - missing ratio 0.3 - 0.7 truncated normal distribution sigma = 0.15
-    # - noniid using direchilet distribution
-    # - number of missing feature depends on datasets
-    ###################################################################################################################
-    # MCAR scenarios
-    if scenario_name == 'mcar_dataiid':
-        client_train_data_list, client_train_data_ms_list, client_seeds = setup_scenario(
-            train_data=train_data,
-            data_partition_strategy='iid-iid-uneven10dir',
-            ms_simulate_strategy='mcar',
-            num_clients=num_clients,
-            seed=seed
+    # ========================================================================================
+    # organize results
+    clients_data = []
+    for i in range(num_clients):
+        clients_data.append(
+            (clients_train_data_list[i], clients_test_data_list[i], client_train_data_ms_list[i])
         )
 
-        return {
-            'client_train_data_list': client_train_data_list,
-            'client_train_data_ms_list': client_train_data_ms_list,
-            'client_seeds': client_seeds
-        }
-
-    elif scenario_name == 'mcar_dataniid':
-        raise NotImplementedError
-
-    ###################################################################################################################
-    # MAR scenarios
-    elif scenario_name == 'mar_homo_dataiid':
-        raise NotImplementedError
-    elif scenario_name == 'mar_heter_dataiid':
-        raise NotImplementedError
-    elif scenario_name == 'mar_homo1_dataniid':
-        # simulate on centralized data then split
-        raise NotImplementedError
-    elif scenario_name == 'mar_homo2_dataniid':
-        # simulate on local data after splitting
-        raise NotImplementedError
-    elif scenario_name == 'mar_heter_dataniid':
-        raise NotImplementedError
-
-    ####################################################################################################################
-    # MNAR scenarios
-    elif scenario_name == 'mnar_homo_dataiid':
-        raise NotImplementedError
-    elif scenario_name == 'mnar_heter_dataiid':
-        raise NotImplementedError
-    elif scenario_name == 'mnar_homo1_dataniid':
-        # simulate on centralized data then split
-        raise NotImplementedError
-    elif scenario_name == 'mnar_homo2_dataniid':
-        # simulate on local data after splitting
-        raise NotImplementedError
-    elif scenario_name == 'mnar_heter_dataniid':
-        raise NotImplementedError
-    else:
-        raise NotImplementedError(f"{scenario_name} not supported")
+    return clients_data, global_test_data, client_seeds, stats

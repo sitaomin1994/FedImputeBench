@@ -70,20 +70,55 @@ class MLPICEImputer(ICEImputer):
         self.seed = seed
         self.data_utils_info = data_utils
 
-    def set_imp_model_params(self, updated_model: OrderedDict, feature_idx):
-        self.imp_models[feature_idx].load_state_dict(updated_model)
+    def set_imp_model_params(self, updated_model_dict: OrderedDict, params: dict) -> None:
+        """
+        Set model parameters
+        :param updated_model_dict: global model parameters dictionary
+        :param params: parameters for set parameters function
+        :return: None
+        """
+        if 'feature_idx' not in params:
+            raise ValueError("Feature index not provided")
+        feature_idx = params['feature_idx']
+        self.imp_models[feature_idx].load_state_dict(deepcopy(updated_model_dict))
 
-    def get_imp_model_params(self, feature_idx):
+    def get_imp_model_params(self, params: dict) -> OrderedDict:
+        """
+        Return model parameters
+        :param params: dict contains parameters for get_imp_model_params
+        :return: OrderedDict - model parameters dictionary
+        """
+        if 'feature_idx' not in params:
+            raise ValueError("Feature index not provided")
+        feature_idx = params['feature_idx']
         return deepcopy(self.imp_models[feature_idx].state_dict())
 
-    def fit(self, X, y, missing_mask, feature_idx):
+    def fit(self, X: np.array, y: np.array, missing_mask: np.array, params: dict) -> dict:
+        """
+        Fit imputer to train local imputation models
+        :param X: features - float numpy array
+        :param y: target
+        :param missing_mask: missing mask
+        :param params: parameters for local training
+            - feature_idx
+            - local_epochs
+            - learning_rate
+            - batch_size
+            - weight_decay
+            - optimizer
+        :return: fit results of local training
+        """
+
+        if 'feature_idx' not in params:
+            raise ValueError("Feature index not provided")
+        feature_idx = params['feature_idx']
 
         # TODO: see where to get this params from
-        local_epochs = 5
-        learning_rate = 0.01
-        batch_size = 32
-        weight_decay = 0.01
-        optimizer = 'adam'
+        local_epochs = params.get('local_epochs', 10)
+        learning_rate = params.get('learning_rate', 0.001)
+        batch_size = params.get('batch_size', 32)
+        weight_decay = params.get('weight_decay', 0.001)
+        optimizer = params.get('optimizer', 'adam')
         regression = self.data_utils_info['task_type'] == 'regression'
 
         # get feature based train test
@@ -150,7 +185,20 @@ class MLPICEImputer(ICEImputer):
             'loss': np.array(losses).mean()
         }
 
-    def impute(self, X, y, missing_mask, feature_idx):
+    def impute(self, X: np.array, y: np.array, missing_mask: np.array, params: dict) -> np.ndarray:
+        """
+        Impute missing values using imputation model
+        :param X: numpy array of features
+        :param y: numpy array of target
+        :param missing_mask: missing mask
+        :param params: parameters for imputation
+            - feature_idx
+        :return: imputed data - numpy array - same dimension as X
+        """
+
+        if 'feature_idx' not in params:
+            raise ValueError("Feature index not provided")
+        feature_idx = params['feature_idx']
 
         # clip the imputed values
         if self.clip:
