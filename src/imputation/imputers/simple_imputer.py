@@ -12,6 +12,7 @@ class SimpleImputer(BaseImputer):
             raise ValueError(f"Strategy {strategy} not supported")
         self.strategy: str = strategy
         self.mean_params: np.array = None
+        self.model_type = 'numpy'
 
     def get_imp_model_params(self, params: dict) -> OrderedDict:
         """
@@ -56,7 +57,7 @@ class SimpleImputer(BaseImputer):
         else:
             raise ValueError(f"Strategy {self.strategy} not supported")
 
-        return {}
+        return {'loss': 0, 'sample_size': X.shape[0]}
 
     def impute(self, X: np.array, y: np.array, missing_mask: np.array, params: dict) -> np.ndarray:
         """

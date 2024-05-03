@@ -1,0 +1,4 @@
+workflow_name: 'simple'
+workflow_params:
+  evaluation_interval: 0
+workflow_runtype: sequential

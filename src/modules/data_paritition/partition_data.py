@@ -43,7 +43,7 @@ def separate_data_niid(
         min_samples: int = 50, reg_bins: int = 50, seed: int = 201030
 ):
     dataset_content, dataset_label = data[:, :-1], data[:, -1]
-    if data_config['task'] == 'regression':  # if regression task, bin the target
+    if data_config['task_type'] == 'regression':  # if regression task, bin the target
         dataset_label = binning_target(dataset_label, reg_bins, seed)
 
     num_classes = len(np.unique(dataset_label))
@@ -98,12 +98,15 @@ def separate_data_niid(
 
         try_cnt = 1
         idx_clients = [[] for _ in range(num_clients)]
-        while min_size < min_samples:
+        #class_condition = False
+        while (min_size < min_samples) :
+
             if try_cnt > 1:
                 print(f'Client data size does not meet the minimum requirement {min_samples}. '
                       f'Try allocating again for the {try_cnt}-th time.')
 
             idx_clients = [[] for _ in range(num_clients)]
+            all_class_condition = np.zeros(num_classes, dtype=bool)
             for class_id in range(num_classes):
                 class_indices = np.where(dataset_label == class_id)[0]
 
@@ -114,14 +117,30 @@ def separate_data_niid(
                 proportions = np.array(
                     [p * (len(idx_client) < N / num_clients) for p, idx_client in zip(proportions, idx_clients)])
                 proportions = proportions / proportions.sum()
+
+                # limited numbers
+                # num_array = (proportions * len(class_indices)).astype(int)
+                # all_class_condition[class_id] = (num_array == 1).any()
+                # print(class_id, num_array, all_class_condition[class_id])
+
                 # [100, 110, 113, 135, 235, ..., 100]
                 proportions = (np.cumsum(proportions) * len(class_indices)).astype(int)[:-1]
                 splited_idx = np.split(class_indices, proportions)
-                idx_clients = [idx_client + idx.tolist() for idx_client, idx in zip(idx_clients, splited_idx)]
+
+                # filter out classes only with one sample
+                splited_idx_new = []
+                for idx in splited_idx:
+                    if len(idx) == 1:
+                        splited_idx_new.append(np.array([], dtype=int))
+                    else:
+                        splited_idx_new.append(idx)
+
+                idx_clients = [idx_client + idx.tolist() for idx_client, idx in zip(idx_clients, splited_idx_new)]
                 min_size = min([len(item) for item in idx_clients])
 
             seed = (seed + 1) % (2 ^ 31 - 1)
             try_cnt += 1
+            #class_condition = ~(all_class_condition.any())
 
         for j in range(num_clients):
             dataidx_map[j] = idx_clients[j]

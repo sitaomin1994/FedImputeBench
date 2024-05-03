@@ -82,7 +82,7 @@ def load_data_partition(
         else:
             raise NotImplementedError
 
-        regression = data_config['task'] == 'regression'
+        regression = data_config['task_type'] == 'regression'
         datas = generate_samples_iid(train_data, sample_fracs, regression=regression, reg_bins=reg_bins, seed=seed)
 
     # non-iid partition
@@ -99,7 +99,7 @@ def load_data_partition(
 
     #############################################################################################################
     # calculate statistics
-    regression = data_config['task'] == 'regression'
+    regression = data_config['task_type'] == 'regression'
     statistics = calculate_data_partition_stats(datas, regression=regression)
 
     #############################################################################################################

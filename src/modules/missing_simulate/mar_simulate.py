@@ -161,7 +161,7 @@ def simulate_nan_mar_sigmoid(
         elif mm_feature_option.startswith('allk'):
             np.random.seed(seed)
             X = np.concatenate([data[:, col].reshape(-1, 1), X_rest], axis=1)
-            k = max(int(float(mm_feature_option.split('allk')[-1]) * X_rest.shape[1]), 1)
+            k = max(int(float(mm_feature_option.split('allk=')[-1]) * X_rest.shape[1]), 1)
             k = min(k, X_rest.shape[1])
             mi = np.abs(np.corrcoef(X, rowvar=False)[0])
             mi_idx = np.argsort(mi)[::-1][1:k + 1]

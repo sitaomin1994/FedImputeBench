@@ -153,7 +153,7 @@ class StudentTDecoder(nn.Module):
     @staticmethod
     def imp_dist_xgivenz(decoder_out):
         mu, std, df = decoder_out
-        td.Independent(
+        return td.Independent(
             td.StudentT(
                 loc=mu,
                 scale=std,

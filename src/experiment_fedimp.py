@@ -1,16 +1,14 @@
 import numpy as np
 from emf.base_experiment import BaseExperiment
 from src.evaluation.evaluator import Evaluator
+from src.loaders.load_environment import setup_clients, setup_server
 from src.utils.tracker import Tracker
 from src.utils.result_analyzer import ResultAnalyzer
 from src.loaders.load_data import load_data
-from src.utils.setup_seeds import setup_clients_seed
-
-from src.loaders.load_data_partition import load_data_partition
-from src.loaders.load_missing_simulation import add_missing
 from src.server import Server
 from src.client import Client
 from src.loaders.load_workflow import load_workflow
+from src.loaders.load_scenario import simulate_scenario
 
 
 class Experiment(BaseExperiment):
@@ -40,43 +38,47 @@ class Experiment(BaseExperiment):
 
         ###########################################################################################################
         # Data loading
-        dataset_name = config["data"]['dataset_name']
-        test_size = config["data"]['test_size']
-        train_data, test_data, data_config = load_data(dataset_name, test_size, seed)
+        dataset_name = config['dataset_name']
+        data, data_config = load_data(dataset_name, seed)
 
         ###########################################################################################################
         # Scenario setup
         num_clients = config['num_clients']
-        data_partition_strategy = config['data_partition']
-        ms_simulate_strategy = config["missing_simulate"]
-        clients_train_data_list, client_train_data_ms_list, client_seeds = self.setup_scenario(
-            train_data, data_partition_strategy, ms_simulate_strategy, num_clients, seed
+        data_partition_params = config['data_partition']['partition_params']
+        missing_scenario_params = config['missing_scenario']['params']
+        clients_data, global_test_data, client_seeds, stata = simulate_scenario(
+            data, data_config, num_clients, data_partition_params, missing_scenario_params, seed
         )
 
         ###########################################################################################################
         # Setup Clients and Server (imputation models and agg strategy)
-        imp_model_name = config['imputer']['imp_name']
-        imp_model_params = config['imputer']['imp_params']
+        imputer_name = config['imputer']['imp_name']
+        imputer_params = config['imputer']['imp_params']
+        imp_model_train_params = config['imputer']['model_train_params']
 
-        agg_strategy_name = config['agg_strategy']['agg_strategy_name']
-        agg_strategy_params = config['agg_strategy']['agg_strategy_params']
+        fed_strategy_name = config['fed_strategy']['fed_strategy_name']
+        fed_strategy_client_params = config['fed_strategy']['fed_strategy_client_params']
+        fed_strategy_server_params = config['fed_strategy']['fed_strategy_server_params']
+
+        clients = setup_clients(
+            clients_data, client_seeds, data_config,
+            imputer_name, imputer_params, fed_strategy_name, fed_strategy_client_params
+        )
+
+        server = setup_server(
+            fed_strategy_name, fed_strategy_server_params, server_config={}
+        )
 
         workflow_name = config['imp_workflow']['workflow_name']
         workflow_params = config['imp_workflow']['workflow_params']
         workflow_run_type = config['imp_workflow']['workflow_runtype']
 
-        clients, server, workflow = self.setup_workflow(
-            clients_train_data_list, client_train_data_ms_list, client_seeds,
-            imp_model_name, imp_model_params,
-            agg_strategy_name, agg_strategy_params,
-            workflow_name, workflow_params,
-            test_data, data_config,
-        )
+        workflow = load_workflow(workflow_name, workflow_params)
 
         ###########################################################################################################
         # Evaluator and Tracker
         evaluator_params = config['evaluator_params']
-        tracker_params = config['tracker_params']
+        tracker_params = config['tracker']['params']
         ret_analyze_params = config['ret_analyze_params']
         evaluator = Evaluator(evaluator_params)  # initialize evaluator
         tracker = Tracker(tracker_params)  # initialize tracker
@@ -84,33 +86,12 @@ class Experiment(BaseExperiment):
 
         ###########################################################################################################
         # Run Federated Imputation
-        tracker = workflow.run_fed_imp(clients, server, evaluator, tracker, workflow_run_type)
+        tracker = workflow.run_fed_imp(
+            clients, server, evaluator, tracker, workflow_run_type, imp_model_train_params
+        )
         ret = result_analyzer.clean_and_analyze_results(tracker)  # TODO: result analyzer
 
         return ret
-
-    @staticmethod
-    def setup_scenario(
-            train_data, data_partition_strategy, ms_simulate_strategy, num_clients, seed
-    ):
-        # ========================================================================================
-        # setup clients seeds
-        client_seeds = setup_clients_seed(num_clients, seed=seed)
-
-        # ========================================================================================
-        # data partition
-        clients_train_data_list = load_data_partition(
-            data_partition_strategy, train_data, num_clients, {}, seed=seed
-        )
-
-        # ========================================================================================
-        # simulate missing data
-        cols = np.arange(train_data.shape[1] - 1)
-        client_train_data_ms_list = add_missing(
-            clients_train_data_list, ms_simulate_strategy, cols, seeds=client_seeds
-        )
-
-        return clients_train_data_list, client_train_data_ms_list, client_seeds
 
     @staticmethod
     def setup_workflow(

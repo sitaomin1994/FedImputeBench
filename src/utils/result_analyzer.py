@@ -6,7 +6,7 @@ class ResultAnalyzer:
         pass
 
     def clean_and_analyze_results(self, tracker: Tracker) -> dict:
-        return {}
+        return tracker.to_dict()
 
     # return {
     #     'rets': rets,

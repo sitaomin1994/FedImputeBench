@@ -4,7 +4,6 @@ import numpy as np
 
 
 class Tracker:
-
     """
     Tracker class to track the imputation results along iterations
     tracker_params: {
@@ -40,7 +39,7 @@ class Tracker:
             self.persist = 'none'
         else:
             assert tracker_params['persist'] in ['none', 'final', 'all'], "persist is not a valid option"
-            self.persist_all = tracker_params['persist_all']
+            self.persist = tracker_params['persist']
 
         # internal data structures
         self.rounds = []
@@ -52,6 +51,7 @@ class Tracker:
         self.origin_data = None  # tracking original data
         self.mask = None  # tracking missing mask
         self.split_indices = None  # tracking split indices
+        self.imp_data_final = None  # tracking final imputed data
 
     def record_initial(self, data: List[np.ndarray], mask: List[np.ndarray]):
 
@@ -84,11 +84,16 @@ class Tracker:
 
         self.rounds.append(final_round)
         self.imp_quality.append(imp_quality)
-        self.imp_data.append(data)
-        self.model_params.append(model_params)
-        self.misc.append(other_info)
+        self.imp_data_final = np.concatenate(data)
 
-    def to_dict(self):
+        if self.track_model_params and model_params is not None:
+            self.model_params.append(model_params)
+
+        if self.track_misc and other_info is not None:
+            self.misc.append(other_info)
+
+    def to_dict(self) -> dict:
+
         ret = {
             "results": {
                 'rounds': self.rounds,
@@ -97,17 +102,11 @@ class Tracker:
         }
 
         if self.persist == 'final':
-            ret['persist'] = {
-                "imp_data": self.imp_data[-1],
-                "model_params": self.model_params[-1],
-                "misc": self.misc[-1]
-            }
+            raise NotImplementedError("Final persist is not implemented yet")
         elif self.persist == 'all':
-            ret['persist'] = {
-                "imp_data": self.imp_data,
-                "model_params": self.model_params,
-                "misc": self.misc
-            }
+            raise NotImplementedError("All persist is not implemented yet")
+        elif self.persist == 'none':
+            ret['persist'] = {}
         else:
             raise ValueError("Invalid persist option")
 

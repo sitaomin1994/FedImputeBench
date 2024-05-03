@@ -12,6 +12,12 @@ from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier
 from sklearn.base import BaseEstimator
 
 from torch import nn
+from src.imputation.models.ml_models.nn_model import (
+    TwoNNRegressor, TwoNNClassifier
+)
+from src.imputation.models.ml_models.linear_model import (
+    RidgeRegression, Logistic
+)
 
 
 def load_sklearn_model(estimator_name) -> BaseEstimator:
@@ -21,7 +27,9 @@ def load_sklearn_model(estimator_name) -> BaseEstimator:
     elif estimator_name == 'linear_regression':
         return LinearRegression(n_jobs=-1)
     elif estimator_name == 'ridge':
-        return Ridge(alpha=1.0, random_state=0)
+        return Ridge(alpha=10, random_state=0)
+    elif estimator_name == 'bayesian_ridge':
+        return BayesianRidge()
     elif estimator_name == 'lasso':
         return Lasso(alpha=0.1, random_state=0)
     elif estimator_name == 'theilsen':
@@ -29,7 +37,7 @@ def load_sklearn_model(estimator_name) -> BaseEstimator:
     elif estimator_name == 'huber':
         return HuberRegressor()
     elif estimator_name == 'ridge_cv':
-        return RidgeCV(alphas=[0.1, 1.0, 10.0])
+        return RidgeCV(alphas=[0.001, 0.01, 0.1, 1.0])
     elif estimator_name == 'lasso_cv':
         return LassoCV(alphas=[0.1, 1.0, 10.0])
     elif estimator_name == 'logistic':
@@ -66,12 +74,12 @@ def load_sklearn_model(estimator_name) -> BaseEstimator:
 
 def load_pytorch_model(model_name, model_params) -> nn.Module:
     if model_name == 'nn_reg':
-        raise NotImplementedError
+        return TwoNNRegressor(input_dim=model_params['input_dim'], hidden_dim=model_params['hidden_dim'])
     elif model_name == 'nn_clf':
-        raise NotImplementedError
+        return TwoNNClassifier(input_dim=model_params['input_dim'], hidden_dim=model_params['hidden_dim'])
     elif model_name == 'ridge':
-        raise NotImplementedError
-    elif model_name == 'logistic':
-        raise NotImplementedError
+        return RidgeRegression(input_dim=model_params['input_dim'])
+    elif model_name == 'logit':
+        return Logistic(input_dim=model_params['input_dim'])
     else:
         raise ValueError('Unknown model name: {}'.format(model_name))

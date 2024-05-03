@@ -9,7 +9,7 @@ import hydra
 from src.exp_manager import FedMissExpManager
 
 
-@hydra.main(version_base=None, config_path="config", config_name="experiment_config_imp_pc2")
+@hydra.main(version_base=None, config_path="config", config_name="experiment_config")
 def my_app(cfg: DictConfig) -> None:
     print(cfg.experiment.output_path)
     config_dict = OmegaConf.to_container(cfg, resolve=True)

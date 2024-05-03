@@ -1,8 +1,0 @@
-agg_strategy_name: 'local'
-agg_strategy_params: {}
-fed_train_params:
-  global_epochs: 1
-  local_epochs: 100
-  lr: 0.01
-  optimizer: 'adam'
-  weight_decay: 0.001

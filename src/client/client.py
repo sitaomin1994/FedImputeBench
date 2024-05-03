@@ -1,11 +1,8 @@
-from abc import ABC, abstractmethod
 from typing import Tuple
-
 import numpy as np
-from sklearn.impute import SimpleImputer
 from scipy import stats
-from src.imputation.base import BaseImputer
 from src.loaders.load_imputer import load_imputer
+from src.loaders.load_strategy import load_fed_strategy_client
 
 
 class Client:
@@ -13,8 +10,15 @@ class Client:
     def __init__(
             self,
             client_id: int,
-            train_data: np.ndarray, test_data: np.ndarray, X_train_ms: np.ndarray, data_config: dict,
-            imp_model_name, imp_model_params, client_config: dict, seed=0,
+            train_data: np.ndarray,
+            test_data: np.ndarray,
+            X_train_ms: np.ndarray,
+            data_config: dict,
+            imp_model_name,
+            imp_model_params,
+            fed_strategy: str,
+            fed_strategy_params: dict,
+            client_config: dict, seed=0,
     ) -> None:
 
         # client id
@@ -26,13 +30,19 @@ class Client:
         self.X_train_ms = X_train_ms  # missing data
         self.X_train_mask = np.isnan(self.X_train_ms)  # missing data mask
         self.X_train_imp = self.X_train_ms.copy()  # imputed data
+        # print(f"Client {self.client_id} - Train data shape: {self.X_train.shape}, Test data shape: {self.X_test.shape}")
+        # print(f"Client {self.client_id} - Missing data shape: {self.X_train_ms.shape}, Missing data mask shape: {self.X_train_mask.shape}")
+        # print(f"Client {self.client_id} - Imputed data shape: {self.X_train_imp.shape}")
 
         # calculate data stats
         self.data_utils = self.calculate_data_utils(data_config)
 
         # imputation model
-        self.imp_model = load_imputer(imp_model_name, imp_model_params)
-        self.imp_model.initialize(self.data_utils, seed)
+        self.imputer = load_imputer(imp_model_name, imp_model_params)
+        self.imputer.initialize(self.data_utils, {}, seed)
+
+        # fed strategy
+        self.fed_strategy = load_fed_strategy_client(fed_strategy, fed_strategy_params)
 
         # others
         self.seed = seed
@@ -42,33 +52,46 @@ class Client:
         """
         Fit local imputation model
         """
-        fit_res = self.imp_model.fit(
-            self.X_train_imp, self.y_train, self.X_train_mask, params
-        )
-        model_parameters = self.imp_model.get_imp_model_params(params)
-        fit_res.update(self.data_utils)
-        # fit_res['sample_size'] = self.data_utils['missing_stats_cols'][feature_idx]['sample_size_obs'] todo: add sample size
-        # TODO: design a consistent structure for fit_res, fit_params, imp_res, imp_params and document it
+        if not params['fit_model']:
+            return self.imputer.get_imp_model_params(params), {}
+        else:
+            if self.imputer.model_type == 'torch_nn' and self.fed_strategy.name in ['fedprox']:
+                # Based params get current imp models
+                imp_model, dataloader = self.imputer.fetch_model(params, self.X_train_imp, self.y_train, self.X_train_mask)
+                imp_model, fit_res = self.fed_strategy.fit_local(imp_model, dataloader)
 
-        return model_parameters, fit_res
+                self.update_local_imp_model(imp_model.state_dict(), params)
+                fit_res.update(self.data_utils)
+                model_parameters = imp_model.state_dict()
+            else:
+                fit_res = self.imputer.fit(
+                    self.X_train_imp, self.y_train, self.X_train_mask, params
+                )
+                model_parameters = self.imputer.get_imp_model_params(params)
+                fit_res.update(self.data_utils)
+                # fit_res['sample_size'] = self.data_utils['missing_stats_cols'][feature_idx]['sample_size_obs']
+                # todo: add sample size
+                # TODO: design a consistent structure for fit_res, fit_params, imp_res, imp_params and document it
 
-    def update_local_imp_model(self, updated_local_model: dict, params: dict):
+            return model_parameters, fit_res
+
+    def update_local_imp_model(self, updated_local_model: dict, params: dict) -> None:
         """
         Fit local imputation model
         """
-        self.imp_model.set_imp_model_params(updated_local_model, params)
+        self.imputer.set_imp_model_params(updated_local_model, params)
 
-    def local_imputation(self, params: dict):
+    def local_imputation(self, params: dict) -> None:
         """
         Imputation
         """
-        feature_idx = params['feature_idx']
-        self.imp_model.impute(self.X_train_imp, self.y_train, self.X_train_mask, params)
+        self.X_train_imp = self.imputer.impute(self.X_train_imp, self.y_train, self.X_train_mask, params)
 
-    def initial_impute(self, imp_values: np.ndarray, col_type: str = 'num'):
+    def initial_impute(self, imp_values: np.ndarray, col_type: str = 'num') -> None:
         """
         Initial imputation
         """
+        #print(f"Client {self.client_id} {self.X_train_ms.shape} {self.X_train_mask.shape} {self.X_train_imp.shape} {imp_values.shape}")
         num_cols = self.data_utils['num_cols']
         if col_type == 'num':
             for i in range(num_cols):
@@ -77,7 +100,7 @@ class Client:
             for i in range(num_cols, self.X_train.shape[1]):
                 self.X_train_imp[:, i][self.X_train_mask[:, i]] = imp_values[i]
 
-    def calculate_data_utils(self, data_config: dict):
+    def calculate_data_utils(self, data_config: dict) -> dict:
         """
         Calculate data statistic
         # TODO: add VGM for numerical columns for modeling mixture of clusters
@@ -105,7 +128,8 @@ class Client:
             else:
                 col_stats_dict[i] = {
                     'num_class': len(np.unique(self.X_train_ms[:, i][~np.isnan(self.X_train_ms[:, i])])),
-                    "mode": stats.mode(self.X_train_ms[:, i][~np.isnan(self.X_train_ms[:, i])], keepdims=False)[0]
+                    "mode": stats.mode(self.X_train_ms[:, i][~np.isnan(self.X_train_ms[:, i])], keepdims=False)[0],
+                    'mean': np.nanmean(self.X_train_ms[:, i]),
                     # TODO: add frequencies
                 }
 

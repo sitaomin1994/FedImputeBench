@@ -1,0 +1,25 @@
+#defaults:
+#  - /imp_workflow@_group_: icegrad
+
+# configuration for linear ice imputation
+imp_name: 'linear_ice_sgd'
+imp_params:
+  estimator_num: 'ridge'
+  estimator_cat: 'logit'
+  mm_model: 'logistic'
+  mm_model_params:
+    class_weight: 'balanced'
+    Cs: [1e-1]
+    cv: 3
+  clip: True
+  use_y: False
+model_train_params:
+  global_epoch: 100
+  model_converge_tol: 0.0001
+  model_converge_patience: 10
+  local_epoch: 5
+  batch_size: 256
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  optimizer: 'adam'
+  log_interval: 1

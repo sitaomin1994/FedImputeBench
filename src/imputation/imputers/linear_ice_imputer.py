@@ -2,14 +2,14 @@ from collections import OrderedDict
 
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import OneHotEncoder
-from src.imputation.base.ice_imputer import ICEImputer
+from src.imputation.base.ice_imputer import ICEImputerMixin
 from src.imputation.base.base_imputer import BaseImputer
 import numpy as np
 from sklearn.linear_model import LogisticRegressionCV
 from ..model_loader_utils import load_sklearn_model
 
 
-class LinearICEImputer(ICEImputer, BaseImputer):
+class LinearICEImputer(BaseImputer, ICEImputerMixin):
 
     def __init__(
             self,
@@ -37,6 +37,7 @@ class LinearICEImputer(ICEImputer, BaseImputer):
         self.mm_model = None
         self.data_utils_info = None
         self.seed = None
+        self.model_type = 'sklearn'
 
     def initialize(self, data_utils: dict, params: dict, seed: int) -> None:
         """
@@ -100,8 +101,10 @@ class LinearICEImputer(ICEImputer, BaseImputer):
             raise ValueError("Feature index not found in params")
         feature_idx = params['feature_idx']
         imp_model = self.imp_models[feature_idx]
-        # TODO: make imp model as a class that has get_params() interface so it can using non-sklearn models
-        parameters = np.concatenate([imp_model.coef_, np.expand_dims(imp_model.intercept_, 0)])
+        try:
+            parameters = np.concatenate([imp_model.coef_, np.expand_dims(imp_model.intercept_, 0)])
+        except AttributeError:
+            parameters = np.zeros(self.data_utils_info['n_features'] + 1)
         return OrderedDict({"w_b": parameters})
 
     def fit(self, X: np.array, y: np.array, missing_mask: np.array, params: dict) -> dict:
@@ -114,25 +117,26 @@ class LinearICEImputer(ICEImputer, BaseImputer):
             - feature_idx
         :return: fit results of local training
         """
-        if 'feature_idx' not in params:
+        try:
+            feature_idx = params['feature_idx']
+        except KeyError:
             raise ValueError("Feature index not found in params")
-        feature_idx = params['feature_idx']
 
         # get feature based train test
         num_cols = self.data_utils_info['num_cols']
         regression = self.data_utils_info['task_type'] == 'regression'
         row_mask = missing_mask[:, feature_idx]
-        X_cat = X[:, num_cols:]
-        if X_cat.shape[1] > 0:
-            onehot_encoder = OneHotEncoder(max_categories=5, drop="if_binary")
-            X_cat = onehot_encoder.fit_transform(X_cat)
-            X = np.concatenate((X[:, :num_cols], X_cat), axis=1)
-
-        if self.use_y:
-            if regression:
-                oh = OneHotEncoder(drop='first')
-                y = oh.fit_transform(y.reshape(-1, 1)).toarray()
-            X = np.concatenate((X, y.reshape(-1, 1)), axis=1)
+        # X_cat = X[:, num_cols:]
+        # if X_cat.shape[1] > 0:
+        #     onehot_encoder = OneHotEncoder(max_categories=5, drop="if_binary")
+        #     X_cat = onehot_encoder.fit_transform(X_cat)
+        #     X = np.concatenate((X[:, :num_cols], X_cat), axis=1)
+        #
+        # if self.use_y:
+        #     if regression:
+        #         oh = OneHotEncoder(drop='first')
+        #         y = oh.fit_transform(y.reshape(-1, 1)).toarray()
+        #     X = np.concatenate((X, y.reshape(-1, 1)), axis=1)
 
         X_train = X[~row_mask][:, np.arange(X.shape[1]) != feature_idx]
         y_train = X[~row_mask][:, feature_idx]
@@ -144,16 +148,17 @@ class LinearICEImputer(ICEImputer, BaseImputer):
         coef = np.concatenate([estimator.coef_, np.expand_dims(estimator.intercept_, 0)])
 
         # Fit mechanism models
-        if row_mask.sum() == 0:
-            mm_coef = np.zeros(X.shape[1]) + 0.001
-        else:
-            self.mm_model.fit(X, row_mask)
-            mm_coef = np.concatenate([self.mm_model.coef_[0], self.mm_model.intercept_])
+        # if row_mask.sum() == 0:
+        #     mm_coef = np.zeros(X.shape[1]) + 0.001
+        # else:
+        #     self.mm_model.fit(X, row_mask)
+        #     mm_coef = np.concatenate([self.mm_model.coef_[0], self.mm_model.intercept_])
 
         return {
             'coef': coef,
-            'mm_coef': mm_coef,
-            'loss': {},  # TODO: add loss
+            #'mm_coef': mm_coef,
+            'loss': {},
+            'sample_size': X_train.shape[0]
         }
 
     def impute(self, X: np.array, y: np.array, missing_mask: np.array, params: dict) -> np.ndarray:

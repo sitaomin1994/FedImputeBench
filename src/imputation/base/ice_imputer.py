@@ -8,12 +8,7 @@ from abc import ABC, abstractmethod
 from .base_imputer import BaseImputer
 
 
-class ICEImputer():
-
-    def __init__(
-            self,
-    ):
-        super().__init__()
+class ICEImputerMixin:
 
     @staticmethod
     def get_clip_thresholds(data_utils):

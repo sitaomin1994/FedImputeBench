@@ -135,7 +135,7 @@ def _add_missing_central(
         mm_feature_option=mm_feature_option, mm_beta_option=mm_beta_option, seed=seed
     )
 
-    return np.concatenate([X_train_ms, y_train.reshape(-1, 1)], axis=1)
+    return np.concatenate(X_train_ms)
 
 
 ########################################################################################################################
@@ -211,7 +211,7 @@ def _add_missing_dist(
             mm_feature_option=mm_feature_option, mm_beta_option=mm_beta_option, seed=seeds[i]
         )
 
-        clients_data_ms.append(np.concatenate([X_train_ms, y_train.reshape(-1, 1)], axis=1))
+        clients_data_ms.append(X_train_ms)
 
     return clients_data_ms
 

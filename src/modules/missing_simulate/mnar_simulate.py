@@ -60,7 +60,7 @@ def simulate_nan_mnar_sigmoid(
             data_corr = data
         elif mm_feature_option.startswith('allk'):
             np.random.seed(seed)
-            k = max(int(float(mm_feature_option.split('allk')[-1]) * data.shape[1]), 1)
+            k = max(int(float(mm_feature_option.split('allk=')[-1]) * data.shape[1]), 1)
             mi = np.corrcoef(data, rowvar=False)[col]
             mi_idx = np.argsort(mi)[::-1][:k + 1]
             data_corr = data[:, mi_idx]

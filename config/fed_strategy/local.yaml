@@ -1,0 +1,4 @@
+fed_strategy_name: 'local'
+fed_strategy_client_params: {}
+fed_strategy_server_params:
+  initial_impute: local

@@ -194,14 +194,14 @@ def load_data(dataset_name, normalize=True, verbose=False, threshold=None, test_
 
     ####################################################################################################################
     # Split train and test
-    if test_size is not None:
-        train_data, test_data = split_train_test(
-            data, data_config, test_size=test_size, seed=seed, output_format='dataframe_merge'
-        )
-        test_data = test_data.values
-        train_data = train_data.values
-    else:
-        train_data = data.values
-        test_data = None
+    # if test_size is not None:
+    #     train_data, test_data = split_train_test(
+    #         data, data_config, test_size=test_size, seed=seed, output_format='dataframe_merge'
+    #     )
+    #     test_data = test_data.values
+    #     train_data = train_data.values
+    # else:
+    #     train_data = data.values
+    #     test_data = None
 
-    return train_data, test_data, data_config
+    return data.values, data_config

@@ -4,10 +4,12 @@ from src.server import Server
 from typing import List
 from src.client import Client
 from src.imputation.initial_imputation import initial_imputation_num, initial_imputation_cat
+from .utils import formulate_centralized_client
 from .workflow import BaseWorkflow
 from ..evaluation.evaluator import Evaluator
 from tqdm.auto import trange
 
+from ..imputation.initial_imputation.initial_imputation import initial_imputation
 from ..utils.tracker import Tracker
 
 
@@ -22,7 +24,7 @@ class WorkflowICEGrad(BaseWorkflow):
         self.tracker = None
 
     def fed_imp_sequential(
-            self, clients: List[Client], server: Server, evaluator: Evaluator, tracker: Tracker
+            self, clients: List[Client], server: Server, evaluator: Evaluator, tracker: Tracker, train_params: dict
     ) -> Tracker:
 
         """
@@ -32,34 +34,27 @@ class WorkflowICEGrad(BaseWorkflow):
         # Workflow Parameters
         data_dim = clients[0].X_train.shape[1]
         iterations = self.workflow_params['imp_iterations']
-        model_epochs = self.workflow_params['model_epochs']
-        model_converge_tol = self.workflow_params['model_converge_tol']  # TODO: not used
-        model_converge_patience = self.workflow_params['model_converge_patience']  # TODO: not used
-
-        initial_imp_num = self.workflow_params['initial_imp_num']
-        initial_imp_cat = self.workflow_params['initial_imp_cat']
 
         evaluation_interval = self.workflow_params['evaluation_interval']
 
+        if server.fed_strategy.name == 'central':
+            clients.append(formulate_centralized_client(clients))
+
         ############################################################################################################
         # Update Global clip thresholds
-        if server.aggregation_strategy.name == 'local':
+        if server.fed_strategy.name == 'local':
             initial_values_min, initial_values_max = [], []
             for client_id, client in enumerate(clients):
-                initial_values_min.append(client.imp_model.min_values)
-                initial_values_max.append(client.imp_model.max_values)
+                initial_values_min.append(client.imputer.min_values)
+                initial_values_max.append(client.imputer.max_values)
             global_min_values = np.min(np.array(initial_values_min), axis=0, initial=0)
             global_max_values = np.max(np.array(initial_values_max), axis=0, initial=1)
             for client_id, client in enumerate(clients):
-                client.imp_model.set_clip_thresholds(global_min_values, global_max_values)
+                client.imputer.set_clip_thresholds(global_min_values, global_max_values)
 
         ############################################################################################################
         # Initial Imputation
-        initial_data_num = initial_imputation_num(initial_imp_num, [client.data_utils for client in clients])
-        initial_data_cat = initial_imputation_cat(initial_imp_cat, [client.data_utils for client in clients])
-        for client_idx, client in enumerate(clients):
-            client.initial_impute(initial_data_num[client_idx], col_type='num')
-            client.initial_impute(initial_data_cat[client_idx], col_type='cat')
+        clients = initial_imputation(server.fed_strategy.strategy_params['initial_impute'], clients)
 
         # initial evaluation and tracking
         self.eval_and_track(evaluator, tracker, clients, phase='initial')
@@ -80,28 +75,69 @@ class WorkflowICEGrad(BaseWorkflow):
             for feature_idx in trange(data_dim, desc='Feature_idx', leave=False, colour='blue'):
 
                 # Collaboratively training imputation model using gradient-based method
-                for model_epoch in trange(model_epochs, desc='Model Epochs', leave=False, colour='blue'):
+                model_converge_tol = train_params['model_converge_tol']  # TODO: not used
+                model_converge_patience = train_params['model_converge_patience']
+                best_significant_loss_per_client = {client.client_id: None for client in clients}
+                patience_counter_per_client = {client.client_id: 0 for client in clients}
+                all_clients_converged = False
 
+                model_global_epochs = train_params['global_epoch']
+                for model_epoch in trange(model_global_epochs, desc='Model Epochs', leave=False, colour='blue'):
+
+                    ###############################################################################################
                     # local training of imputation model
                     local_models, clients_fit_res = [], []
+                    fit_instruction = server.fed_strategy.fit_instruction([{} for _ in range(len(clients))])
                     for client in clients:
-                        # TODO: dynamic local training
-                        model_parameter, fit_res = client.fit_local_imp_model(params={'feature_idx': feature_idx})
+                        fit_params = {'feature_idx': feature_idx}
+                        fit_params.update(train_params)
+                        fit_params.update(fit_instruction[client.client_id])
+                        model_parameter, fit_res = client.fit_local_imp_model(params=fit_params)
                         local_models.append(model_parameter)
                         clients_fit_res.append(fit_res)
 
+                    ###############################################################################################
+                    # check convergence
+                    for client, fit_res in zip(clients, clients_fit_res):
+                        current_loss = fit_res['loss']  # Assuming 'loss' is reported in fit_res
+
+                        if best_significant_loss_per_client[client.client_id] is None:
+                            best_significant_loss_per_client[client.client_id] = current_loss
+                            improvement = float('inf')  # Assume large improvement to initialize
+                        else:
+                            # Calculate improvement
+                            improvement = best_significant_loss_per_client[client.client_id] - current_loss
+
+                        # Update the best loss and reset patience if there's significant improvement
+                        if improvement > model_converge_tol:
+                            best_significant_loss_per_client[client.client_id] = current_loss
+                            patience_counter_per_client[client.client_id] = 0
+                        else:
+                            patience_counter_per_client[client.client_id] += 1  # Increment patience counter
+
+                    if all(
+                            patience_counter_per_client[client.client_id] >= model_converge_patience
+                            for client in clients
+                    ):
+                        print("All clients have converged. Stopping training.")
+                        all_clients_converged = True
+                        break
+
+                    ###############################################################################################
                     # aggregate local imputation model
-                    global_models, agg_res = server.aggregate(
+                    global_models, agg_res = server.fed_strategy.aggregate_parameters(
                         local_model_parameters=local_models, fit_res=clients_fit_res
                     )
 
-                    # updates local imputation model and do imputation
+                    ###############################################################################################
+                    # updates local imputation model
                     for global_model, client in zip(global_models, clients):
-                        # updated_local_model = agg_strategy.update_local_model(global_model, local_model, client)
-                        client.set_imp_model_params(global_model, params={'feature_idx': feature_idx})
+                        client.update_local_imp_model(global_model, params={'feature_idx': feature_idx})
 
-                    # TODO: how about some clients are already converged? -> client need to be check convergence locally
+                if not all_clients_converged:
+                    print("Training completed without early stopping.")
 
+                ###############################################################################################
                 # Local imputation using updated imputation models
                 for client in clients:
                     client.local_imputation(params={'feature_idx': feature_idx})
@@ -113,6 +149,6 @@ class WorkflowICEGrad(BaseWorkflow):
         return tracker
 
     def fed_imp_parallel(
-            self, clients: List[Client], server: Server, evaluator: Evaluator, tracker: Tracker
+            self, clients: List[Client], server: Server, evaluator: Evaluator, tracker: Tracker, train_params: dict
     ) -> Tracker:
         return tracker

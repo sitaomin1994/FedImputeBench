@@ -15,25 +15,25 @@ class BaseWorkflow(ABC):
 
     @abstractmethod
     def fed_imp_sequential(
-            self, clients: List[Client], server: Server, evaluator: Evaluator, tracker: Tracker
+            self, clients: List[Client], server: Server, evaluator: Evaluator, tracker: Tracker, train_params: dict
     ) -> Tracker:
         pass
 
     @abstractmethod
     def fed_imp_parallel(
-            self, clients: List[Client], server: Server, evaluator: Evaluator, tracker: Tracker
+            self, clients: List[Client], server: Server, evaluator: Evaluator, tracker: Tracker, train_params: dict
     ) -> Tracker:
         pass
 
     def run_fed_imp(
             self, clients: List[Client], server: Server, evaluator: Evaluator, tracker: Tracker,
-            run_type: str = 'sequential'
+            run_type: str, train_params: dict,
     ) -> Tracker:
 
         if run_type == 'sequential':
-            return self.fed_imp_sequential(clients, server, evaluator, tracker)
+            return self.fed_imp_sequential(clients, server, evaluator, tracker, train_params)
         elif run_type == 'parallel':
-            return self.fed_imp_parallel(clients, server, evaluator, tracker)
+            return self.fed_imp_parallel(clients, server, evaluator, tracker, train_params)
         else:
             raise ValueError('Invalid workflow run type')
 
@@ -64,7 +64,7 @@ class BaseWorkflow(ABC):
                     round_num=epoch,
                     imp_quality=evaluation_results,
                     data=[client.X_train_imp for client in clients],
-                    model_params=[client.imp_model.get_params() for client in clients],
+                    model_params=[],  # todo make it
                     other_info=[{} for _ in clients]
                 )
 
@@ -83,7 +83,7 @@ class BaseWorkflow(ABC):
                 final_round=iterations,
                 imp_quality=evaluation_results,
                 data=[client.X_train_imp for client in clients],
-                model_params=[client.imp_model.get_params() for client in clients],
+                model_params=[],
                 other_info=[{} for _ in clients]
             )
             tqdm.write(

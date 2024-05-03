@@ -1,8 +1,5 @@
 workflow_name: 'ice'
 workflow_params:
-  data_dim: 64
   imp_iterations: 10
-  initial_imp_num: 'local_mean'
-  initial_imp_cat: 'local_mode'
   evaluation_interval: 1
 workflow_runtype: sequential

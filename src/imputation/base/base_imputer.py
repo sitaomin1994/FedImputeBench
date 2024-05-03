@@ -1,11 +1,11 @@
 
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
 
 import numpy as np
 
 
-class BaseImputer(ABC):
+class BaseImputer(metaclass=ABCMeta):
 
     def __init__(self):
         pass

@@ -1,4 +1,4 @@
-from random import random
+import random
 from scipy.special import expit
 import numpy as np
 from n_sphere import n_sphere
@@ -58,8 +58,8 @@ def mask_sigmoid(
     ####################################################################################################################
     # How to set betas in logistic function
     if mechanism == 'mnar':
-        if beta_corr is 'self':  # self masking MNAR missingness
-            coeffs = np.zeros(data_copy.shape[1], 1)
+        if beta_corr == 'self':  # self masking MNAR missingness
+            coeffs = np.zeros((data_copy.shape[1], 1))
             coeffs[0] = 1.0
         elif beta_corr == 'sphere':  # randomly to axis cone of feature itself for MNAR missingness
             coeffs = generate_param_vector(data_copy.shape[1], main_strength=30, direction='up')
@@ -70,11 +70,11 @@ def mask_sigmoid(
         else:
             raise ValueError('Unknown beta_corr, it should be one of self, sphere, random for MNAR mechanism.')
     elif mechanism == 'mar':
-        if beta_corr is 'fixed':
-            coeffs = np.ones(data_copy.shape[1], 1)
+        if beta_corr == 'fixed':
+            coeffs = np.ones((data_copy.shape[1], 1))
             coeffs = coeffs / np.linalg.norm(coeffs)
             coeffs = coeffs.reshape(-1, 1)
-        elif beta_corr is 'randu':  # randomly set beta coefficients - mix of mnar and mar missingness
+        elif beta_corr == 'randu':  # randomly set beta coefficients - mix of mnar and mar missingness
             random_vector = np.random.rand(data_copy.shape[1], 1) * 2 - 1  # random uniform between -1 and 1
             unit_vector = random_vector / np.linalg.norm(random_vector)
             coeffs = unit_vector.reshape(-1, 1)

@@ -1,0 +1,31 @@
+defaults:
+  - _self_
+  - data_partition: niid1
+  - missing_scenario: mcar
+  - imputer: miwae
+  - imp_workflow: vae
+  - fed_strategy: local
+  - tracker: none
+
+########################################################################################################################
+# Experiment Meta
+debug: false
+experiment:
+  # name of prefix of experiments e.g. fed_imp, fed_pred etc.
+  experiment_name: fed_imp_pc2
+  # configuration of output path to save the results
+  output_path: ${dataset_name}/${data_partition.name}/${missing_scenario.name}/${imputer.imp_name}/${fed_strategy.fed_strategy_name}
+  # Other Options
+  seed: 2180279
+  n_rounds: 1
+  mtp: False
+
+########################################################################################################################
+# Experiment Configuration Content
+# scenarios
+dataset_name: codrna
+num_clients: 10
+client: {}  # todo
+server: {}  # todo
+evaluator_params: {} # todo
+ret_analyze_params: null

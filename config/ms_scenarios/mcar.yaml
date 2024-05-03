@@ -1,9 +1,0 @@
-missing_simulate:
-  global_missing: False
-  mf_strategy: "all"
-  mr_dist: "uniform_int"
-  mr_lower: 0.3
-  mr_upper: 0.7
-  mm_mech: "mcar"
-  mm_strictness: True
-  mm_funcs_bank: None

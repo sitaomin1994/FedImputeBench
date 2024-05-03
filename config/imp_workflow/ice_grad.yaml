@@ -1,11 +1,5 @@
 workflow_name: 'icegrad'
 workflow_params:
-  data_dim: 64
-  imp_iterations: 10
-  model_epochs: 200
-  model_converge_tol: 1e-4
-  model_converge_patience: 5
-  initial_imp_num: 'local_mean'
-  initial_imp_cat: 'local_mode'
+  imp_iterations: 1
   evaluation_interval: 1
 workflow_runtype: sequential

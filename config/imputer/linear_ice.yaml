@@ -1,5 +1,5 @@
-defaults:
-  - /imp_workflow@_group_: ice
+#defaults:
+#  - /imp_workflow@_group_: ice
 
 # configuration for linear ice imputation
 imp_name: 'linear_ice'
@@ -13,3 +13,4 @@ imp_params:
     cv: 3
   clip: True
   use_y: False
+model_train_params: {}

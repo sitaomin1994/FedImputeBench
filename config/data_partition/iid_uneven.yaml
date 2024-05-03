@@ -1,0 +1,9 @@
+name: 'iid_uneven'
+partition_params:
+  partition_strategy: "iid"
+  size_strategy: "dir"
+  min_samples: 50
+  max_samples: 5000
+  size_niid_alpha: 0.1
+  local_test_size: 0.1
+  global_test_size: 0.1

@@ -1,0 +1,8 @@
+name: 'iid'
+partition_params:
+  partition_strategy: "iid"
+  size_strategy: "even"
+  min_samples: 100
+  max_samples: 2000
+  local_test_size: 0.1
+  global_test_size: 0.1

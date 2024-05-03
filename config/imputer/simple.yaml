@@ -1,0 +1,7 @@
+#defaults:
+#  - /imp_workflow@_group_: ice
+
+imp_name: 'simple'
+imp_params:
+  strategy: 'mean'
+model_train_params: {}
