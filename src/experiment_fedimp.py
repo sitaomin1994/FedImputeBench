@@ -35,11 +35,13 @@ class Experiment(BaseExperiment):
         :param config: configuration of the experiment
         :return: results dictionary
         """
+        print("aaa", seed)
 
         ###########################################################################################################
         # Data loading
+        rng = np.random.default_rng(seed=seed)
         dataset_name = config['dataset_name']
-        data, data_config = load_data(dataset_name, seed)
+        data, data_config = load_data(dataset_name)
 
         ###########################################################################################################
         # Scenario setup
@@ -47,7 +49,7 @@ class Experiment(BaseExperiment):
         data_partition_params = config['data_partition']['partition_params']
         missing_scenario_params = config['missing_scenario']['params']
         clients_data, global_test_data, client_seeds, stata = simulate_scenario(
-            data, data_config, num_clients, data_partition_params, missing_scenario_params, seed
+            data.values, data_config, num_clients, data_partition_params, missing_scenario_params, rng, seed
         )
 
         ###########################################################################################################

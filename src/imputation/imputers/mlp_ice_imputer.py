@@ -11,6 +11,7 @@ from ..model_loader_utils import load_pytorch_model
 from collections import OrderedDict
 import torch
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+from src.utils.math_util import max_squared_sum
 
 
 class MLPICEImputer(TorchNNImputer, ICEImputerMixin):
@@ -75,7 +76,9 @@ class MLPICEImputer(TorchNNImputer, ICEImputerMixin):
                         self.hidden_dim_min
                     )
                 }
-            self.imp_models.append(load_pytorch_model(estimator, model_params))
+
+            model = load_pytorch_model(estimator, model_params, seed)
+            self.imp_models.append(model)
 
         # Missing Mechanism Model
         if self.mm_model_name == 'logistic':     # TODO: make mechanism model as a separate component
@@ -117,29 +120,39 @@ class MLPICEImputer(TorchNNImputer, ICEImputerMixin):
         return deepcopy(self.imp_models[feature_idx].state_dict())
 
     def fetch_model(
-            self, params: dict, X_train_imp: np.ndarray, y_train: np.ndarray, X_train_mask: np.ndarray
+            self, params: dict, X: np.ndarray, y_train: np.ndarray, missing_mask: np.ndarray
     ) -> Tuple[torch.nn.Module, torch.utils.data.DataLoader]:
         """
-        Fetch model for training
+        Fetch model and dataloader for training given params
         :param params: parameters for training
-        :param X_train_imp: imputed data
+        :param X: imputed data
         :param y_train: target
-        :param X_train_mask: missing mask
+        :param missing_mask: missing mask
         :return: model, data loader
         """
-        feature_idx = params['feature_idx']
-        model = self.imp_models[feature_idx]
+        try:
+            feature_idx = params['feature_idx']
+            batch_size = params['batch_size']
+        except KeyError as e:
+            raise ValueError(f"Parameter {str(e)} not found in params")
+        row_mask = missing_mask[:, feature_idx]
+        X_train = X[~row_mask][:, np.arange(X.shape[1]) != feature_idx]
+        y_train = X[~row_mask][:, feature_idx]
 
-        # set up train and test data for training imputation model
-        row_mask = X_train_mask[:, feature_idx]
-        X_train = X_train_imp[~row_mask][:, np.arange(X_train_imp.shape[1]) != feature_idx]
-        y_train = X_train_imp[~row_mask][:, feature_idx]
+        #batch_size = max(1, min(X.shape[0]//100, 128))
+        print(batch_size)
+        print(max_squared_sum(X_train))
 
         # make X_train and y_train as torch tensors and torch data loader
         X_train = torch.tensor(X_train, dtype=torch.float32)
         y_train = torch.tensor(y_train, dtype=torch.float32)
         train_data = torch.utils.data.TensorDataset(X_train, y_train)
-        train_loader = torch.utils.data.DataLoader(train_data, batch_size=params['batch_size'], shuffle=True)
+        train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True)
+        #     self.data_loaders['feature_idx'] = train_loader
+        # else:
+        #     train_loader = self.data_loaders['feature_idx']
+
+        model = self.imp_models[feature_idx]
 
         return model, train_loader
 
@@ -179,7 +192,7 @@ class MLPICEImputer(TorchNNImputer, ICEImputerMixin):
             X_train = torch.tensor(X_train, dtype=torch.float32)
             y_train = torch.tensor(y_train, dtype=torch.float32)
             train_data = torch.utils.data.TensorDataset(X_train, y_train)
-            train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=True)
+            train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size, shuffle=False)
             self.data_loaders['feature_idx'] = train_loader
         else:
             train_loader = self.data_loaders['feature_idx']

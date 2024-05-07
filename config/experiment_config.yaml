@@ -2,7 +2,7 @@ defaults:
   - _self_
   - data_partition: niid1
   - missing_scenario: mcar
-  - imputer: miwae
+  - imputer: notmiwae
   - imp_workflow: vae
   - fed_strategy: local
   - tracker: none
@@ -13,7 +13,7 @@ debug: false
 experiment:
   # name of prefix of experiments e.g. fed_imp, fed_pred etc.
   experiment_name: fed_imp_pc2
-  # configuration of output path to save the results
+  # configuration of an output path to save the results
   output_path: ${dataset_name}/${data_partition.name}/${missing_scenario.name}/${imputer.imp_name}/${fed_strategy.fed_strategy_name}
   # Other Options
   seed: 2180279

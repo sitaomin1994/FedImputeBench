@@ -7,13 +7,15 @@ from src.utils.setup_seeds import setup_clients_seed
 
 
 def simulate_scenario(
-        data: np.array, data_config:dict, num_clients,
+        data: np.array, data_config: dict, num_clients,
         data_partition_params: dict,
         missing_simulate_params: dict,
-        seed: int = 100330201
+        rng: np.random.Generator,
+        seed: int = 100330201,
 ) -> Tuple[List[Tuple[np.array, np.ndarray, np.ndarray]], np.array, List[int], List[List[Tuple[int, int]]]]:
     """
     Simulate missing data scenario
+    :param rng: numpy random generator
     :param data: data
     :param data_config: data configuration
     :param num_clients: number of clients
@@ -44,15 +46,14 @@ def simulate_scenario(
     :param seed:
     :return:
     """
-
     # ========================================================================================
     # setup clients seeds
-    client_seeds = setup_clients_seed(num_clients, seed=seed)
+    client_seeds = setup_clients_seed(num_clients, rng=rng)
 
     # ========================================================================================
     # data partition
     clients_train_data_list, clients_test_data_list, global_test_data, stats = load_data_partition(
-        data, data_config, num_clients, seed=seed, **data_partition_params
+        data, data_config, num_clients, seed=seed, rng=rng, **data_partition_params
     )
 
     # ========================================================================================

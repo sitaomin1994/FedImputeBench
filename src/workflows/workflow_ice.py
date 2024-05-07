@@ -49,9 +49,7 @@ class WorkflowICE(BaseWorkflow):
             global_min_values = np.min(np.array(initial_values_min), axis=0, initial=0)
             global_max_values = np.max(np.array(initial_values_max), axis=0, initial=1)
             for client_id, client in enumerate(clients):
-                client.imputer.set_clip_thresholds(
-                    global_min_values, global_max_values
-                )  # encapsulate these interfaces
+                client.imputer.set_clip_thresholds(global_min_values, global_max_values)  # encapsulate these interfaces
 
         ############################################################################################################
         # Initial Imputation

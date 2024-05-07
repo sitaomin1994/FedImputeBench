@@ -9,8 +9,8 @@ import torch.distributions as td
 
 # hyperimpute absolute
 from emf.reproduce_utils import set_seed
-from decoder import GaussianDecoder, BernoulliDecoder, StudentTDecoder
-from encoder import BaseEncoder
+from .decoder import GaussianDecoder, BernoulliDecoder, StudentTDecoder
+from .encoder import BaseEncoder
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -20,9 +20,10 @@ def weights_init(layer: Any) -> None:
         torch.nn.init.orthogonal_(layer.weight)
 
 
+# TODO: move this MM model to a separate file
 class MaskNet(nn.Module):
     """
-    This implements the Mask net that is used in notmiwae's implementation for self-masking mechanism
+    This implements the Mask net used in notmiwae's implementation for self-masking mechanism
     """
 
     def __init__(self, input_dim: int):
@@ -46,11 +47,13 @@ class MaskNet(nn.Module):
 
         Returns:
             encoded: Encoded output tensor with shape (batch_size, input_dim)
-        """  # Run masked values through model.
+        """
+        # Run masked values through a model.
         output = -self.W * (x - self.b)
         return output
 
 
+# TODO: move this MM model to a separate file
 class MaskNet2(nn.Module):
     """
     This implements the Mask net that is used in notmiwae's implementation for self-masking mechanism
@@ -80,7 +83,7 @@ class MaskNet2(nn.Module):
 
         Returns:
             encoded: Encoded output tensor with shape (batch_size, input_dim)
-        """  # Run masked values through model.
+        """  # Run masked values through a model.
         output = self.decoder(x)
         return output
 
@@ -117,7 +120,8 @@ class NOTMIWAE(nn.Module):
             out_dist='studentt',
             seed: int = 0,
             K: int = 20,
-            L: int = 1000,
+            L: int = 100,
+            mask_net_type: str = 'linear',
     ) -> None:
 
         super().__init__()
@@ -141,7 +145,7 @@ class NOTMIWAE(nn.Module):
 
         # encoder
         self.encoder = BaseEncoder(
-            self.num_features, 2 * self.latent_size, [self.n_hidden for _ in range(self.n_hidden_layers)],
+            self.num_features, self.latent_size, [self.n_hidden for _ in range(self.n_hidden_layers)],
         ).to(DEVICE)
 
         # decoder
@@ -164,7 +168,10 @@ class NOTMIWAE(nn.Module):
         self.decoder = self.decoder.to(DEVICE)
 
         # mask net
-        self.mask_net = MaskNet(num_features).to(DEVICE)
+        if mask_net_type == 'linear':
+            self.mask_net = MaskNet(num_features).to(DEVICE)
+        else:
+            self.mask_net = MaskNet2(num_features).to(DEVICE)
 
         # prior for z
         self.p_z = td.Independent(
@@ -173,34 +180,38 @@ class NOTMIWAE(nn.Module):
 
     @staticmethod
     def name() -> str:
-        return "miwae"
+        return "notmiwae"
 
-    def init(self):
+    def init(self, seed):
+        set_seed(seed)
         self.encoder.apply(weights_init)
         self.decoder.apply(weights_init)
 
     def compute_loss(self, inputs: List[torch.Tensor]) -> Tuple[torch.Tensor, Dict]:
+
         x, mask = inputs  # x - data, mask - missing mask
         batch_size = x.shape[0]
 
         # encoder and z distribution
-        mask_ = self.mask_enc(mask)
-        x_ = torch.concat([x, mask_], dim=1)
+        #mask_ = self.mask_enc(mask)
         mu, logvar = self.encoder(x)
 
         # q(z|x)
         q_zgivenxobs = td.Independent(td.Normal(loc=mu, scale=logvar), 1)
         zgivenx = q_zgivenxobs.rsample([self.K])
+        #print(zgivenx.shape)
         zgivenx_flat = zgivenx.reshape([self.K * batch_size, self.latent_size])
 
         # decoder and x distribution
         out_decoder = self.decoder(zgivenx_flat)
 
-        # data and mask
+        # data
         recon_x_means = self.decoder.l_out_mu(out_decoder)
         data = torch.Tensor.repeat(x, [self.K, 1]).to(DEVICE)
         data_flat = torch.Tensor.repeat(x, [self.K, 1]).reshape([-1, 1]).to(DEVICE)
         tiled_mask = torch.Tensor.repeat(mask, [self.K, 1]).to(DEVICE)
+
+        # mask
         recon_x_tiled = recon_x_means * (1 - tiled_mask) + data * tiled_mask  # (K * batch_size, p)
         mask_recon = self.mask_net(recon_x_tiled).to(DEVICE).reshape([-1, 1])  # (K * batch_size*p, 1)
 
@@ -224,7 +235,9 @@ class NOTMIWAE(nn.Module):
 
         return neg_bound, {}
 
-    def impute(self, x: torch.Tensor, mask: torch.Tensor, L: int) -> torch.Tensor:
+    def impute(self, x: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+
+        L = self.L
         batch_size = x.shape[0]
         p = x.shape[1]
 
@@ -233,8 +246,7 @@ class NOTMIWAE(nn.Module):
         self.decoder.to(DEVICE)
         self.mask_net.to(DEVICE)
         self.mask_enc.to(DEVICE)
-        mask_ = self.mask_enc(mask)
-        x_ = torch.concat([x, mask_], dim=1)
+
         mu, logvar = self.encoder(x)
         q_zgivenxobs = td.Independent(td.Normal(loc=mu, scale=logvar), 1)
 

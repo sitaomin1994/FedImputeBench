@@ -1,3 +1,4 @@
+import gc
 from copy import deepcopy
 from typing import Dict, Union, List, Tuple, OrderedDict
 
@@ -6,6 +7,7 @@ from torch.utils.data import DataLoader
 
 from ..base.torch_nn_imputer import TorchNNImputer
 from ..models.vae_models.miwae import MIWAE
+from ..models.vae_models.notmiwae import NOTMIWAE
 import torch
 from src.evaluation.imp_quality_metrics import rmse
 from src.imputation.base import JMImputerMixin, BaseImputer
@@ -16,15 +18,16 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class MIWAEImputer(TorchNNImputer, JMImputerMixin):
 
-    def __init__(self, imp_model_params: dict):
+    def __init__(self, name, imp_model_params: dict):
 
         super().__init__()
         self.model = None
-        self.name = "miwae"
+        self.name = name
 
         # imputation model parameters
         self.imp_model_params = imp_model_params
         self.model_type = 'torch_nn'
+        self.train_dataloader = None
 
     def get_imp_model_params(self, params: dict) -> OrderedDict:
         """
@@ -56,26 +59,49 @@ class MIWAEImputer(TorchNNImputer, JMImputerMixin):
         :param seed: int - seed for randomization
         :return: None
         """
-        # TODO: handling categorical data
-        self.model = MIWAE(num_features=data_utils['n_features'], **self.imp_model_params)
+        if self.name == 'miwae':
+            self.model = MIWAE(num_features=data_utils['n_features'], **self.imp_model_params)
+        elif self.name == 'notmiwae':
+            self.model = NOTMIWAE(num_features=data_utils['n_features'], **self.imp_model_params)
+        else:
+            raise ValueError(f"Model {self.name} not supported")
+
         self.model.init(seed)
 
     def fetch_model(
-            self, params: dict, X_train_imp: np.ndarray, y_train: np.ndarray, X_train_mask: np.ndarray
+            self, params: dict, X: np.ndarray, y: np.ndarray, missing_mask: np.ndarray
     ) -> Tuple[torch.nn.Module, torch.utils.data.DataLoader]:
         """
         Fetch model for training
         :param params: parameters for training
-        :param X_train_imp: imputed data
-        :param y_train: target
-        :param X_train_mask: missing mask
-        :return: model, data loader
+        :param X: imputed data
+        :param y: target
+        :param missing_mask: missing mask
+        :return: model, train_dataloader
         """
         """
         Fetch model for training
         """
-        # set up train and test data for training imputation model
-        raise NotImplementedError
+        # set up train and test data for a training imputation model
+        try:
+            batch_size = params['batch_size']
+        except KeyError as e:
+            raise ValueError(f"Parameter {str(e)} not found in params")
+
+        # if self.train_dataloader is not None:
+        #     return self.model, self.train_dataloader
+        # else:
+        n = X.shape[0]
+        X_imp = X.copy()
+        X_mask = missing_mask.copy()
+        bs = min(batch_size, n)
+
+        train_dataset = torch.utils.data.TensorDataset(
+            torch.from_numpy(X_imp).float(), torch.from_numpy(~X_mask).float()
+        )
+        train_dataloader = DataLoader(train_dataset, batch_size=bs, shuffle=True)
+
+        return self.model, train_dataloader
 
     def fit(self, X: np.array, y: np.array, missing_mask: np.array, params: dict) -> dict:
         """
@@ -96,17 +122,18 @@ class MIWAEImputer(TorchNNImputer, JMImputerMixin):
         # 	self.model.init()
 
         try:
-            lr = params['lr']
+            lr = params['learning_rate']
             weight_decay = params['weight_decay']
             local_epochs = params['local_epoch']
             batch_size = params['batch_size']
-            #verbose = params['verbose']
+            # verbose = params['verbose']
             optimizer_name = params['optimizer']
         except KeyError as e:
             raise ValueError(f"Parameter {str(e)} not found in params")
 
         if optimizer_name == 'adam':
-            optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, weight_decay=weight_decay, amsgrad=True)
+            optimizer = torch.optim.Adam(
+                self.model.parameters(), lr=lr, weight_decay=weight_decay, amsgrad=True)
         else:
             raise NotImplementedError
 
@@ -115,26 +142,33 @@ class MIWAEImputer(TorchNNImputer, JMImputerMixin):
         X_imp = X.copy()
         X_mask = missing_mask.copy()
         bs = min(batch_size, n)
-
+        train_dataset = torch.utils.data.TensorDataset(
+            torch.from_numpy(X_imp).float(), torch.from_numpy(~X_mask).float()
+        )
+        train_dataloader = DataLoader(train_dataset, batch_size=bs, shuffle=True)
         # training
         final_loss = 0
         rmses = []
         for ep in range(local_epochs):
 
             # shuffle data
-            perm = np.random.permutation(n)  # We use the "random reshuffling" version of SGD
-            batches_data = np.array_split(X_imp[perm,], int(n / bs), )
-            batches_mask = np.array_split(X_mask[perm,], int(n / bs), )
-            batches_y = np.array_split(y[perm,], int(n / bs), )
+            # perm = np.random.permutation(n)  # We use the "random reshuffling" version of SGD
+            # batches_data = np.array_split(X_imp[perm,], int(n / bs), )
+            # batches_mask = np.array_split(X_mask[perm,], int(n / bs), )
+            # batches_y = np.array_split(y[perm,], int(n / bs), )
             total_loss, total_iters = 0, 0
             self.model.train()
-            for it in range(len(batches_data)):
+            # for it in range(len(batches_data)):
+            for it, inputs in enumerate(train_dataloader):
                 optimizer.zero_grad()
                 self.model.encoder.zero_grad()
                 self.model.decoder.zero_grad()
-                b_data = torch.from_numpy(batches_data[it]).float().to(DEVICE)
-                b_mask = torch.from_numpy(~batches_mask[it]).float().to(DEVICE)
-                b_y = torch.from_numpy(batches_y[it]).long().to(DEVICE)
+                # b_data = torch.from_numpy(batches_data[it]).float().to(DEVICE)
+                # b_mask = torch.from_numpy(~batches_mask[it]).float().to(DEVICE)
+                b_data, b_mask = inputs
+                b_data = b_data.to(DEVICE)
+                b_mask = b_mask.to(DEVICE)
+                # b_y = torch.from_numpy(batches_y[it]).long().to(DEVICE)
                 data = [b_data, b_mask]
 
                 loss, ret_dict = self.model.compute_loss(data)
@@ -169,7 +203,7 @@ class MIWAEImputer(TorchNNImputer, JMImputerMixin):
 
     def impute(self, X: np.array, y: np.array, missing_mask: np.array, params: dict) -> np.ndarray:
         """
-        Impute missing values using imputation model
+        Impute missing values using an imputation model
         :param X: numpy array of features
         :param y: numpy array of target
         :param missing_mask: missing mask
@@ -189,4 +223,6 @@ class MIWAEImputer(TorchNNImputer, JMImputerMixin):
         x_imp = x_imp.detach().cpu().numpy()
         self.model.to("cpu")
 
+        del X
+        gc.collect()
         return x_imp

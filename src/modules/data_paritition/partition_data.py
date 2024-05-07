@@ -1,5 +1,6 @@
 from sklearn.model_selection import train_test_split
 import numpy as np
+from emf.reproduce_utils import set_seed
 from typing import List, Union, Tuple
 from src.modules.data_paritition.partition_data_utils import (
     binning_target, noniid_sample_dirichlet, generate_samples_iid
@@ -40,8 +41,9 @@ import gc
 def separate_data_niid(
         data: np.ndarray, data_config: dict, num_clients: int, niid: bool = True, partition: str = 'dir',
         balance: bool = False, class_per_client: Union[None, int] = None, niid_alpha: float = 0.1,
-        min_samples: int = 50, reg_bins: int = 50, seed: int = 201030
+        min_samples: int = 50, reg_bins: int = 50, seed: int = 201030, rng: np.random.Generator = None
 ):
+
     dataset_content, dataset_label = data[:, :-1], data[:, -1]
     if data_config['task_type'] == 'regression':  # if regression task, bin the target
         dataset_label = binning_target(dataset_label, reg_bins, seed)
@@ -63,6 +65,8 @@ def separate_data_niid(
 
         class_num_per_client = [class_per_client for _ in range(num_clients)]
         for i in range(num_classes):
+            np.random.seed(seed)
+            seed = seed +  1
             selected_clients = []
             for client in range(num_clients):
                 if class_num_per_client[client] > 0:
@@ -100,20 +104,22 @@ def separate_data_niid(
         idx_clients = [[] for _ in range(num_clients)]
         #class_condition = False
         while (min_size < min_samples) :
-
             if try_cnt > 1:
                 print(f'Client data size does not meet the minimum requirement {min_samples}. '
                       f'Try allocating again for the {try_cnt}-th time.')
 
             idx_clients = [[] for _ in range(num_clients)]
-            all_class_condition = np.zeros(num_classes, dtype=bool)
+            #all_class_condition = np.zeros(num_classes, dtype=bool)
             for class_id in range(num_classes):
                 class_indices = np.where(dataset_label == class_id)[0]
-
+                print(class_id, class_indices)
                 # split classes indices into num_clients parts
-                np.random.seed(seed)
-                np.random.shuffle(class_indices)
-                proportions = np.random.dirichlet(np.repeat(niid_alpha, num_clients))
+                rng.shuffle(class_indices)
+                print(class_indices)
+                alphas = np.repeat(niid_alpha, num_clients)
+                print(alphas)
+                proportions = rng.dirichlet(alphas)
+                print(proportions)
                 proportions = np.array(
                     [p * (len(idx_client) < N / num_clients) for p, idx_client in zip(proportions, idx_clients)])
                 proportions = proportions / proportions.sum()
@@ -138,7 +144,6 @@ def separate_data_niid(
                 idx_clients = [idx_client + idx.tolist() for idx_client, idx in zip(idx_clients, splited_idx_new)]
                 min_size = min([len(item) for item in idx_clients])
 
-            seed = (seed + 1) % (2 ^ 31 - 1)
             try_cnt += 1
             #class_condition = ~(all_class_condition.any())
 

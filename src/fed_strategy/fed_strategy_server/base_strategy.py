@@ -16,3 +16,7 @@ class StrategyServer(ABC):
     @abstractmethod
     def fit_instruction(self, params_list: List[dict]) -> List[dict]:
         pass
+
+    @abstractmethod
+    def update_instruction(self, params: dict) -> dict:
+        pass

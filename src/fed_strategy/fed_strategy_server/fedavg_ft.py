@@ -5,11 +5,12 @@ from collections import OrderedDict
 from src.fed_strategy.fed_strategy_server.base_strategy import StrategyServer
 
 
-class FedAvgStrategyServer(StrategyServer):
+class FedAvgFtStrategyServer(StrategyServer):
 
     def __init__(self, strategy_params):
-        super(FedAvgStrategyServer, self).__init__('fedavg')
+        super(FedAvgFtStrategyServer, self).__init__('fedavg_ft')
         self.strategy_params = strategy_params
+        self.fine_tune_steps = strategy_params['fine_tune_steps']
 
     def aggregate_parameters(
             self, local_model_parameters: List[OrderedDict], fit_res: List[dict], *args, **kwargs
@@ -45,3 +46,11 @@ class FedAvgStrategyServer(StrategyServer):
     def fit_instruction(self, params_list: List[dict]) -> List[dict]:
 
         return [{'fit_model': True} for _ in range(len(params_list))]
+
+    def update_instruction(self, params: dict) -> dict:
+        current_epoch = params['current_epoch']
+        global_epoch = params['global_epoch']
+        if (global_epoch - current_epoch)/global_epoch < self.fine_tune_steps:
+            return {'update_model': False}
+        else:
+            return {'update_model': True}

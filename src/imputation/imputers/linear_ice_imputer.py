@@ -123,8 +123,8 @@ class LinearICEImputer(BaseImputer, ICEImputerMixin):
             raise ValueError("Feature index not found in params")
 
         # get feature based train test
-        num_cols = self.data_utils_info['num_cols']
-        regression = self.data_utils_info['task_type'] == 'regression'
+        # num_cols = self.data_utils_info['num_cols']
+        # regression = self.data_utils_info['task_type'] == 'regression'
         row_mask = missing_mask[:, feature_idx]
         # X_cat = X[:, num_cols:]
         # if X_cat.shape[1] > 0:
@@ -187,26 +187,28 @@ class LinearICEImputer(BaseImputer, ICEImputerMixin):
             return X
 
         # one hot encoding for categorical columns
-        num_cols = self.data_utils_info['num_cols']
-        regression = self.data_utils_info['task_type'] == 'regression'
-        X_cat = X[:, num_cols:]
-        if X_cat.shape[1] > 0:
-            onehot_encoder = OneHotEncoder(sparse=False, max_categories=10, drop="if_binary")
-            X_cat = onehot_encoder.fit_transform(X_cat)
-            X = np.concatenate((X[:, :num_cols], X_cat), axis=1)
-        else:
-            X = X[:, :num_cols]
-
-        if self.use_y:
-            if regression:
-                oh = OneHotEncoder(drop='first')
-                y = oh.fit_transform(y.reshape(-1, 1)).toarray()
-            X = np.concatenate((X, y.reshape(-1, 1)), axis=1)
+        # num_cols = self.data_utils_info['num_cols']
+        # regression = self.data_utils_info['task_type'] == 'regression'
+        # X_cat = X[:, num_cols:]
+        # if X_cat.shape[1] > 0:
+        #     onehot_encoder = OneHotEncoder(sparse=False, max_categories=10, drop="if_binary")
+        #     X_cat = onehot_encoder.fit_transform(X_cat)
+        #     X = np.concatenate((X[:, :num_cols], X_cat), axis=1)
+        # else:
+        #     X = X[:, :num_cols]
+        #
+        # if self.use_y:
+        #     if regression:
+        #         oh = OneHotEncoder(drop='first')
+        #         y = oh.fit_transform(y.reshape(-1, 1)).toarray()
+        #     X = np.concatenate((X, y.reshape(-1, 1)), axis=1)
 
         # impute missing values
         X_test = X[row_mask][:, np.arange(X.shape[1]) != feature_idx]
         estimator = self.imp_models[feature_idx]
         imputed_values = estimator.predict(X_test)
+        if feature_idx >= self.data_utils_info['num_cols']:
+            imputed_values = (imputed_values >= 0.5).float()
         imputed_values = np.clip(imputed_values, min_values[feature_idx], max_values[feature_idx])
         X[row_mask, feature_idx] = np.squeeze(imputed_values)
 

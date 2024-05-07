@@ -36,3 +36,7 @@ class CentralStrategyServer(StrategyServer):
         fit_instructions.append({'fit_model': True})
 
         return fit_instructions
+
+    def update_instruction(self, params: dict) -> dict:
+
+        return {}

@@ -2,4 +2,7 @@ data
 files
 results
 outputs
+multirun
+__pycache__/
+*.py[cod]
 .idea

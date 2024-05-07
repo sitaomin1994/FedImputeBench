@@ -317,7 +317,7 @@ def process_codrna(normalize=True, verbose=False, threshold=None, sample=True, g
         data = pd.concat([data_y0, data_y1], axis=0).reset_index(drop=True)
 
     if len(data) >= 20000:
-        data = data.sample(n=20000).reset_index(drop=True)
+        data = data.sample(n=20000, random_state=0).reset_index(drop=True)
 
     data_config = {
         'target': target_col,

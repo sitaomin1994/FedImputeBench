@@ -4,12 +4,13 @@ import os
 import random
 
 
-def setup_clients_seed(num_clients, seed=0):  # TODO: need to use seed
+def setup_clients_seed(num_clients, rng: np.random.Generator):
     """
     Setup seeds for each client
     """
     # Set seeds for each client
-    client_seeds = np.random.randint(0, 10000, num_clients)
+    client_seeds = rng.integers(0, 10000, num_clients)
+    print(client_seeds)
     return list(client_seeds)
 
 

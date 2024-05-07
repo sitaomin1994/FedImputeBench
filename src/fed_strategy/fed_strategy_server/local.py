@@ -28,3 +28,6 @@ class LocalStrategyServer(StrategyServer):
     def fit_instruction(self, params_list: List[dict]) -> List[dict]:
 
         return [{'fit_model': True} for _ in range(len(params_list))]
+
+    def update_instruction(self, params: dict) -> dict:
+        return {}

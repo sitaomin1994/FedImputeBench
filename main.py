@@ -1,7 +1,8 @@
 from loguru import logger
 import sys
 import warnings
-
+import os
+os.environ['FOR_DISABLE_CONSOLE_CTRL_HANDLER'] = '1'
 warnings.filterwarnings("ignore", category=UserWarning)
 from omegaconf import DictConfig, OmegaConf
 import hydra

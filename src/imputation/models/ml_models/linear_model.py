@@ -3,12 +3,21 @@ from typing import List, Tuple, Dict
 import torch.nn as nn
 import torch
 
+from emf.reproduce_utils import set_seed
+from ..common_blocks import weights_init
+
 
 class RidgeRegression(nn.Module):
 
     def __init__(self, input_dim):
         super(RidgeRegression, self).__init__()
+        # self.w = nn.Parameter(torch.zeros(input_dim, 1))
+        # self.b = nn.Parameter(torch.zeros(1))
         self.linear = nn.Linear(input_dim, 1)
+
+    def init(self, seed):
+        set_seed(seed)
+        self.linear.apply(weights_init)
 
     def forward(self, x):
         return self.linear(x)
@@ -25,6 +34,10 @@ class Logistic(nn.Module):
         super(Logistic, self).__init__()
         self.C = C
         self.linear = nn.Linear(input_dim, 1)
+
+    def init(self, seed):
+        set_seed(seed)
+        self.linear.apply(weights_init)
 
     def forward(self, x):
         return torch.sigmoid(self.linear(x))

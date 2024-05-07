@@ -27,7 +27,7 @@ from src.modules.data_prep.data_prep_reg import (
 )
 
 
-def load_data(dataset_name, normalize=True, verbose=False, threshold=None, test_size=None, seed=0):
+def load_data(dataset_name, normalize=True, verbose=False, threshold=None, output_format='dataframe'):
     # ##################################################################################################################
     # Classification
     # ##################################################################################################################
@@ -203,5 +203,8 @@ def load_data(dataset_name, normalize=True, verbose=False, threshold=None, test_
     # else:
     #     train_data = data.values
     #     test_data = None
-
-    return data.values, data_config
+    
+    if output_format == 'dataframe':
+        return data, data_config
+    elif output_format == 'numpy':
+        return data.values, data_config

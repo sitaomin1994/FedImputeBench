@@ -69,11 +69,13 @@ def calculate_data_partition_stats(
 
 
 def noniid_sample_dirichlet(
-        num_population, n_clients, alpha, min_samples, max_samples, max_repeat_times=5e6, seed=None
+        num_population, n_clients, alpha, min_samples, max_samples, max_repeat_times=5e6,
+        rng: np.random.Generator = np.random.default_rng(42)
 ):
     """
     Perform non-iid sampling using dirichlet distribution non-iidness control by alpha,
     larger alpha, more uniform distributed, smaller alpha, more skewed distributed
+    :param rng: numpy random generator
     :param num_population: number of samples in the population
     :param n_clients: number of clients
     :param alpha: dirichlet distribution parameter
@@ -90,8 +92,7 @@ def noniid_sample_dirichlet(
 
     while min_size < min_samples or max_size > max_samples:
         repeat_times += 1
-        np.random.seed(seed + repeat_times)
-        proportions = np.random.dirichlet(np.repeat(alpha, n_clients))
+        proportions = rng.dirichlet(np.repeat(alpha, n_clients))
         sizes = num_population * proportions
         min_size = min(sizes)
         max_size = max(sizes)
@@ -122,7 +123,7 @@ def generate_samples_iid(
     # set features and target
     X, y = data[:, :-1], data[:, -1]
     if regression and reg_bins is not None:
-        y = binning_target(y, reg_bins)
+        y = binning_target(y, reg_bins, seed)
 
     # split using sample_fracs and train_test_split
     for idx, sample_frac in enumerate(sample_fracs):

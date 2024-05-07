@@ -13,15 +13,22 @@ class FedProxStrategyClient(StrategyClient):
         super().__init__('fedprox')
         self.mu = strategy_params.get('mu', 0.01)
 
-    def fit_local_prox(
-            self, model: torch.nn.Module, dataloader: torch.utils.data.DataLoader
+    def fit_local_model(
+            self, model: torch.nn.Module, dataloader: torch.utils.data.DataLoader, params: dict
     ) -> Tuple[torch.nn.Module, dict]:
 
-        local_epochs = 100
-        lr = 0.01
-        weight_decay = 0.01
+        try:
+            local_epochs = params['local_epoch']
+            learning_rate = params['learning_rate']
+            weight_decay = params['weight_decay']
+            optimizer_name = params['optimizer']
+        except KeyError as e:
+            raise ValueError(f"Parameter {str(e)} not found in params")
 
-        optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+        if optimizer_name == 'adam':
+            optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
+        else:
+            raise ValueError(f"Optimizer {optimizer_name} not supported")
 
         # Initialization - model to device and copy global model parameters
         model.to(DEVICE)

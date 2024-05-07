@@ -24,10 +24,12 @@ def load_data_partition(
         local_test_size: float = 0.1,
         global_test_size: float = 0.1,
         reg_bins: int = 50,
-        seed=201030
+        rng: np.random.Generator = np.random.default_rng(42),
+        seed=201031
 ) -> Tuple[List[np.ndarray], List[np.ndarray], np.ndarray, List[List[Tuple[int, int]]]]:
     """
     Load data partition
+    :param rng: numpy random generator
     :param data: data
     :param data_config: data configuration
     :param num_clients: number of clients
@@ -53,8 +55,7 @@ def load_data_partition(
     #############################################################################################################
     # partition data
     # iid partition
-    random.seed(seed)
-    np.random.seed(seed)
+
     if partition_strategy == 'iid':
         # evenly partition data
         if size_strategy == 'even':
@@ -63,22 +64,19 @@ def load_data_partition(
         elif size_strategy == 'even2':
             sample_fracs = [even_sample_size / data.shape[0] for _ in range(num_clients)]
         elif size_strategy == 'random_uniform':
-            sample_fracs = [
-                random.uniform(min_samples / data.shape[0], max_samples / data.shape[0]) for _ in range(num_clients)
-            ]
+            sample_fracs = rng.uniform(min_samples / data.shape[0], max_samples / data.shape[0], num_clients).tolist()
         # dirichlet distribution
         elif size_strategy == 'dir':
             if max_samples == -1:
                 max_samples = data.shape[0]
             sizes = noniid_sample_dirichlet(
-                data.shape[0], num_clients, size_niid_alpha, min_samples, max_samples, seed=seed
+                data.shape[0], num_clients, size_niid_alpha, min_samples, max_samples, rng = rng
             )
             sample_fracs = [size / data.shape[0] for size in sizes]
         # hub and spoke
         elif size_strategy == 'hs':
             sample_fracs = [0.5] + [0.05 for _ in range(num_clients - 1)]
-            np.random.seed(seed)
-            np.random.shuffle(sample_fracs)
+            rng.shuffle(sample_fracs)
         else:
             raise NotImplementedError
 
@@ -89,7 +87,7 @@ def load_data_partition(
     elif partition_strategy == 'niid_dir':
         datas = separate_data_niid(
             train_data, data_config, num_clients, niid=True, partition='dir', balance=False, class_per_client=None,
-            niid_alpha=niid_alpha, min_samples=min_samples, reg_bins=reg_bins, seed=seed
+            niid_alpha=niid_alpha, min_samples=min_samples, reg_bins=reg_bins, seed=seed, rng = rng
         )
     else:
         raise ValueError('Strategy not found')

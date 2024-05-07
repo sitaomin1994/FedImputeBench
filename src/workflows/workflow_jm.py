@@ -108,7 +108,10 @@ class WorkflowJM(BaseWorkflow):
             ########################################################################################################
             # updates local imputation model and do imputation
             for global_model, client in zip(global_models, clients):
-                client.update_local_imp_model(global_model, params={})
+                update_instruction = server.fed_strategy.update_instruction({
+                    'current_epoch': epoch, 'global_epoch': global_model_epochs
+                })
+                client.update_local_imp_model(global_model, params=update_instruction)
 
             if epoch % imp_interval == 0:
                 for client in clients:

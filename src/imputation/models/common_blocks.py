@@ -1,10 +1,15 @@
-from typing import Type
+from typing import Type, Any
 
 import torch
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+
+def weights_init(layer: Any) -> None:
+    if type(layer) == nn.Linear:
+        torch.nn.init.orthogonal_(layer.weight)
 
 
 ########################################################################################################################
@@ -52,7 +57,7 @@ class LinearLayers(nn.Module):
             output_dim,
             hidden_dims,
             dropout_rate=0.0,
-            normalization= None,
+            normalization=None,
             activation='relu',
             final_activation=None,
             init_method='default'

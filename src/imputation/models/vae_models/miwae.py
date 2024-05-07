@@ -91,7 +91,8 @@ class MIWAE(nn.Module):
 
         # prior for z
         self.p_z = td.Independent(
-            td.Normal(loc=torch.zeros(self.latent_size).to(DEVICE), scale=torch.ones(self.latent_size).to(DEVICE)), 1
+            td.Normal(loc=torch.zeros(self.latent_size).to(DEVICE), scale=torch.ones(self.latent_size).to(DEVICE)),
+            1
         )
 
     @staticmethod
@@ -116,7 +117,7 @@ class MIWAE(nn.Module):
 
         # decoder
         out_decoder = self.decoder(zgivenx_flat)
-        recon_x_means = self.decoder.l_out_mu(out_decoder)
+        #recon_x_means = self.decoder.l_out_mu(out_decoder)
 
         # compute loss
         data_flat = torch.Tensor.repeat(x, [self.K, 1]).reshape([-1, 1]).to(DEVICE)
@@ -151,7 +152,7 @@ class MIWAE(nn.Module):
 
         # decoder
         out_decoder = self.decoder(zgivenx_flat)
-        recon_x_means = self.decoder.l_out_mu(out_decoder)
+        #recon_x_means = self.decoder.l_out_mu(out_decoder)
 
         # loss
         data_flat = torch.Tensor.repeat(x, [L, 1]).reshape([-1, 1]).to(DEVICE)

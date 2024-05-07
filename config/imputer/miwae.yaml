@@ -6,15 +6,20 @@ imp_params:
   imp_model_params:
     latent_size: 16
     n_hidden: 64
+    n_hidden_layers: 2
+    out_dist: 'studentt'
     K: 20
     L: 100
 model_train_params:
-  global_epoch: 100
-  model_converge_tol: 0.0001
-  model_converge_patience: 10
+  global_epoch: 150
+  model_converge_tol: 0.001
+  model_converge_patience: 20
   local_epoch: 5
   batch_size: 512
-  lr: 0.001
+  learning_rate: 0.001
   weight_decay: 0.0001
+  schedule_step_size: 10
+  schedule_gamma: 0.5
+  schedule_last_epoch: -1
   optimizer: 'adam'
   log_interval: 1

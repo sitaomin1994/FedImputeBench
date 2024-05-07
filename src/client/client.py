@@ -50,15 +50,17 @@ class Client:
 
     def fit_local_imp_model(self, params: dict) -> Tuple[dict, dict]:
         """
-        Fit local imputation model
+        Fit a local imputation model
         """
         if not params['fit_model']:
             return self.imputer.get_imp_model_params(params), {}
         else:
-            if self.imputer.model_type == 'torch_nn' and self.fed_strategy.name in ['fedprox']:
+            if self.imputer.model_type == 'torch_nn': #and self.fed_strategy.name == 'fedprox':
                 # Based params get current imp models
-                imp_model, dataloader = self.imputer.fetch_model(params, self.X_train_imp, self.y_train, self.X_train_mask)
-                imp_model, fit_res = self.fed_strategy.fit_local(imp_model, dataloader)
+                imp_model, dataloader = self.imputer.fetch_model(
+                    params, self.X_train_imp, self.y_train, self.X_train_mask
+                )
+                imp_model, fit_res = self.fed_strategy.fit_local_model(imp_model, dataloader, params)
 
                 self.update_local_imp_model(imp_model.state_dict(), params)
                 fit_res.update(self.data_utils)
@@ -79,7 +81,8 @@ class Client:
         """
         Fit local imputation model
         """
-        self.imputer.set_imp_model_params(updated_local_model, params)
+        if 'update_model' not in params or ('update_model' in params and params['update_model'] == True):
+            self.imputer.set_imp_model_params(updated_local_model, params)
 
     def local_imputation(self, params: dict) -> None:
         """
@@ -91,7 +94,7 @@ class Client:
         """
         Initial imputation
         """
-        #print(f"Client {self.client_id} {self.X_train_ms.shape} {self.X_train_mask.shape} {self.X_train_imp.shape} {imp_values.shape}")
+        # print(f"Client {self.client_id} {self.X_train_ms.shape} {self.X_train_mask.shape} {self.X_train_imp.shape} {imp_values.shape}")
         num_cols = self.data_utils['num_cols']
         if col_type == 'num':
             for i in range(num_cols):

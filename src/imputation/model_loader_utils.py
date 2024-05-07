@@ -12,6 +12,8 @@ from sklearn.tree import DecisionTreeRegressor, DecisionTreeClassifier
 from sklearn.base import BaseEstimator
 
 from torch import nn
+
+from emf.reproduce_utils import set_seed
 from src.imputation.models.ml_models.nn_model import (
     TwoNNRegressor, TwoNNClassifier
 )
@@ -27,7 +29,7 @@ def load_sklearn_model(estimator_name) -> BaseEstimator:
     elif estimator_name == 'linear_regression':
         return LinearRegression(n_jobs=-1)
     elif estimator_name == 'ridge':
-        return Ridge(alpha=10, random_state=0)
+        return Ridge(alpha=1.0, random_state=0, solver='sag')
     elif estimator_name == 'bayesian_ridge':
         return BayesianRidge()
     elif estimator_name == 'lasso':
@@ -72,7 +74,8 @@ def load_sklearn_model(estimator_name) -> BaseEstimator:
         raise ValueError('Unknown estimator name: {}'.format(estimator_name))
 
 
-def load_pytorch_model(model_name, model_params) -> nn.Module:
+def load_pytorch_model(model_name, model_params, seed) -> nn.Module:
+    set_seed(seed)
     if model_name == 'nn_reg':
         return TwoNNRegressor(input_dim=model_params['input_dim'], hidden_dim=model_params['hidden_dim'])
     elif model_name == 'nn_clf':

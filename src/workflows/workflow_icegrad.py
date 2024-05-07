@@ -65,27 +65,29 @@ class WorkflowICEGrad(BaseWorkflow):
 
             ########################################################################################################
             # Evaluation
-            self.eval_and_track(
-                evaluator, tracker, clients, phase='round', epoch=epoch, iterations=iterations,
-                evaluation_interval=evaluation_interval
-            )
+            if epoch % evaluation_interval == 0 or epoch >= iterations - 3:
+                self.eval_and_track(
+                    evaluator, tracker, clients, phase='round', epoch=epoch, iterations=iterations,
+                    evaluation_interval=evaluation_interval
+                )
 
             ########################################################################################################
             # Federated imputation for each feature
             for feature_idx in trange(data_dim, desc='Feature_idx', leave=False, colour='blue'):
 
                 # Collaboratively training imputation model using gradient-based method
-                model_converge_tol = train_params['model_converge_tol']  # TODO: not used
+                model_converge_tol = train_params['model_converge_tol']
                 model_converge_patience = train_params['model_converge_patience']
                 best_significant_loss_per_client = {client.client_id: None for client in clients}
                 patience_counter_per_client = {client.client_id: 0 for client in clients}
                 all_clients_converged = False
 
                 model_global_epochs = train_params['global_epoch']
-                for model_epoch in trange(model_global_epochs, desc='Model Epochs', leave=False, colour='blue'):
+                #for model_epoch in trange(model_global_epochs, desc='Model Epochs', leave=False, colour='blue'):
+                for model_epoch in range(model_global_epochs):
 
                     ###############################################################################################
-                    # local training of imputation model
+                    # local training of an imputation model
                     local_models, clients_fit_res = [], []
                     fit_instruction = server.fed_strategy.fit_instruction([{} for _ in range(len(clients))])
                     for client in clients:
