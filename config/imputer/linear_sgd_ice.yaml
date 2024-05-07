@@ -2,15 +2,19 @@
 #  - /imp_workflow@_group_: icegrad
 
 # configuration for linear ice imputation
-imp_name: 'linear_ice_sgd'
+imp_name: 'mlp_ice'
 imp_params:
-  estimator_num: 'ridge'
-  estimator_cat: 'logit'
+  estimator_num: 'nn_reg'
+  estimator_cat: 'nn_clf'
   mm_model: 'logistic'
   mm_model_params:
     class_weight: 'balanced'
     Cs: [1e-1]
     cv: 3
+  imp_model_params:
+    hidden_dim_min: 16
+    hidden_dim_max: 64
+    hidden_dim_factor: 2
   clip: True
   use_y: False
 model_train_params:
@@ -20,6 +24,6 @@ model_train_params:
   local_epoch: 5
   batch_size: 256
   learning_rate: 0.001
-  weight_decay: 0.0001
+  weight_decay: 0.001
   optimizer: 'adam'
   log_interval: 1
