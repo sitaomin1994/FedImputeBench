@@ -1,0 +1,15 @@
+defaults:
+  - /imp_workflow@_group_: ice
+
+imp_name: 'linear_ice'
+imp_params:
+  estimator_num: 'ridge_cv'
+  estimator_cat: 'logistic_cv'
+  mm_model: 'logistic'
+  mm_model_params:
+    class_weight: 'balanced'
+    Cs: [1e-1]
+    cv: 3
+  clip: True
+  use_y: False
+model_train_params: {}

@@ -1,5 +1,5 @@
 workflow_name: 'vae'
 workflow_params:
-  evaluation_interval: 10
-  imp_interval: 5
+  evaluation_interval: 50
+  imp_interval: 10
 workflow_runtype: sequential
