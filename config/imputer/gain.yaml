@@ -1,29 +1,33 @@
 defaults:
-  - /imp_workflow@_group_: vae
+  - /imp_workflow@_group_: jm
 
-imp_name: miwae
+imp_name: gain
 imp_params:
   clip: true
   imp_model_params:
-    latent_size: 16
-    n_hidden: 64
-    n_hidden_layers: 2
-    out_dist: 'studentt'
-    K: 20
-    L: 100
+    h_dim: 64
+    n_layers: 2
+    activation: 'relu'
+    loss_alpha: 50
+    hint_rate: 0.3
 model_train_params:
-  global_epoch: 150
+  global_epoch: 200
   local_epoch: 5
-  batch_size: 512
+  batch_size: 256
   learning_rate: 0.001
   weight_decay: 0.0001
-  use_early_stopping: true
-  model_converge_tol: 0.001
-  model_converge_patience: 20
   scheduler: "step"
   scheduler_params:
     step_size: 10
     gamma: 0.5
     schedule_last_epoch: -1
   optimizer: 'adam'
-  log_interval: 1
+  use_early_stopping: false
+  model_converge:
+    tolerance: 0.001
+    patience: 10
+    window_size: 4
+    check_steps: 1
+    back_steps: 10
+  log_interval: 10
+  imp_interval: 10

@@ -6,6 +6,7 @@ from src.client import Client
 from copy import deepcopy
 import gc
 
+
 def formulate_centralized_client(clients: List[Client]) -> Client:
     """
     Formulate a centralized client
@@ -42,3 +43,14 @@ def formulate_centralized_client(clients: List[Client]) -> Client:
     )
 
     return centralized_client
+
+
+def update_clip_threshold(clients: List[Client]):
+    initial_values_min, initial_values_max = [], []
+    for client_id, client in enumerate(clients):
+        initial_values_min.append(client.imputer.min_values)
+        initial_values_max.append(client.imputer.max_values)
+    global_min_values = np.min(np.array(initial_values_min), axis=0, initial=0)
+    global_max_values = np.max(np.array(initial_values_max), axis=0, initial=1)
+    for client_id, client in enumerate(clients):
+        client.imputer.set_clip_thresholds(global_min_values, global_max_values)

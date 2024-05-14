@@ -1,14 +1,14 @@
 from copy import deepcopy
 from typing import List, Tuple
 from collections import OrderedDict
-
+import numpy as np
 from src.fed_strategy.fed_strategy_server.base_strategy import StrategyServer
 
 
-class FedAvgStrategyServer(StrategyServer):
+class FedTreeStrategyServer(StrategyServer):
 
     def __init__(self, strategy_params):
-        super(FedAvgStrategyServer, self).__init__('fedavg')
+        super(FedTreeStrategyServer, self).__init__('fedtree')
         self.strategy_params = strategy_params
         self.fine_tune_epochs = strategy_params.get('fine_tune_steps', 0)
 
@@ -26,20 +26,21 @@ class FedAvgStrategyServer(StrategyServer):
         :return: List of aggregated model parameters, dict of aggregated results
         """
 
-        # federated averaging implementation
-        averaged_model_state_dict = OrderedDict([])  # global parameters
+        # federated tree sampling strategy
         sample_sizes = [item['sample_size'] for item in fit_res]
-        normalized_coefficient = [size / sum(sample_sizes) for size in sample_sizes]
+        sample_fracs = [size / sum(sample_sizes) for size in sample_sizes]
 
-        for it, local_model_state_dict in enumerate(local_model_parameters):
-            for key in local_model_state_dict.keys():
-                if it == 0:
-                    averaged_model_state_dict[key] = normalized_coefficient[it] * local_model_state_dict[key]
-                else:
-                    averaged_model_state_dict[key] += normalized_coefficient[it] * local_model_state_dict[key]
+        np.random.seed(1203401)
+        # all local trees
+        global_trees = []
+        for local_model_state_dict, sample_frac in zip(local_model_parameters, sample_fracs):
+            local_trees = local_model_state_dict['estimators']
+            sampled_trees = np.random.choice(local_trees, int(len(local_trees) * sample_frac), replace=False)
+            global_trees.extend(sampled_trees)
 
+        global_params = OrderedDict({"estimators": global_trees})
         # copy parameters for each client
-        agg_model_parameters = [deepcopy(averaged_model_state_dict) for _ in range(len(local_model_parameters))]
+        agg_model_parameters = [deepcopy(global_params) for _ in range(len(local_model_parameters))]
         agg_res = {}
 
         return agg_model_parameters, agg_res
@@ -51,3 +52,4 @@ class FedAvgStrategyServer(StrategyServer):
     def update_instruction(self, params: dict) -> dict:
 
         return {}
+

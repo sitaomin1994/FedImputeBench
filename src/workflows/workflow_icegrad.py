@@ -4,7 +4,7 @@ from src.server import Server
 from typing import List
 from src.client import Client
 from src.imputation.initial_imputation import initial_imputation_num, initial_imputation_cat
-from .utils import formulate_centralized_client
+from .utils import formulate_centralized_client, update_clip_threshold
 from .workflow import BaseWorkflow
 from ..evaluation.evaluator import Evaluator
 from tqdm.auto import trange
@@ -42,15 +42,8 @@ class WorkflowICEGrad(BaseWorkflow):
 
         ############################################################################################################
         # Update Global clip thresholds
-        if server.fed_strategy.name == 'local':
-            initial_values_min, initial_values_max = [], []
-            for client_id, client in enumerate(clients):
-                initial_values_min.append(client.imputer.min_values)
-                initial_values_max.append(client.imputer.max_values)
-            global_min_values = np.min(np.array(initial_values_min), axis=0, initial=0)
-            global_max_values = np.max(np.array(initial_values_max), axis=0, initial=1)
-            for client_id, client in enumerate(clients):
-                client.imputer.set_clip_thresholds(global_min_values, global_max_values)
+        if server.fed_strategy.name != 'local':
+            update_clip_threshold(clients)
 
         ############################################################################################################
         # Initial Imputation
@@ -128,7 +121,9 @@ class WorkflowICEGrad(BaseWorkflow):
                     ###############################################################################################
                     # aggregate local imputation model
                     global_models, agg_res = server.fed_strategy.aggregate_parameters(
-                        local_model_parameters=local_models, fit_res=clients_fit_res
+                        local_model_parameters=local_models, fit_res=clients_fit_res, params = {
+                            'current_epoch': model_epoch, "global_epoch": model_global_epochs
+                        }
                     )
 
                     ###############################################################################################

@@ -1,11 +1,8 @@
-import numpy as np
-
-from .utils import formulate_centralized_client
+from .utils import formulate_centralized_client, update_clip_threshold
 from .workflow import BaseWorkflow
 from src.server import Server
 from typing import List
 from src.client import Client
-from src.imputation.initial_imputation import initial_imputation_num, initial_imputation_cat
 from ..evaluation.evaluator import Evaluator
 
 from tqdm.auto import trange
@@ -40,20 +37,10 @@ class WorkflowICE(BaseWorkflow):
             clients.append(formulate_centralized_client(clients))
 
         ############################################################################################################
-        # Update Global clip thresholds
-        if server.fed_strategy.name == 'local':
-            initial_values_min, initial_values_max = [], []
-            for client_id, client in enumerate(clients):
-                initial_values_min.append(client.imputer.min_values)  # encapsulate these
-                initial_values_max.append(client.imputer.max_values)  # encapsulate these
-            global_min_values = np.min(np.array(initial_values_min), axis=0, initial=0)
-            global_max_values = np.max(np.array(initial_values_max), axis=0, initial=1)
-            for client_id, client in enumerate(clients):
-                client.imputer.set_clip_thresholds(global_min_values, global_max_values)  # encapsulate these interfaces
-
-        ############################################################################################################
-        # Initial Imputation
+        # Initial Imputation and update clip threshold
         clients = initial_imputation(server.fed_strategy.strategy_params['initial_impute'], clients)
+        if server.fed_strategy.name != 'local':
+            update_clip_threshold(clients)
 
         # initial evaluation and tracking
         self.eval_and_track(evaluator, tracker, clients, phase='initial')
@@ -61,14 +48,6 @@ class WorkflowICE(BaseWorkflow):
         ############################################################################################################
         # Federated Imputation Sequential Workflow
         for epoch in trange(iterations, desc='ICE Iterations', colour='blue'):
-
-            ########################################################################################################
-            # Evaluation
-            if epoch % evaluation_interval == 0 or epoch >= iterations - 3:
-                self.eval_and_track(
-                    evaluator, tracker, clients, phase='round', epoch=epoch, iterations=iterations,
-                    evaluation_interval=evaluation_interval
-                )
 
             ########################################################################################################
             # federated imputation for each feature
@@ -86,13 +65,21 @@ class WorkflowICE(BaseWorkflow):
 
                 # server aggregate local imputation model
                 global_models, agg_res = server.fed_strategy.aggregate_parameters(
-                    local_model_parameters=local_models, fit_res=clients_fit_res
+                    local_model_parameters=local_models, fit_res=clients_fit_res, params={}
                 )
 
                 # client update local imputation model and do imputation
                 for global_model, client in zip(global_models, clients):
                     client.update_local_imp_model(global_model, params={'feature_idx': feature_idx})
                     client.local_imputation(params={'feature_idx': feature_idx})
+
+            ########################################################################################################
+            # Evaluation
+            if epoch % evaluation_interval == 0:
+                self.eval_and_track(
+                    evaluator, tracker, clients, phase='round', epoch=epoch, iterations=iterations,
+                    evaluation_interval=evaluation_interval
+                )
 
         ########################################################################################################
         # Final Evaluation and Tracking

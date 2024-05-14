@@ -1,7 +1,12 @@
 from abc import ABC, abstractmethod
+
+import numpy as np
 import torch
 from typing import Tuple
 import torch.optim.lr_scheduler as lr_scheduler
+from src.imputation.base.base_imputer import BaseNNImputer
+from src.utils.nn_utils import load_optimizer, load_lr_scheduler
+
 
 class StrategyClient(ABC):
 
@@ -9,90 +14,86 @@ class StrategyClient(ABC):
         self.name = name
 
     @abstractmethod
-    def fit_local_model(
-            self, model: torch.nn.Module, dataloader: torch.utils.data.DataLoader, params: dict
-    ) -> Tuple[torch.nn.Module, dict]:
+    def pre_training_setup(self, model: torch.nn.Module, params: dict):
+        pass
+
+    @abstractmethod
+    def fed_updates(self, model: torch.nn.Module):
+        pass
+
+    @abstractmethod
+    def post_training_setup(self, model: torch.nn.Module):
         pass
 
 
 def fit_local_model_base(
-        model: torch.nn.Module, dataloader: torch.utils.data.DataLoader, params: dict
+        imputer: BaseNNImputer, training_params: dict, fed_strategy: StrategyClient,
+        X_train_imp: np.ndarray, y_train: np.ndarray, X_train_mask: np.ndarray
 ) -> Tuple[torch.nn.Module, dict]:
+
+    ######################################################################################
+    # training params
     DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
     try:
-        local_epochs = params['local_epoch']
-        learning_rate = params['learning_rate']
-        weight_decay = params['weight_decay']
-        optimizer_name = params['optimizer']
-        model_converge_tol = params['model_converge_tol']
-        model_converge_patience = params['model_converge_patience']
-        schedule_step = params['schedule_step_size']
-        schedule_gamma = params['schedule_gamma']
-        schedule_last_epoch = params['schedule_last_epoch']
+        local_epochs = training_params['local_epoch']
+        model_converge_tol = training_params['model_converge_tol']
+        model_converge_patience = training_params['model_converge_patience']
     except KeyError as e:
         raise ValueError(f"Parameter {str(e)} not found in params")
 
-    if optimizer_name == 'adam':
-        optimizer = torch.optim.Adam(
-            model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    elif optimizer_name == 'sgd':
-        optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    elif optimizer_name == 'asgd':
-        optimizer = torch.optim.ASGD(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    elif optimizer_name == 'lbfgs':
-        optimizer = torch.optim.LBFGS(model.parameters(), lr=learning_rate)
-    else:
-        raise ValueError(f"Optimizer {optimizer_name} not supported")
+    ######################################################################################
+    # model and dataloader
+    model, train_dataloader = imputer.configure_model(training_params, X_train_imp, y_train, X_train_mask)
 
-    scheduler = lr_scheduler.StepLR(optimizer, step_size=schedule_step, gamma=schedule_gamma)
-    # Initialization - model to device and copy global model parameters
+    # optimizer and scheduler
+    optimizers, lr_schedulers = imputer.configure_optimizer(training_params)
     model.to(DEVICE)
-    model.train()
 
+    ######################################################################################
+    # pre-training setup
+    fed_strategy.pre_training_setup(model)
+
+    ######################################################################################
+    # training loop
     total_loss, total_iters = 0, 0
-    early_stopping_triggered = False
-    best_loss = float('inf')
-    patience_counter = 0
     for ep in range(local_epochs):
-        loss_epoch = 0
-        for i, inputs in enumerate(dataloader):
-            # training step
-            inputs = tuple(input_.to(DEVICE) for input_ in inputs)
-            optimizer.zero_grad()
-            loss, train_res_dict = model.compute_loss(inputs)
-            loss.backward()
-            loss_epoch += loss.item()
-            # update parameters
-            optimizer.step()
 
+        #################################################################################
+        # training one epoch
+        losses_epoch = [0 for _ in range(len(optimizers))]
+        for batch_idx, batch in enumerate(train_dataloader):
+            for optimizer_idx, optimizer in enumerate(optimizers):
+                #########################################################################
+                # training step
+                model.train()
+                loss, res = model.train_step(batch, batch_idx, optimizers, optimizer_idx)
+                #########################################################################
+                # fed updates
+                fed_strategy.fed_updates(model)
+
+                #########################################################################
+                # update loss
+                losses_epoch[optimizer_idx] += loss.item()
+
+        #################################################################################
+        # epoch end - update loss, early stopping, evaluation, garbage collection etc.
         if DEVICE == "cuda":
             torch.cuda.empty_cache()
 
-        final_loss = loss_epoch / len(dataloader)
-        # if ep % 20 == 0:
-        #     print(f"Epoch {ep} - Loss: {final_loss}")
-        #
-        # if final_loss < best_loss - model_converge_tol:
-        #     best_loss = final_loss
-        #     patience_counter = 0  # Reset patience counter
-        # else:
-        #     patience_counter += 1  # Increment patience counter
+        losses_epoch = [loss_epoch / len(train_dataloader) for loss_epoch in losses_epoch]
 
-            # Early stopping check
-        # if patience_counter >= model_converge_patience:
-        #     print(f"Early stopping triggered after {ep} epochs. Loss: {final_loss}")
-        #     early_stopping_triggered = True
-        #     break
+        # update lr scheduler
+        for scheduler in lr_schedulers:
+            scheduler.step()
 
-        scheduler.step()
-
-        total_loss += final_loss
+        total_loss += sum(losses_epoch)/len(losses_epoch)  # average loss
         total_iters += 1
 
-    # if not early_stopping_triggered:
-    #     print(f"Training completed without early stopping. Final loss: {final_loss}")
+    #########################################################################################
+    # post-training setup
+    fed_strategy.post_training_setup(model)
 
     model.to('cpu')
     final_loss = total_loss / total_iters
 
-    return model, {'loss': final_loss, 'sample_size': len(dataloader.dataset)}
+    return model, {'loss': final_loss, 'sample_size': len(train_dataloader.dataset)}

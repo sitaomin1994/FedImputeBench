@@ -10,7 +10,6 @@ def simulate_scenario(
         data: np.array, data_config: dict, num_clients,
         data_partition_params: dict,
         missing_simulate_params: dict,
-        rng: np.random.Generator,
         seed: int = 100330201,
 ) -> Tuple[List[Tuple[np.array, np.ndarray, np.ndarray]], np.array, List[int], List[List[Tuple[int, int]]]]:
     """
@@ -27,8 +26,10 @@ def simulate_scenario(
         - max_samples: maximum samples
         - niid_alpha: non-iid alpha dirichlet
         - even_sample_size: even sample size
-        - local_test_size: local test ratio
-        - global_test_size: global test ratio
+        - sample_iid_direct: sample iid data directly - default: False
+        - local_test_size: local test ratio - default: 0.1
+        - global_test_size: global test ratio - default: 0.1
+        - local_backup_size: local backup_size -  default: 0.1
         - reg_bins: regression bins
     :param missing_simulate_params: missing data simulation parameters
         - global_missing: whether simulate missing data globally or locally
@@ -48,30 +49,46 @@ def simulate_scenario(
     """
     # ========================================================================================
     # setup clients seeds
-    client_seeds = setup_clients_seed(num_clients, rng=rng)
+    global_seed = seed
+    global_rng = np.random.default_rng(seed)
+    client_seeds = setup_clients_seed(num_clients, rng=global_rng)
+    client_rngs = [np.random.default_rng(seed) for seed in client_seeds]
 
     # ========================================================================================
     # data partition
-    clients_train_data_list, clients_test_data_list, global_test_data, stats = load_data_partition(
-        data, data_config, num_clients, seed=seed, rng=rng, **data_partition_params
+    clients_train_data_list, clients_backup_data_list, clients_test_data_list, global_test_data, stats = (
+        load_data_partition(
+            data, data_config, num_clients, seeds=client_seeds, global_seed=global_seed, **data_partition_params
+        )
     )
 
     # ========================================================================================
     # simulate missing data globally
-    if 'ms_cols' in data_config:
-        cols = data_config['ms_cols']
+    if 'mm_obs' in missing_simulate_params and missing_simulate_params['mm_obs']:
+        if 'obs_col_idx' in data_config and len(data_config['obs_col_idx']) > 0:
+            obs_cols = np.array(data_config['obs_col_idx'])
+            cols = np.arange(data.shape[1] - 1)[~np.isin(np.arange(data.shape[1] - 1), obs_cols)]
+        else:
+            size = (data.shape[1] - 1) // 4
+            cols = global_rng.choice(data.shape[1] - 1, size=size, replace=False)
     else:
         cols = np.arange(data.shape[1] - 1)
     client_train_data_ms_list = add_missing(
-        clients_train_data_list, cols, client_seeds, seed=seed, **missing_simulate_params
+        clients_train_data_list, cols, client_rngs, seed=global_seed, **missing_simulate_params
     )
 
     # ========================================================================================
     # organize results
     clients_data = []
     for i in range(num_clients):
-        clients_data.append(
-            (clients_train_data_list[i], clients_test_data_list[i], client_train_data_ms_list[i])
+        # merge backup data
+        client_train_data = np.concatenate([clients_train_data_list[i], clients_backup_data_list[i]], axis=0)
+        client_train_data_ms = np.concatenate(
+            [client_train_data_ms_list[i], clients_backup_data_list[i][:, :-1]], axis=0
         )
+        client_test_data = clients_test_data_list[i]
+
+        # append data back to a list
+        clients_data.append((client_train_data, client_test_data, client_train_data_ms))
 
     return clients_data, global_test_data, client_seeds, stats

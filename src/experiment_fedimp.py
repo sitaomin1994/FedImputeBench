@@ -4,6 +4,7 @@ from src.evaluation.evaluator import Evaluator
 from src.loaders.load_environment import setup_clients, setup_server
 from src.utils.tracker import Tracker
 from src.utils.result_analyzer import ResultAnalyzer
+from src.utils.consistency_checker import check_consistency
 from src.loaders.load_data import load_data
 from src.server import Server
 from src.client import Client
@@ -26,7 +27,7 @@ class Experiment(BaseExperiment):
         if n_rounds == 1:
             return self.single_run(config, seed)
         else:
-            results = self.multiple_runs(config, seed, n_rounds, mtp = mtp)
+            results = self.multiple_runs(config, seed, n_rounds, mtp=mtp)
             return self.merge_results(results)
 
     def single_run(self, config: dict, seed) -> dict:
@@ -39,7 +40,6 @@ class Experiment(BaseExperiment):
 
         ###########################################################################################################
         # Data loading
-        rng = np.random.default_rng(seed=seed)
         dataset_name = config['dataset_name']
         data, data_config = load_data(dataset_name)
 
@@ -49,7 +49,7 @@ class Experiment(BaseExperiment):
         data_partition_params = config['data_partition']['partition_params']
         missing_scenario_params = config['missing_scenario']['params']
         clients_data, global_test_data, client_seeds, stata = simulate_scenario(
-            data.values, data_config, num_clients, data_partition_params, missing_scenario_params, rng, seed
+            data.values, data_config, num_clients, data_partition_params, missing_scenario_params, seed
         )
 
         ###########################################################################################################
@@ -62,6 +62,13 @@ class Experiment(BaseExperiment):
         fed_strategy_client_params = config['fed_strategy']['fed_strategy_client_params']
         fed_strategy_server_params = config['fed_strategy']['fed_strategy_server_params']
 
+        workflow_name = config['imp_workflow']['workflow_name']
+        workflow_params = config['imp_workflow']['workflow_params']
+        workflow_run_type = config['imp_workflow']['workflow_runtype']
+
+        # check the consistency of imputer, fed_strategy and workflow
+        check_consistency(imputer_name, fed_strategy_name, workflow_name)
+
         clients = setup_clients(
             clients_data, client_seeds, data_config,
             imputer_name, imputer_params, fed_strategy_name, fed_strategy_client_params
@@ -70,10 +77,6 @@ class Experiment(BaseExperiment):
         server = setup_server(
             fed_strategy_name, fed_strategy_server_params, server_config={}
         )
-
-        workflow_name = config['imp_workflow']['workflow_name']
-        workflow_params = config['imp_workflow']['workflow_params']
-        workflow_run_type = config['imp_workflow']['workflow_runtype']
 
         workflow = load_workflow(workflow_name, workflow_params)
 

@@ -10,7 +10,8 @@ from src.modules.missing_simulate.add_missing_utils import (
 
 # TODO: make this to be a class
 def add_missing(
-        clients_data: List[np.ndarray], cols: List[int], seeds: List[int],
+        clients_data: List[np.ndarray], cols: List[int],
+        rngs: List[np.random.Generator],
         global_missing: bool = False,
         mf_strategy: str = 'all',
         mr_dist: str = 'uniform_int',
@@ -23,13 +24,14 @@ def add_missing(
         mm_obs: bool = True,
         mm_feature_option: str = 'allk=0.2',
         mm_beta_option: str = None,
-        seed: int = 20030331
+        seed: int = 20030331,
 ) -> List[np.array]:
     """
     Simulate Missing data
+    :param rngs: random generator for each client
     :param clients_data: List of clients data
     :param cols: columns to be considered
-    :param seeds:  seed for each client
+    :param seeds: seed for each client
     :param global_missing: whether simulate missing data globally or locally
     :param mf_strategy: missing features strategy
     :param mr_dist: missing ratio distribution
@@ -50,6 +52,7 @@ def add_missing(
     if global_missing:
         global_data = np.concatenate(clients_data, axis=0)
         split_indices = np.cumsum([item.shape[0] for item in clients_data])[:-1]
+
         global_data_ms = _add_missing_central(
             global_data, cols, mf_strategy=mf_strategy, mr_dist=mr_dist, mr_lower=mr_lower, mr_upper=mr_upper,
             mm_funcs_bank=mm_funcs_bank, mm_mech=mm_mech, mm_strictness=mm_strictness, mm_obs=mm_obs,
@@ -61,7 +64,7 @@ def add_missing(
     # add missing to separately
     else:
         clients_data_ms = _add_missing_dist(
-            clients_data, cols, seeds, mf_strategy=mf_strategy, mr_dist=mr_dist, mr_lower=mr_lower, mr_upper=mr_upper,
+            clients_data, cols, rngs, mf_strategy=mf_strategy, mr_dist=mr_dist, mr_lower=mr_lower, mr_upper=mr_upper,
             mm_funcs_dist=mm_funcs_dist, mm_funcs_bank=mm_funcs_bank, mm_mech=mm_mech, mm_strictness=mm_strictness,
             mm_obs=mm_obs, mm_feature_option=mm_feature_option, mm_beta_option=mm_beta_option, seed=seed
         )
@@ -129,18 +132,19 @@ def _add_missing_central(
     # Simulate missing data
     print(missing_cols, missing_ratios, mm_funcs)
     X_train, y_train = data[:, :-1], data[:, -1]
+    rng = np.random.default_rng(seed)
     X_train_ms = simulate_nan(
         X_train, y_train, mm_mech=mm_mech, missing_features=missing_cols, missing_ratios=missing_ratios,
         mechanism_funcs=mm_funcs, mm_obs=mm_obs, mm_strictness=mm_strictness,
-        mm_feature_option=mm_feature_option, mm_beta_option=mm_beta_option, seed=seed
+        mm_feature_option=mm_feature_option, mm_beta_option=mm_beta_option, rng = rng
     )
 
-    return np.concatenate(X_train_ms)
+    return X_train_ms
 
 
 ########################################################################################################################
 def _add_missing_dist(
-        clients_data: List[np.ndarray], cols: List[int], seeds: List[int],
+        clients_data: List[np.ndarray], cols: List[int], rngs: List[np.random.Generator],
         mf_strategy: str = 'all',
         mr_dist: str = 'uniform_int',
         mr_lower: float = 0.3,
@@ -158,7 +162,7 @@ def _add_missing_dist(
         Add missing data for each client's dataset
         :param clients_data: List of data array for clients
         :param cols: columns to add missing values
-        :param seeds: list seed for missing data simulation for each client
+        :param rngs: list random generator for missing data simulation for each client
         :param mm_funcs_dist: missing mechanism functions distribution across clients and features
         :param mm_funcs_bank: missing mechanism functions banks
         :param mf_strategy: missing features strategy
@@ -174,7 +178,7 @@ def _add_missing_dist(
         :return: list of datasets with missing values
         """
 
-    num_clients = len(seeds)
+    num_clients = len(rngs)
 
     # missing features - e.g. 'all'
     clients_missing_cols = generate_missing_cols(mf_strategy, num_clients, cols, seed=seed)
@@ -208,7 +212,7 @@ def _add_missing_dist(
         X_train_ms = simulate_nan(
             X_train, y_train, mm_mech=mm_mech, missing_features=missing_cols, missing_ratios=missing_ratios,
             mechanism_funcs=mm_funcs, mm_obs=mm_obs, mm_strictness=mm_strictness,
-            mm_feature_option=mm_feature_option, mm_beta_option=mm_beta_option, seed=seeds[i]
+            mm_feature_option=mm_feature_option, mm_beta_option=mm_beta_option, rng=rngs[i]
         )
 
         clients_data_ms.append(X_train_ms)
@@ -222,7 +226,8 @@ def _add_missing_dist(
 def simulate_nan(
         X_train: np.ndarray, y_train: np.ndarray, mm_mech: str,
         missing_features: List[int], missing_ratios: List[float], mechanism_funcs: List[str],
-        mm_strictness: bool, mm_obs: bool, mm_feature_option: str, mm_beta_option: str, seed: int = 201030
+        mm_strictness: bool, mm_obs: bool, mm_feature_option: str, mm_beta_option: str,
+        rng: np.random.Generator = np.random.default_rng(100203)
 ) -> np.ndarray:
     """
     Simulate missing values for one client
@@ -236,35 +241,35 @@ def simulate_nan(
     :param mm_obs: missing based on observed data
     :param mm_feature_option: missing mechanism associated with which features
     :param mm_beta_option: missing mechanism beta coefficient option
-    :param seed: randomness
+    :param rng: randomness generator
     :return: data with missing values
     """
 
     # TODO: add mary
     if mm_mech == 'mcar':
         X_train_ms = mcar_simulate.simulate_nan_mcar(
-            X_train, missing_features, missing_ratios, seed=seed
+            X_train, missing_features, missing_ratios, rng=rng
         )
     elif mm_mech == 'mar_quantile':
         X_train_ms = mar_simulate.simulate_nan_mar_quantile(
             X_train, missing_features, missing_ratio=missing_ratios, missing_func=mechanism_funcs,
-            obs=mm_obs, strict=mm_strictness, seed=seed
+            obs=mm_obs, strict=mm_strictness, rng=rng
         )
     elif mm_mech == 'mar_sigmoid':
         X_train_ms = mar_simulate.simulate_nan_mar_sigmoid(
             X_train, missing_features, missing_ratio=missing_ratios, missing_func=mechanism_funcs,
             obs=mm_obs, strict=mm_strictness, mm_feature_option=mm_feature_option, mm_beta_option=mm_beta_option,
-            seed=seed
+            rng=rng
         )
     elif mm_mech == 'mnar_quantile':
         X_train_ms = mnar_simulate.simulate_nan_mnar_quantile(
             X_train, missing_features, missing_ratio=missing_ratios, missing_func=mechanism_funcs, strict=mm_strictness,
-            seed=seed
+            rng=rng
         )
     elif mm_mech == 'mnar_sigmoid':
         X_train_ms = mnar_simulate.simulate_nan_mnar_sigmoid(
             X_train, missing_features, missing_ratio=missing_ratios, missing_func=mechanism_funcs,
-            strict=mm_strictness, mm_feature_option=mm_feature_option, mm_beta_option=mm_beta_option, seed=seed
+            strict=mm_strictness, mm_feature_option=mm_feature_option, mm_beta_option=mm_beta_option, rng=rng
         )
     else:
         raise NotImplementedError

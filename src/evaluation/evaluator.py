@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 import numpy as np
 from src.client import Client
 from src.evaluation.imp_quality_metrics import rmse, sliced_ws
@@ -10,7 +10,10 @@ class Evaluator:
         self.evaluator_params = evaluator_params
 
     @staticmethod
-    def evaluate_imputation_local(X_train_imp:np.ndarray, X_train_origin:np.ndarray, X_train_mask:np.ndarray) -> dict:
+    def evaluate_imputation_local(
+            X_train_imp: np.ndarray, X_train_origin: np.ndarray, X_train_mask: np.ndarray
+    ) -> dict:
+
         imp_rmse = rmse(X_train_imp, X_train_origin, X_train_mask)
         imp_ws = sliced_ws(X_train_imp, X_train_origin)
         return {
@@ -43,15 +46,23 @@ class Evaluator:
         evaluation_results['imp_ws_avg'] = float(np.mean(evaluation_results['imp_ws_clients']))
 
         # global imputation quality evaluation
-        merged_X_imp = np.concatenate(X_train_imps, axis=0)
-        merged_X_origin = np.concatenate(X_train_origins, axis=0)
-        merged_X_mask = np.concatenate(X_train_masks, axis=0)
-        imp_rmse = rmse(merged_X_imp, merged_X_origin, merged_X_mask)
-        imp_ws = sliced_ws(merged_X_imp, merged_X_origin)
-        evaluation_results['imp_rmse_global'] = imp_rmse
-        evaluation_results['imp_ws_global'] = imp_ws
+        # merged_X_imp = np.concatenate(X_train_imps, axis=0)
+        # merged_X_origin = np.concatenate(X_train_origins, axis=0)
+        # merged_X_mask = np.concatenate(X_train_masks, axis=0)
+        # imp_rmse = rmse(merged_X_imp, merged_X_origin, merged_X_mask)
+        # imp_ws = sliced_ws(merged_X_imp, merged_X_origin)
+        # evaluation_results['imp_rmse_global'] = imp_rmse
+        # evaluation_results['imp_ws_global'] = imp_ws
 
         return evaluation_results
+
+    @staticmethod
+    def get_imp_quality(evaluation_results: dict, individual: bool = True, metric='rmse') -> Union[dict, float]:
+
+        if individual is True:
+            return evaluation_results[f'imp_{metric}_clients']
+        else:
+            return evaluation_results[f'imp_{metric}_avg']
 
     @staticmethod
     def evaluation_prediction(clients: List[Client]):

@@ -1,20 +1,22 @@
 from copy import deepcopy
-from typing import Tuple
+from typing import Tuple, List
 
 from sklearn.model_selection import StratifiedKFold
 from src.imputation.base.ice_imputer import ICEImputerMixin
 import numpy as np
 from sklearn.linear_model import LogisticRegressionCV
-
-from ..base.torch_nn_imputer import TorchNNImputer
 from ..model_loader_utils import load_pytorch_model
 from collections import OrderedDict
 import torch
+
+from src.utils.nn_utils import load_optimizer, load_lr_scheduler
+
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 from src.utils.math_util import max_squared_sum
+from src.imputation.base import BaseNNImputer
 
 
-class MLPICEImputer(TorchNNImputer, ICEImputerMixin):
+class ICEGradImputer(BaseNNImputer, ICEImputerMixin):
 
     def __init__(
             self,
@@ -50,7 +52,18 @@ class MLPICEImputer(TorchNNImputer, ICEImputerMixin):
         self.model_type = 'torch_nn'
         self.data_loaders = {}
 
-    def initialize(self, data_utils, params, seed):
+    def initialize(
+            self, X: np.array, missing_mask: np.array, data_utils: dict, params: dict, seed: int
+    ) -> None:
+        """
+        Initialize imputer - statistics imputation models etc.
+        :param X: data with intial imputed values
+        :param missing_mask: missing mask of data
+        :param data_utils:  utils dictionary - contains information about data
+        :param params: params for initialization
+        :param seed: int - seed for randomization
+        :return: None
+        """
 
         # initialized imputation models
         self.imp_models = []
@@ -71,7 +84,7 @@ class MLPICEImputer(TorchNNImputer, ICEImputerMixin):
             else:
                 model_params = {
                     'input_dim': data_utils['n_features'] - 1,
-                     'hidden_dim': min(
+                    'hidden_dim': min(
                         max(data_utils['n_features'] * self.hidden_dim_factor, self.hidden_dim_max),
                         self.hidden_dim_min
                     )
@@ -81,7 +94,7 @@ class MLPICEImputer(TorchNNImputer, ICEImputerMixin):
             self.imp_models.append(model)
 
         # Missing Mechanism Model
-        if self.mm_model_name == 'logistic':     # TODO: make mechanism model as a separate component
+        if self.mm_model_name == 'logistic':  # TODO: make mechanism model as a separate component
             self.mm_model = LogisticRegressionCV(
                 Cs=self.mm_model_params['Cs'], class_weight=self.mm_model_params['class_weight'],
                 cv=StratifiedKFold(self.mm_model_params['cv']), random_state=seed, max_iter=1000, n_jobs=-1
@@ -119,17 +132,10 @@ class MLPICEImputer(TorchNNImputer, ICEImputerMixin):
         feature_idx = params['feature_idx']
         return deepcopy(self.imp_models[feature_idx].state_dict())
 
-    def fetch_model(
-            self, params: dict, X: np.ndarray, y_train: np.ndarray, missing_mask: np.ndarray
+    def configure_model(
+            self, params: dict, X: np.ndarray, y: np.ndarray, missing_mask: np.ndarray
     ) -> Tuple[torch.nn.Module, torch.utils.data.DataLoader]:
-        """
-        Fetch model and dataloader for training given params
-        :param params: parameters for training
-        :param X: imputed data
-        :param y_train: target
-        :param missing_mask: missing mask
-        :return: model, data loader
-        """
+
         try:
             feature_idx = params['feature_idx']
             batch_size = params['batch_size']
@@ -139,10 +145,7 @@ class MLPICEImputer(TorchNNImputer, ICEImputerMixin):
         X_train = X[~row_mask][:, np.arange(X.shape[1]) != feature_idx]
         y_train = X[~row_mask][:, feature_idx]
 
-        #batch_size = max(1, min(X.shape[0]//100, 128))
-        print(batch_size)
-        print(max_squared_sum(X_train))
-
+        # batch_size = max(1, min(X.shape[0]//100, 128))
         # make X_train and y_train as torch tensors and torch data loader
         X_train = torch.tensor(X_train, dtype=torch.float32)
         y_train = torch.tensor(y_train, dtype=torch.float32)
@@ -155,6 +158,24 @@ class MLPICEImputer(TorchNNImputer, ICEImputerMixin):
         model = self.imp_models[feature_idx]
 
         return model, train_loader
+
+    def configure_optimizer(
+            self, params: dict, model: torch.nn.Module
+    ) -> tuple[List[torch.optim.Optimizer], List[torch.optim.lr_scheduler.LRScheduler]]:
+        pass
+        try:
+            learning_rate = params['learning_rate']
+            weight_decay = params['weight_decay']
+            optimizer_name = params['optimizer']
+            scheduler_name = params['scheduler']
+            scheduler_params = params['scheduler_params']
+        except KeyError as e:
+            raise ValueError(f"Parameter {str(e)} not found in params")
+
+        optimizer = load_optimizer(optimizer_name, model.parameters(), learning_rate, weight_decay)
+        lr_scheduler = load_lr_scheduler(scheduler_name, optimizer, scheduler_params)
+
+        return [optimizer], [lr_scheduler]
 
     def fit(self, X: np.array, y: np.array, missing_mask: np.array, params: dict) -> dict:
         """
@@ -182,7 +203,7 @@ class MLPICEImputer(TorchNNImputer, ICEImputerMixin):
         except KeyError as e:
             raise ValueError(f"Parameter {str(e)} not found in params")
 
-        # set up train and test data for training imputation model
+        # set up train and test data for a training imputation model
         if 'feature_idx' not in self.data_loaders:
             row_mask = missing_mask[:, feature_idx]
             X_train = X[~row_mask][:, np.arange(X.shape[1]) != feature_idx]
@@ -218,15 +239,9 @@ class MLPICEImputer(TorchNNImputer, ICEImputerMixin):
             losses.append(loss_epoch / len(train_loader))
 
         model.to('cpu')
-        # Fit mechanism models
-        # if row_mask.sum() == 0:
-        #     mm_coef = np.zeros(X.shape[1]) + 0.001
-        # else:
-        #     self.mm_model.fit(X, row_mask)
-        #     mm_coef = np.concatenate([self.mm_model.coef_[0], self.mm_model.intercept_])
 
         return {
-            #'mm_coef': mm_coef,
+            # 'mm_coef': mm_coef,
             'loss': np.array(losses).mean(),
             'sample_size': len(train_loader.dataset)
         }

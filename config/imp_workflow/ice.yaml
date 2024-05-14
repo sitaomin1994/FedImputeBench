@@ -1,5 +1,5 @@
 workflow_name: 'ice'
 workflow_params:
   imp_iterations: 20
-  evaluation_interval: 5
+  evaluation_interval: 1
 workflow_runtype: sequential

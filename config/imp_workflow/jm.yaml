@@ -1,5 +1,4 @@
-workflow_name: 'vae'
+workflow_name: 'jm'
 workflow_params:
-  evaluation_interval: 50
-  imp_interval: 10
+  imp_interval: 1
 workflow_runtype: sequential

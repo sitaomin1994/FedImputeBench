@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from tqdm import tqdm
 
 from src.server import Server
-from typing import Dict, Union, List, Tuple
+from typing import Dict, Union, List, Tuple, Any
 from src.client import Client
 from src.evaluation.evaluator import Evaluator
 from src.utils.tracker import Tracker
@@ -40,7 +40,7 @@ class BaseWorkflow(ABC):
     @staticmethod
     def eval_and_track(
             evaluator, tracker, clients, phase='round', epoch=0, iterations=0, evaluation_interval=1
-    ):
+    ) -> Union[Any]:
 
         ############################################################################################################
         # Initial evaluation and tracking
@@ -49,6 +49,18 @@ class BaseWorkflow(ABC):
                 data=[client.X_train for client in clients],
                 mask=[client.X_train_mask for client in clients],
             )
+
+            evaluation_results = evaluator.evaluate_imputation(
+                X_train_imps=[client.X_train_imp for client in clients],
+                X_train_origins=[client.X_train for client in clients],
+                X_train_masks=[client.X_train_mask for client in clients]
+            )
+
+            tqdm.write(
+                f"Initial: rmse - {evaluation_results['imp_rmse_avg']} ws - {evaluation_results['imp_ws_avg']}"
+            )
+
+            return None
 
         ############################################################################################################
         # Evaluation and tracking for each round
@@ -71,6 +83,9 @@ class BaseWorkflow(ABC):
             tqdm.write(
                 f"Epoch {epoch}: rmse - {evaluation_results['imp_rmse_avg']} ws - {evaluation_results['imp_ws_avg']}"
             )
+
+            return evaluator.get_imp_quality(evaluation_results)
+
         ############################################################################################################
         # Final evaluation and tracking
         elif phase == 'final':
@@ -89,3 +104,5 @@ class BaseWorkflow(ABC):
             tqdm.write(
                 f"Final: rmse - {evaluation_results['imp_rmse_avg']} ws - {evaluation_results['imp_ws_avg']}"
             )
+
+            return evaluator.get_imp_quality(evaluation_results)

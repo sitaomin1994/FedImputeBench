@@ -5,26 +5,30 @@ from typing import Dict, Union, List, Tuple, OrderedDict
 import numpy as np
 from torch.utils.data import DataLoader
 
-from ..base.torch_nn_imputer import TorchNNImputer
 from ..models.vae_models.miwae import MIWAE
 from ..models.vae_models.notmiwae import NOTMIWAE
 import torch
 from src.evaluation.imp_quality_metrics import rmse
-from src.imputation.base import JMImputerMixin, BaseImputer
+from src.imputation.base import JMImputerMixin, BaseNNImputer
 from tqdm.auto import tqdm, trange
+
+from src.utils.nn_utils import load_optimizer, load_lr_scheduler
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-class MIWAEImputer(TorchNNImputer, JMImputerMixin):
+class MIWAEImputer(BaseNNImputer, JMImputerMixin):
 
-    def __init__(self, name, imp_model_params: dict):
+    def __init__(self, name, imp_model_params: dict, clip: bool = True):
 
         super().__init__()
         self.model = None
         self.name = name
 
         # imputation model parameters
+        self.clip = clip
+        self.min_values = None
+        self.max_values = None
         self.imp_model_params = imp_model_params
         self.model_type = 'torch_nn'
         self.train_dataloader = None
@@ -47,14 +51,18 @@ class MIWAEImputer(TorchNNImputer, JMImputerMixin):
         :param params: parameters for set parameters function
         :return: None
         """
-        params = self.model.state_dict()
-        params.update(deepcopy(updated_model_dict))
-        self.model.load_state_dict(params)
+        params_dict = self.model.state_dict()
+        params_dict.update(deepcopy(updated_model_dict))
+        self.model.load_state_dict(params_dict)
 
-    def initialize(self, data_utils: dict, params: dict, seed: int) -> None:
+    def initialize(
+            self, X: np.array, missing_mask: np.array, data_utils: dict, params: dict, seed: int
+    ) -> None:
         """
         Initialize imputer - statistics imputation models etc.
-        :param data_utils: data utils dictionary - contains information about data
+        :param X: data with intial imputed values
+        :param missing_mask: missing mask of data
+        :param data_utils:  utils dictionary - contains information about data
         :param params: params for initialization
         :param seed: int - seed for randomization
         :return: None
@@ -67,22 +75,12 @@ class MIWAEImputer(TorchNNImputer, JMImputerMixin):
             raise ValueError(f"Model {self.name} not supported")
 
         self.model.init(seed)
+        self.min_values, self.max_values = self.get_clip_thresholds(data_utils)
 
-    def fetch_model(
+    def configure_model(
             self, params: dict, X: np.ndarray, y: np.ndarray, missing_mask: np.ndarray
     ) -> Tuple[torch.nn.Module, torch.utils.data.DataLoader]:
-        """
-        Fetch model for training
-        :param params: parameters for training
-        :param X: imputed data
-        :param y: target
-        :param missing_mask: missing mask
-        :return: model, train_dataloader
-        """
-        """
-        Fetch model for training
-        """
-        # set up train and test data for a training imputation model
+
         try:
             batch_size = params['batch_size']
         except KeyError as e:
@@ -102,6 +100,25 @@ class MIWAEImputer(TorchNNImputer, JMImputerMixin):
         train_dataloader = DataLoader(train_dataset, batch_size=bs, shuffle=True)
 
         return self.model, train_dataloader
+
+    def configure_optimizer(
+            self, params: dict, model: torch.nn.Module
+    ) -> tuple[List[torch.optim.Optimizer], List[torch.optim.lr_scheduler.LRScheduler]]:
+
+        try:
+            learning_rate = params['learning_rate']
+            weight_decay = params['weight_decay']
+            optimizer_name = params['optimizer']
+            scheduler_name = params['scheduler']
+            scheduler_params = params['scheduler_params']
+        except KeyError as e:
+            raise ValueError(f"Parameter {str(e)} not found in params")
+
+        optimizer = load_optimizer(optimizer_name, model.parameters(), learning_rate, weight_decay)
+        lr_scheduler = load_lr_scheduler(scheduler_name, optimizer, scheduler_params)
+
+
+        return [optimizer], [lr_scheduler]
 
     def fit(self, X: np.array, y: np.array, missing_mask: np.array, params: dict) -> dict:
         """
@@ -225,4 +242,8 @@ class MIWAEImputer(TorchNNImputer, JMImputerMixin):
 
         del X
         gc.collect()
+        if self.clip:
+            for i in range(x_imp.shape[1]):
+                x_imp[:, i] = np.clip(x_imp[:, i], self.min_values[i], self.max_values[i])
+
         return x_imp

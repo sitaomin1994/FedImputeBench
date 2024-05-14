@@ -1,6 +1,7 @@
-name: 'iid_uneven'
+name: 'iid2'
 partition_params:
   partition_strategy: "iid"
+  split_col: 'target'
   size_strategy: "dir"
   min_samples: 50
   max_samples: 5000

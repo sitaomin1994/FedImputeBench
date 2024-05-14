@@ -3,7 +3,8 @@ from src.fed_strategy.fed_strategy_client import (
     CentralStrategyClient,
     LocalStrategyClient,
     FedProxStrategyClient,
-    StrategyClient
+    FedAvgFtStrategyClient,
+    StrategyClient,
 )
 
 from src.fed_strategy.fed_strategy_server import (
@@ -12,6 +13,7 @@ from src.fed_strategy.fed_strategy_server import (
     CentralStrategyServer,
     FedProxStrategyServer,
     FedAvgFtStrategyServer,
+    FedTreeStrategyServer,
     StrategyServer,
 )
 
@@ -24,8 +26,10 @@ def load_fed_strategy_client(strategy_name: str, strategy_params: dict) -> Strat
         return CentralStrategyClient(strategy_params)
     elif strategy_name == 'fedavg':
         return FedAvgStrategyClient(strategy_params)
-    elif strategy_name == 'fedavg_ft':
+    elif strategy_name == 'fedtree':
         return FedAvgStrategyClient(strategy_params)
+    elif strategy_name == 'fedavg_ft':
+        return FedAvgFtStrategyClient(strategy_params)
     elif strategy_name == 'fedprox':
         return FedProxStrategyClient(strategy_params)
     else:
@@ -40,6 +44,8 @@ def load_fed_strategy_server(strategy_name: str, strategy_params: dict) -> Strat
         return CentralStrategyServer(strategy_params)
     elif strategy_name == 'fedavg':
         return FedAvgStrategyServer(strategy_params)
+    elif strategy_name == 'fedtree':
+        return FedTreeStrategyServer(strategy_params)
     elif strategy_name == 'fedprox':
         return FedProxStrategyServer(strategy_params)
     elif strategy_name == 'fedavg_ft':

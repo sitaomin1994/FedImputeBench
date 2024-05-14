@@ -3,13 +3,13 @@ from collections import OrderedDict
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import OneHotEncoder
 from src.imputation.base.ice_imputer import ICEImputerMixin
-from src.imputation.base.base_imputer import BaseImputer
+from src.imputation.base.base_imputer import BaseMLImputer
 import numpy as np
 from sklearn.linear_model import LogisticRegressionCV
 from ..model_loader_utils import load_sklearn_model
 
 
-class LinearICEImputer(BaseImputer, ICEImputerMixin):
+class LinearICEImputer(BaseMLImputer, ICEImputerMixin):
 
     def __init__(
             self,
@@ -39,10 +39,14 @@ class LinearICEImputer(BaseImputer, ICEImputerMixin):
         self.seed = None
         self.model_type = 'sklearn'
 
-    def initialize(self, data_utils: dict, params: dict, seed: int) -> None:
+    def initialize(
+            self, X: np.array, missing_mask: np.array, data_utils: dict, params: dict, seed: int
+    ) -> None:
         """
         Initialize imputer - statistics imputation models etc.
-        :param data_utils: data utils dictionary - contains information about data
+        :param X: data with intial imputed values
+        :param missing_mask: missing mask of data
+        :param data_utils:  utils dictionary - contains information about data
         :param params: params for initialization
         :param seed: int - seed for randomization
         :return: None
@@ -67,10 +71,10 @@ class LinearICEImputer(BaseImputer, ICEImputerMixin):
         else:
             raise ValueError("Invalid missing mechanism model")
 
-        # initialize min max values for clipping threshold
+        # initialize min max values for a clipping threshold
         self.min_values, self.max_values = self.get_clip_thresholds(data_utils)
 
-        # seed same as client
+        # seed same as a client
         self.seed = seed
         self.data_utils_info = data_utils
 
@@ -122,21 +126,7 @@ class LinearICEImputer(BaseImputer, ICEImputerMixin):
         except KeyError:
             raise ValueError("Feature index not found in params")
 
-        # get feature based train test
-        # num_cols = self.data_utils_info['num_cols']
-        # regression = self.data_utils_info['task_type'] == 'regression'
         row_mask = missing_mask[:, feature_idx]
-        # X_cat = X[:, num_cols:]
-        # if X_cat.shape[1] > 0:
-        #     onehot_encoder = OneHotEncoder(max_categories=5, drop="if_binary")
-        #     X_cat = onehot_encoder.fit_transform(X_cat)
-        #     X = np.concatenate((X[:, :num_cols], X_cat), axis=1)
-        #
-        # if self.use_y:
-        #     if regression:
-        #         oh = OneHotEncoder(drop='first')
-        #         y = oh.fit_transform(y.reshape(-1, 1)).toarray()
-        #     X = np.concatenate((X, y.reshape(-1, 1)), axis=1)
 
         X_train = X[~row_mask][:, np.arange(X.shape[1]) != feature_idx]
         y_train = X[~row_mask][:, feature_idx]
@@ -185,23 +175,6 @@ class LinearICEImputer(BaseImputer, ICEImputerMixin):
         row_mask = missing_mask[:, feature_idx]
         if np.sum(row_mask) == 0:
             return X
-
-        # one hot encoding for categorical columns
-        # num_cols = self.data_utils_info['num_cols']
-        # regression = self.data_utils_info['task_type'] == 'regression'
-        # X_cat = X[:, num_cols:]
-        # if X_cat.shape[1] > 0:
-        #     onehot_encoder = OneHotEncoder(sparse=False, max_categories=10, drop="if_binary")
-        #     X_cat = onehot_encoder.fit_transform(X_cat)
-        #     X = np.concatenate((X[:, :num_cols], X_cat), axis=1)
-        # else:
-        #     X = X[:, :num_cols]
-        #
-        # if self.use_y:
-        #     if regression:
-        #         oh = OneHotEncoder(drop='first')
-        #         y = oh.fit_transform(y.reshape(-1, 1)).toarray()
-        #     X = np.concatenate((X, y.reshape(-1, 1)), axis=1)
 
         # impute missing values
         X_test = X[row_mask][:, np.arange(X.shape[1]) != feature_idx]

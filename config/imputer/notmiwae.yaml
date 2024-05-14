@@ -1,11 +1,12 @@
-#defaults:
-#  - /imp_workflow@_group_: vae
+defaults:
+  - /imp_workflow@_group_: jm
 
 imp_name: notmiwae
 imp_params:
+  clip: false
   imp_model_params:
     latent_size: 16
-    n_hidden: 64
+    n_hidden: 32
     n_hidden_layers: 2
     out_dist: 'studentt'
     K: 20
@@ -13,14 +14,17 @@ imp_params:
     mask_net_type: "linear"
 model_train_params:
   global_epoch: 150
-  model_converge_tol: 0.001
-  model_converge_patience: 20
   local_epoch: 5
   batch_size: 512
   learning_rate: 0.001
   weight_decay: 0.0001
-  schedule_step_size: 10
-  schedule_gamma: 0.5
-  schedule_last_epoch: -1
+  use_early_stopping: true
+  model_converge_tol: 0.0001
+  model_converge_patience: 20
+  scheduler: "step"
+  scheduler_params:
+    step_size: 10
+    gamma: 0.5
+    schedule_last_epoch: -1
   optimizer: 'adam'
   log_interval: 1

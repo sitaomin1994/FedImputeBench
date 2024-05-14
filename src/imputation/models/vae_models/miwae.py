@@ -104,7 +104,7 @@ class MIWAE(nn.Module):
         self.encoder.apply(weights_init)
         self.decoder.apply(weights_init)
 
-    def compute_loss(self, inputs: List[torch.Tensor]) -> Tuple[torch.Tensor, Dict]:
+    def compute_loss(self, inputs: tuple[torch.Tensor, ...]) -> Tuple[torch.Tensor, Dict]:
         x, mask = inputs  # x - data, mask - missing mask
         batch_size = x.shape[0]
 
@@ -117,7 +117,7 @@ class MIWAE(nn.Module):
 
         # decoder
         out_decoder = self.decoder(zgivenx_flat)
-        #recon_x_means = self.decoder.l_out_mu(out_decoder)
+        # recon_x_means = self.decoder.l_out_mu(out_decoder)
 
         # compute loss
         data_flat = torch.Tensor.repeat(x, [self.K, 1]).reshape([-1, 1]).to(DEVICE)
@@ -136,6 +136,20 @@ class MIWAE(nn.Module):
 
         return neg_bound, {}
 
+    def train_step(
+            self, batch: Tuple[torch.Tensor, ...], batch_idx: int,
+            optimizers: List[torch.optim.Optimizer], optimizer_idx: int
+    ) -> tuple[float, dict]:
+
+        optimizer = optimizers[0]
+        batch = tuple(item.to(DEVICE) for item in batch)
+        optimizer.zero_grad()
+        loss, train_res_dict = self.compute_loss(batch)
+        loss.backward()
+        optimizer.step()
+
+        return loss.item(), {}
+
     def impute(self, x: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
         L = self.L
         batch_size = x.shape[0]
@@ -152,7 +166,7 @@ class MIWAE(nn.Module):
 
         # decoder
         out_decoder = self.decoder(zgivenx_flat)
-        #recon_x_means = self.decoder.l_out_mu(out_decoder)
+        # recon_x_means = self.decoder.l_out_mu(out_decoder)
 
         # loss
         data_flat = torch.Tensor.repeat(x, [L, 1]).reshape([-1, 1]).to(DEVICE)

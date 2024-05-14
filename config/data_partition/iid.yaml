@@ -1,6 +1,7 @@
 name: 'iid'
 partition_params:
   partition_strategy: "iid"
+  split_col: 'target'
   size_strategy: "even"
   min_samples: 100
   max_samples: 2000

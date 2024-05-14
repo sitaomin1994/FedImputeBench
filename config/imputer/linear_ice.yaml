@@ -1,10 +1,9 @@
-#defaults:
-#  - /imp_workflow@_group_: ice
+defaults:
+  - /imp_workflow@_group_: ice
 
-# configuration for linear ice imputation
 imp_name: 'linear_ice'
 imp_params:
-  estimator_num: 'ridge'
+  estimator_num: 'ridge_cv'
   estimator_cat: 'logistic_cv'
   mm_model: 'logistic'
   mm_model_params:

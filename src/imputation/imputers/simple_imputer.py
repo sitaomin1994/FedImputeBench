@@ -1,10 +1,10 @@
 import numpy as np
 
-from src.imputation.base import BaseImputer
+from src.imputation.base import BaseMLImputer
 from collections import OrderedDict
 
 
-class SimpleImputer(BaseImputer):
+class SimpleImputer(BaseMLImputer):
 
     def __init__(self, strategy: str = 'mean'):
         super().__init__()
@@ -31,10 +31,14 @@ class SimpleImputer(BaseImputer):
         """
         self.mean_params = updated_model_dict['mean']
 
-    def initialize(self, data_utils: dict, params: dict, seed: int) -> None:
+    def initialize(
+            self, X: np.array, missing_mask: np.array, data_utils: dict, params: dict, seed: int
+    ) -> None:
         """
         Initialize imputer - statistics imputation models etc.
-        :param data_utils: data utils dictionary - contains information about data
+        :param X: data with intial imputed values
+        :param missing_mask: missing mask of data
+        :param data_utils:  utils dictionary - contains information about data
         :param params: params for initialization
         :param seed: int - seed for randomization
         :return: None
@@ -61,7 +65,7 @@ class SimpleImputer(BaseImputer):
 
     def impute(self, X: np.array, y: np.array, missing_mask: np.array, params: dict) -> np.ndarray:
         """
-        Impute missing values using imputation model
+        Impute missing values using an imputation model
         :param X: numpy array of features
         :param y: numpy array of target
         :param missing_mask: missing mask

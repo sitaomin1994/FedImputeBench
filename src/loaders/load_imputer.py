@@ -1,26 +1,34 @@
 from src.imputation.imputers import (
-    MIWAEImputer,
     LinearICEImputer,
-    SimpleImputer,
-    LinearICEGradImputer,
-    MLPICEImputer,
+    SimpleImputer, EMImputer,
+    ICEGradImputer, GAINImputer, MIWAEImputer, MissForestImputer,
 )
 
 
 def load_imputer(name, imputer_params):
-    if name == 'miwae':
+
+    ####################################################################################################################
+    # Traditional ML Imputation Models
+    if name == 'simple':
+        return SimpleImputer(**imputer_params)
+    elif name == 'linear_ice':
+        return LinearICEImputer(**imputer_params)
+    elif name == 'linear_sgd_ice':
+        return ICEGradImputer(**imputer_params)
+    elif name == 'em':
+        return EMImputer(**imputer_params)
+    elif name == 'missforest':
+        return MissForestImputer(**imputer_params)
+
+    ####################################################################################################################
+    # Deep Learning NN Imputation Models
+    elif name == 'mlp_ice':
+        return ICEGradImputer(**imputer_params)
+    elif name == 'gain':
+        return GAINImputer(**imputer_params)
+    elif name == 'miwae':
         return MIWAEImputer(name='miwae', **imputer_params)
     elif name == 'notmiwae':
         return MIWAEImputer(name='notmiwae', **imputer_params)
-    elif name == 'linear_ice':
-        return LinearICEImputer(**imputer_params)
-    elif name == 'simple':
-        return SimpleImputer(**imputer_params)
-    elif name == 'linear_ice_sgd':
-        return LinearICEGradImputer(**imputer_params)
-    elif name == 'mlp_ice':
-        return MLPICEImputer(**imputer_params)
-    elif name == 'linear_sgd_ice':
-        return MLPICEImputer(**imputer_params)
     else:
         raise NotImplementedError

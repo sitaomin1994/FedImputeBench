@@ -5,7 +5,6 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OneHotEncoder
 
 from abc import ABC, abstractmethod
-from .base_imputer import BaseImputer
 
 
 class ICEImputerMixin:

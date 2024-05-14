@@ -10,7 +10,11 @@ class CentralStrategyClient(StrategyClient):
         self.strategy_params = strategy_params
         super().__init__('central')
 
-    def fit_local_model(
-            self, model: torch.nn.Module, dataloader: torch.utils.data.DataLoader, params: dict
-    ) -> Tuple[torch.nn.Module, dict]:
-        return fit_local_model_base(model, dataloader, params)
+    def pre_training_setup(self, model: torch.nn.Module, params: dict):
+        pass
+
+    def fed_updates(self, model: torch.nn.Module):
+        pass
+
+    def post_training_setup(self, model: torch.nn.Module):
+        pass

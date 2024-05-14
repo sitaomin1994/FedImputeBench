@@ -1,5 +1,5 @@
-from typing import List, Union, Tuple
-
+from typing import List, Tuple
+import math
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import KBinsDiscretizer
@@ -105,73 +105,98 @@ def noniid_sample_dirichlet(
 
 
 def generate_samples_iid(
-        data: np.ndarray, sample_fracs: List[float], seed: int, regression: bool = False,
-        reg_bins: Union[None, int] = None,
+        data: np.ndarray, sample_fracs: List[float], seeds: List[int], global_seed: int = 10023,
+        sample_iid_direct: bool = False, regression: bool = False, reg_bins: int = 20
 ) -> List[np.ndarray]:
     """
     generate samples iid
     :param data: global data array
     :param sample_fracs: sample size for each client
-    :param seed: randon seed
+    :param seeds: randon seed for each client
+    :param sample_iid_direct: whether directly iid sampling or not
     :param regression: whether regression task
-    :param reg_bins: bins for regression target
-    :return: list of data array for each client
+    :param reg_bins: bins for a regression target
+    :return: list of a data array for each client
     """
+    if sample_iid_direct:                      # directly sampling without iid based on target
+        ret = []
+        for idx, sample_frac in enumerate(sample_fracs):
+            np.random.seed(seeds[idx])
+            sampled_indices = np.random.choice(
+                data.shape[0], size=math.ceil(data.shape[0] * sample_frac), replace=False
+            )
+            sampled_data = data[sampled_indices]
+            ret.append(sampled_data)
 
-    ret = []
+        return ret
+    else:                               # iid based on target
+        ret = []
 
-    # set features and target
-    X, y = data[:, :-1], data[:, -1]
-    if regression and reg_bins is not None:
-        y = binning_target(y, reg_bins, seed)
+        # set features and target
+        X, y = data[:, :-1], data[:, -1]
+        if regression:
+            y = binning_target(y, reg_bins, global_seed)
 
-    # split using sample_fracs and train_test_split
-    for idx, sample_frac in enumerate(sample_fracs):
-        new_seed = (seed + idx * 990983) % (2 ^ 32)
-        if sample_frac == 1.0:
-            ret.append(data.copy())
-        else:
-            # new_seed = seed
-            if regression and reg_bins is None:
-                _, X_test, _, y_test = train_test_split(
-                    X, y, test_size=sample_frac, random_state=(new_seed) % (2 ** 32)
-                )
+        # split using sample_fracs and train_test_split
+        for idx, sample_frac in enumerate(sample_fracs):
+            if sample_frac == 1.0:
+                ret.append(data.copy())
             else:
-                _, X_test, _, y_test = train_test_split(
-                    X, y, test_size=sample_frac, random_state=(new_seed) % (2 ** 32), stratify=data[:, -1]
-                )
-            ret.append(np.concatenate([X_test, y_test.reshape(-1, 1)], axis=1).copy())
+                # new_seed = seed
+                if regression and reg_bins is None:
+                    _, X_test, _, y_test = train_test_split(
+                        X, y, test_size=sample_frac, random_state=seeds[idx]
+                    )
+                else:
+                    _, X_test, _, y_test = train_test_split(
+                        X, y, test_size=sample_frac, random_state=seeds[idx], stratify=data[:, -1]
+                    )
+                ret.append(np.concatenate([X_test, y_test.reshape(-1, 1)], axis=1))
 
-    return ret
+        return ret
 
 
 def generate_local_test_data(
-        datas: np.ndarray, local_test_size: float, regression: bool, seed: int = 201030
-) -> Tuple[List[np.ndarray], List[np.ndarray]]:
+        datas: np.ndarray, seeds: List[int], local_test_size: float, local_backup_size: float, regression: bool
+) -> Tuple[List[np.ndarray], List[np.ndarray], List[np.array]]:
     """
-    Generate local test data
+    Generate a local test data
     :param datas: list of data
     :param local_test_size: local test data ratio
+    :param local_backup_size: retain a fraction of sample to ensure not all values are missing
     :param regression: regression task or not
-    :param seed: randomness
+    :param seeds: random seed for each client
     :return: tuple of train and test datas
     """
 
-    train_datas, test_datas = [], []
-    for data in datas:
+    train_datas, backup_datas, test_datas = [], [], []
+    for idx, data in enumerate(datas):
+
+        # split train and test
         if not regression:
             train_data, test_data = train_test_split(
-                data, test_size=local_test_size, random_state=seed, stratify=data[:, -1]
+                data, test_size=local_test_size, random_state=seeds[idx], stratify=data[:, -1]
             )
         else:
             train_data, test_data = train_test_split(
-                data, test_size=local_test_size, random_state=seed
+                data, test_size=local_test_size, random_state=seeds[idx]
+            )
+
+        # split train and retain
+        if not regression:
+            train_data, backup_data = train_test_split(
+                data, test_size=local_backup_size, random_state=seeds[idx], stratify=data[:, -1]
+            )
+        else:
+            train_data, backup_data = train_test_split(
+                data, test_size=local_backup_size, random_state=seeds[idx]
             )
 
         train_datas.append(train_data)
+        backup_datas.append(backup_data)
         test_datas.append(test_data)
 
-    return train_datas, test_datas
+    return train_datas, backup_datas, test_datas
 
 
 def generate_global_test_data(

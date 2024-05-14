@@ -19,7 +19,7 @@ def local(clients_data_utils, key='mean', col_type='num'):
             )
 
     elif col_type == 'cat':
-        if key not in ['mode']:
+        if key not in ['mode', 'zero']:
             raise ValueError("key must be one of 'mode'")
 
         if key == 'zero':

@@ -1,5 +1,5 @@
-#defaults:
-#  - /imp_workflow@_group_: icegrad
+defaults:
+  - /imp_workflow@_group_: ice_grad
 
 # configuration for linear ice imputation
 imp_name: 'mlp_ice'

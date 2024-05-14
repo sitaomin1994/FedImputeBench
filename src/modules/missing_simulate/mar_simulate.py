@@ -11,7 +11,7 @@ from src.modules.missing_simulate.ms_mech_funcs import (
 ########################################################################################################################
 # Quantile based MAR simulation
 def simulate_nan_mar_quantile(
-        data, cols, missing_ratio, missing_func='left', obs=False, strict=True, seed=201030
+        data, cols, missing_ratio, missing_func='left', obs=False, strict=True, rng=np.random.default_rng(201030)
 ):
     """
     Simulate missing values for MAR mechanism using quantile based method
@@ -21,7 +21,7 @@ def simulate_nan_mar_quantile(
     :param missing_func: misisng mech function for each column
     :param obs: whether to add missing values based on only set of observed columns or all columns
     :param strict: strictly add missing values or with probability
-    :param seed: random seed
+    :param rng: random generator
     :return: data with missingness added - same dimension of data
     """
     # find the columns that are not to be adding missing values
@@ -39,9 +39,9 @@ def simulate_nan_mar_quantile(
 
         ##########################################################
         # random seed
-        seed = (seed + 10087651) % (2 ** 32 - 1)
-        np.random.seed(seed)
-        random.seed(seed)
+        # seed = (seed + 10087651) % (2 ** 32 - 1)
+        # np.random.seed(seed)
+        # random.seed(seed)
 
         ##########################################################
         # fetch missing ratio and missing func
@@ -77,7 +77,7 @@ def simulate_nan_mar_quantile(
         ##########################################################
         # add missing value to mask
         mask = mask_quantile(
-            mask, col, data_corr, missing_ratio=missing_ratio_, missing_func=missing_func_, strict=strict, seed=seed
+            mask, col, data_corr, missing_ratio=missing_ratio_, missing_func=missing_func_, strict=strict, rng=rng
         )
 
     # assign the missing values
@@ -107,7 +107,7 @@ def simulate_nan_mar_quantile(
 def simulate_nan_mar_sigmoid(
         data: np.ndarray, cols: list, missing_ratio: Union[str, list, dict], missing_func: Union[str, list, dict],
         strict: bool = False, obs: bool = False, mm_feature_option='all', mm_beta_option: str = 'random_uniform',
-        seed: int = 1002031
+        rng: np.random.Generator = np.random.default_rng(1002031)
 ) -> np.ndarray:
     """
     Simulate missing values for MAR mechanism using sigmoid function
@@ -119,7 +119,7 @@ def simulate_nan_mar_sigmoid(
     :param obs: whether to add missing values based on only set of observed columns or all columns
     :param mm_feature_option: how to select missing data with associated columns
     :param mm_beta_option: how to set coefficients beta of associated columns
-    :param seed: random seed
+    :param rng: numpy random generator
     :return: data with missingness added - same dimension of data
     """
     mask = np.zeros(data.shape, dtype=bool)
@@ -129,7 +129,7 @@ def simulate_nan_mar_sigmoid(
 
         ##################################################################################
         # set the seed and missing ratio and funcs
-        seed = (seed + 1203941) % (2 ^ 32 - 1)
+        #seed = (seed + 1203941) % (2 ^ 32 - 1)
         if isinstance(missing_ratio, dict):
             missing_ratio_ = missing_ratio[col]
         elif isinstance(missing_ratio, list):
@@ -159,7 +159,7 @@ def simulate_nan_mar_sigmoid(
         if mm_feature_option == 'all':
             data_corr = X_rest
         elif mm_feature_option.startswith('allk'):
-            np.random.seed(seed)
+            #np.random.seed(seed)
             X = np.concatenate([data[:, col].reshape(-1, 1), X_rest], axis=1)
             k = max(int(float(mm_feature_option.split('allk=')[-1]) * X_rest.shape[1]), 1)
             k = min(k, X_rest.shape[1])
@@ -176,7 +176,7 @@ def simulate_nan_mar_sigmoid(
         #################################################################################
         mask = mask_sigmoid(
             mask, col, data_corr, missing_ratio_, missing_func_, strict=strict, mechanism='mar',
-            beta_corr=mm_beta_option, seed=seed
+            beta_corr=mm_beta_option, rng=rng
         )
 
     # assign the missing values

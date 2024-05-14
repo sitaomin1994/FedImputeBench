@@ -1,8 +1,12 @@
-from typing import Tuple
+from collections import Counter
+from typing import Tuple, Union
 import numpy as np
 from scipy import stats
+
+from src.imputation.base import BaseNNImputer
 from src.loaders.load_imputer import load_imputer
 from src.loaders.load_strategy import load_fed_strategy_client
+from src.utils.fed_nn_trainer import fit_fed_nn_model
 
 
 class Client:
@@ -30,16 +34,13 @@ class Client:
         self.X_train_ms = X_train_ms  # missing data
         self.X_train_mask = np.isnan(self.X_train_ms)  # missing data mask
         self.X_train_imp = self.X_train_ms.copy()  # imputed data
-        # print(f"Client {self.client_id} - Train data shape: {self.X_train.shape}, Test data shape: {self.X_test.shape}")
-        # print(f"Client {self.client_id} - Missing data shape: {self.X_train_ms.shape}, Missing data mask shape: {self.X_train_mask.shape}")
-        # print(f"Client {self.client_id} - Imputed data shape: {self.X_train_imp.shape}")
 
         # calculate data stats
         self.data_utils = self.calculate_data_utils(data_config)
+        self.profile()
 
         # imputation model
         self.imputer = load_imputer(imp_model_name, imp_model_params)
-        self.imputer.initialize(self.data_utils, {}, seed)
 
         # fed strategy
         self.fed_strategy = load_fed_strategy_client(fed_strategy, fed_strategy_params)
@@ -48,53 +49,10 @@ class Client:
         self.seed = seed
         self.client_config = client_config
 
-    def fit_local_imp_model(self, params: dict) -> Tuple[dict, dict]:
-        """
-        Fit a local imputation model
-        """
-        if not params['fit_model']:
-            return self.imputer.get_imp_model_params(params), {}
-        else:
-            if self.imputer.model_type == 'torch_nn': #and self.fed_strategy.name == 'fedprox':
-                # Based params get current imp models
-                imp_model, dataloader = self.imputer.fetch_model(
-                    params, self.X_train_imp, self.y_train, self.X_train_mask
-                )
-                imp_model, fit_res = self.fed_strategy.fit_local_model(imp_model, dataloader, params)
-
-                self.update_local_imp_model(imp_model.state_dict(), params)
-                fit_res.update(self.data_utils)
-                model_parameters = imp_model.state_dict()
-            else:
-                fit_res = self.imputer.fit(
-                    self.X_train_imp, self.y_train, self.X_train_mask, params
-                )
-                model_parameters = self.imputer.get_imp_model_params(params)
-                fit_res.update(self.data_utils)
-                # fit_res['sample_size'] = self.data_utils['missing_stats_cols'][feature_idx]['sample_size_obs']
-                # todo: add sample size
-                # TODO: design a consistent structure for fit_res, fit_params, imp_res, imp_params and document it
-
-            return model_parameters, fit_res
-
-    def update_local_imp_model(self, updated_local_model: dict, params: dict) -> None:
-        """
-        Fit local imputation model
-        """
-        if 'update_model' not in params or ('update_model' in params and params['update_model'] == True):
-            self.imputer.set_imp_model_params(updated_local_model, params)
-
-    def local_imputation(self, params: dict) -> None:
-        """
-        Imputation
-        """
-        self.X_train_imp = self.imputer.impute(self.X_train_imp, self.y_train, self.X_train_mask, params)
-
     def initial_impute(self, imp_values: np.ndarray, col_type: str = 'num') -> None:
         """
         Initial imputation
         """
-        # print(f"Client {self.client_id} {self.X_train_ms.shape} {self.X_train_mask.shape} {self.X_train_imp.shape} {imp_values.shape}")
         num_cols = self.data_utils['num_cols']
         if col_type == 'num':
             for i in range(num_cols):
@@ -102,6 +60,52 @@ class Client:
         elif col_type == 'cat':
             for i in range(num_cols, self.X_train.shape[1]):
                 self.X_train_imp[:, i][self.X_train_mask[:, i]] = imp_values[i]
+
+        # initialize imputer after local imputation
+        self.imputer.initialize(self.X_train_imp, self.X_train_mask, self.data_utils, {}, self.seed)
+
+    def fit_local_imp_model(self, params: dict) -> Tuple[dict, dict]:
+        """
+        Fit a local imputation model
+        """
+        if not params['fit_model']:
+            #print('No model fitting')
+            return self.imputer.get_imp_model_params(params), {'sample_size': self.X_train_imp.shape[0]}
+        else:
+            # NN based Imputation Models
+            if isinstance(self.imputer, BaseNNImputer):
+                #print('Fitting NN based Imputation Model')
+
+                imp_model, fit_res = fit_fed_nn_model(
+                    self.imputer, params, self.fed_strategy, self.X_train_imp, self.y_train, self.X_train_mask
+                )
+                #self.update_local_imp_model(imp_model.state_dict(), params)
+                #fit_res.update(self.data_utils)
+                model_parameters = imp_model.state_dict()
+            # Traditional Imputation Models
+            else:
+                fit_res = self.imputer.fit(
+                    self.X_train_imp, self.y_train, self.X_train_mask, params
+                )
+                model_parameters = self.imputer.get_imp_model_params(params)
+                fit_res.update(self.data_utils)
+
+            return model_parameters, fit_res
+
+    def update_local_imp_model(self, updated_local_model: Union[dict, None], params: dict) -> None:
+        """
+        Fit a local imputation model
+        """
+        # if 'update_model' not in params or ('update_model' in params and params['update_model'] == True):
+        #     print('update model')
+        if updated_local_model is not None:
+            self.imputer.set_imp_model_params(updated_local_model, params)
+
+    def local_imputation(self, params: dict) -> None:
+        """
+        Imputation
+        """
+        self.X_train_imp = self.imputer.impute(self.X_train_imp, self.y_train, self.X_train_mask, params)
 
     def calculate_data_utils(self, data_config: dict) -> dict:
         """
@@ -133,6 +137,8 @@ class Client:
                     'num_class': len(np.unique(self.X_train_ms[:, i][~np.isnan(self.X_train_ms[:, i])])),
                     "mode": stats.mode(self.X_train_ms[:, i][~np.isnan(self.X_train_ms[:, i])], keepdims=False)[0],
                     'mean': np.nanmean(self.X_train_ms[:, i]),
+                    'min': np.nanmin(self.X_train_ms[:, i]),
+                    'max': np.nanmax(self.X_train_ms[:, i]),
                     # TODO: add frequencies
                 }
 
@@ -174,3 +180,24 @@ class Client:
             }
 
         return data_utils
+
+    def profile(self):
+
+        mask_int = self.X_train_mask.astype(int)
+        mask_str_rows = [''.join(map(str, row)) for row in mask_int]
+        pattern_counter = Counter(mask_str_rows)
+
+        print('-' * 120)
+        print("| Client {:2} | DS: {} | MissDS: {} | MaskDS: {} | ImputeDS: {} | MissRatio: {:.2f} |".format(
+            self.client_id, self.X_train.shape, self.X_train_ms.shape, self.X_train_mask.shape,
+            self.X_train_imp.shape,
+            np.isnan(self.X_train_ms).sum().sum() / (self.X_train_ms.shape[0] * self.X_train_ms.shape[1])
+        ))
+        ms_ratio_cols = np.isnan(self.X_train_ms).sum(axis=0) / (self.X_train_ms.shape[0] * 0.9)
+        print("| MissRatio Cols: {} |".format(np.array2string(ms_ratio_cols, precision=2, suppress_small=True)))
+        #print(pattern_counter)
+
+        # print(f"Client {self.client_id} - Train data shape: {self.X_train.shape}, Test data shape: {self.X_test.shape}")
+        # print(f"Client {self.client_id} - Missing data shape: {self.X_train_ms.shape}, Missing data mask shape: {self.X_train_mask.shape}")
+        # print(f"Client {self.client_id} - Imputed data shape: {self.X_train_imp.shape}")
+        # print(f"Client {self.client_id} - Missing Ratio: {np.isnan(self.X_train_ms).sum().sum()/(self.X_train_ms.shape[0]*self.X_train_ms.shape[1])}")

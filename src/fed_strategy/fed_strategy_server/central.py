@@ -9,14 +9,17 @@ class CentralStrategyServer(StrategyServer):
     def __init__(self, strategy_params):
         super(CentralStrategyServer, self).__init__('central')
         self.strategy_params = strategy_params
+        self.fine_tune_epochs = strategy_params.get('fine_tune_steps', 0)
 
     def aggregate_parameters(
-            self, local_model_parameters: List[OrderedDict], fit_res: List[dict], *args, **kwargs
+            self, local_model_parameters: List[OrderedDict], fit_res: List[dict], params: dict, *args, **kwargs
     ) -> Tuple[List[OrderedDict], dict]:
         """
         Aggregate local models
         :param local_model_parameters: List of local model parameters
         :param fit_res: List of fit results of local training
+            - sample_size: int - number of samples used for training
+        :param params: dictionary for information
         :param args: other params list
         :param kwargs: other params dict
         :return: List of aggregated model parameters, dict of aggregated results

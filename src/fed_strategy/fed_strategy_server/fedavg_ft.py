@@ -10,22 +10,21 @@ class FedAvgFtStrategyServer(StrategyServer):
     def __init__(self, strategy_params):
         super(FedAvgFtStrategyServer, self).__init__('fedavg_ft')
         self.strategy_params = strategy_params
-        self.fine_tune_steps = strategy_params['fine_tune_steps']
+        self.fine_tune_epochs = strategy_params.get('fine_tune_steps', 0)
 
     def aggregate_parameters(
-            self, local_model_parameters: List[OrderedDict], fit_res: List[dict], *args, **kwargs
+            self, local_model_parameters: List[OrderedDict], fit_res: List[dict], params: dict, *args, **kwargs
     ) -> Tuple[List[OrderedDict], dict]:
         """
         Aggregate local models
         :param local_model_parameters: List of local model parameters
         :param fit_res: List of fit results of local training
             - sample_size: int - number of samples used for training
+        :param params: dictionary for information
         :param args: other params list
         :param kwargs: other params dict
         :return: List of aggregated model parameters, dict of aggregated results
         """
-
-        # federated averaging implementation
         averaged_model_state_dict = OrderedDict([])  # global parameters
         sample_sizes = [item['sample_size'] for item in fit_res]
         normalized_coefficient = [size / sum(sample_sizes) for size in sample_sizes]
@@ -48,9 +47,4 @@ class FedAvgFtStrategyServer(StrategyServer):
         return [{'fit_model': True} for _ in range(len(params_list))]
 
     def update_instruction(self, params: dict) -> dict:
-        current_epoch = params['current_epoch']
-        global_epoch = params['global_epoch']
-        if (global_epoch - current_epoch)/global_epoch < self.fine_tune_steps:
-            return {'update_model': False}
-        else:
-            return {'update_model': True}
+        return {'update_model': True}

@@ -15,6 +15,9 @@ def initial_imputation(strategy: str, Clients: List[Client]):
     elif strategy == 'central':
         initial_imp_num = 'central_mean'
         initial_imp_cat = 'central_mode'
+    elif strategy == 'zero':
+        initial_imp_num = 'zero'
+        initial_imp_cat = 'zero'
     else:
         raise ValueError("strategy must be one of 'local', 'avg'")
 
@@ -35,8 +38,8 @@ def initial_imputation_num(strategy, clients_data_utils: List[dict]) -> List[np.
         return local(clients_data_utils, key='mean', col_type='num')
     elif strategy == 'local_median':
         return local(clients_data_utils, key='median', col_type='num')
-    elif strategy == 'local_zero':
-        raise local(clients_data_utils, key='zero', col_type='num')
+    elif strategy == 'zero':
+        return local(clients_data_utils, key='zero', col_type='num')
     elif strategy == 'fedavg_mean':
         return fedavg(clients_data_utils, key='mean')
     elif strategy == 'fedavg_median':
@@ -63,5 +66,7 @@ def initial_imputation_cat(strategy, clients_data_utils: List[dict]) -> List[np.
         return central(clients_data_utils, key='mode', col_type='cat')
     elif strategy == 'fedavg_mean':
         return fedavg(clients_data_utils, key='mean', col_type='cat')
+    elif strategy == 'zero':
+        return local(clients_data_utils, key='zero', col_type='cat')
     else:
         raise ValueError("strategy must be one of 'local_mode'")

@@ -5,7 +5,7 @@ from src.client import Client
 from src.imputation.initial_imputation.initial_imputation import initial_imputation
 from ..evaluation.evaluator import Evaluator
 from src.utils.tracker import Tracker
-from .utils import formulate_centralized_client
+from .utils import formulate_centralized_client, update_clip_threshold
 
 
 class WorkflowSimple(BaseWorkflow):
@@ -47,7 +47,7 @@ class WorkflowSimple(BaseWorkflow):
             params_list.append(params)
             fit_rest_list.append(fit_res)
 
-        global_models, agg_res = server.fed_strategy.aggregate_parameters(params_list, fit_rest_list)
+        global_models, agg_res = server.fed_strategy.aggregate_parameters(params_list, fit_rest_list, {})
 
         for global_model, client in zip(global_models, clients):
             client.update_local_imp_model(global_model, params={})

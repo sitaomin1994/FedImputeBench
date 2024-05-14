@@ -187,7 +187,7 @@ class NOTMIWAE(nn.Module):
         self.encoder.apply(weights_init)
         self.decoder.apply(weights_init)
 
-    def compute_loss(self, inputs: List[torch.Tensor]) -> Tuple[torch.Tensor, Dict]:
+    def compute_loss(self, inputs: tuple[torch.Tensor, ...]) -> Tuple[torch.Tensor, Dict]:
 
         x, mask = inputs  # x - data, mask - missing mask
         batch_size = x.shape[0]
@@ -234,6 +234,20 @@ class NOTMIWAE(nn.Module):
         neg_bound = -torch.mean(torch.logsumexp(logpxobsgivenz + logpmgivenx + logpz - logq, 0))
 
         return neg_bound, {}
+
+    def train_step(
+            self, batch: Tuple[torch.Tensor, ...], batch_idx: int,
+            optimizers: List[torch.optim.Optimizer], optimizer_idx: int
+    ) -> tuple[float, dict]:
+
+        optimizer = optimizers[0]
+        batch = tuple(item.to(DEVICE) for item in batch)
+        optimizer.zero_grad()
+        loss, train_res_dict = self.compute_loss(batch)
+        loss.backward()
+        optimizer.step()
+
+        return loss.item(), {}
 
     def impute(self, x: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
 

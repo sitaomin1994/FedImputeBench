@@ -1,5 +1,5 @@
-#defaults:
-#  - /imp_workflow@_group_: ice
+defaults:
+  - /imp_workflow@_group_: simple
 
 imp_name: 'simple'
 imp_params:

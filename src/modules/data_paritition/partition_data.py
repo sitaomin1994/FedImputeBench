@@ -39,15 +39,24 @@ import gc
 
 
 def separate_data_niid(
-        data: np.ndarray, data_config: dict, num_clients: int, niid: bool = True, partition: str = 'dir',
+        data: np.ndarray, data_config: dict, num_clients: int, split_col_idx: int = -1, niid: bool = True, partition: str = 'dir',
         balance: bool = False, class_per_client: Union[None, int] = None, niid_alpha: float = 0.1,
-        min_samples: int = 50, reg_bins: int = 50, seed: int = 201030, rng: np.random.Generator = None
+        min_samples: int = 50, reg_bins: int = 50, seed: int = 201030
 ):
 
-    dataset_content, dataset_label = data[:, :-1], data[:, -1]
-    if data_config['task_type'] == 'regression':  # if regression task, bin the target
-        dataset_label = binning_target(dataset_label, reg_bins, seed)
+    rng = np.random.default_rng(seed)
+    if split_col_idx == -1:
+        dataset_label = data[:, -1]
+        if data_config['task_type'] == 'regression':  # if regression task, bin the target # TODO: refactor this
+            dataset_label = binning_target(dataset_label, reg_bins, seed)
+    else:
+        dataset_label = data[:, split_col_idx]
+        if np.unique(dataset_label).shape[0] > 10:
+            dataset_label = binning_target(dataset_label, reg_bins, seed)
 
+    dataset_content, target = data[:, :-1], data[:, -1]
+
+    print(dataset_label)
     num_classes = len(np.unique(dataset_label))
     # guarantee that each client must have at least one batch of data for testing.
     min_samples = int(min(min_samples, int(len(dataset_label) / num_clients / 2)))  # ?
@@ -65,8 +74,6 @@ def separate_data_niid(
 
         class_num_per_client = [class_per_client for _ in range(num_clients)]
         for i in range(num_classes):
-            np.random.seed(seed)
-            seed = seed +  1
             selected_clients = []
             for client in range(num_clients):
                 if class_num_per_client[client] > 0:
@@ -79,7 +86,7 @@ def separate_data_niid(
             if balance:
                 num_samples = [int(num_per) for _ in range(num_selected_clients - 1)]
             else:
-                num_samples = np.random.randint(
+                num_samples = rng.integers(
                     int(max(num_per / 10, min_samples / num_classes)), int(num_per), num_selected_clients - 1
                 ).tolist()
             num_samples.append(num_all_samples - sum(num_samples))
@@ -104,22 +111,18 @@ def separate_data_niid(
         idx_clients = [[] for _ in range(num_clients)]
         #class_condition = False
         while (min_size < min_samples) :
-            if try_cnt > 1:
-                print(f'Client data size does not meet the minimum requirement {min_samples}. '
-                      f'Try allocating again for the {try_cnt}-th time.')
+            # if try_cnt > 1:
+            #     print(f'Client data size does not meet the minimum requirement {min_samples}. '
+            #           f'Try allocating again for the {try_cnt}-th time.')
 
             idx_clients = [[] for _ in range(num_clients)]
             #all_class_condition = np.zeros(num_classes, dtype=bool)
             for class_id in range(num_classes):
                 class_indices = np.where(dataset_label == class_id)[0]
-                print(class_id, class_indices)
                 # split classes indices into num_clients parts
                 rng.shuffle(class_indices)
-                print(class_indices)
                 alphas = np.repeat(niid_alpha, num_clients)
-                print(alphas)
                 proportions = rng.dirichlet(alphas)
-                print(proportions)
                 proportions = np.array(
                     [p * (len(idx_client) < N / num_clients) for p, idx_client in zip(proportions, idx_clients)])
                 proportions = proportions / proportions.sum()
@@ -154,14 +157,9 @@ def separate_data_niid(
 
     # assign data
     datas = [[] for _ in range(num_clients)]
-    statistic = [[] for _ in range(num_clients)]
     for client in range(num_clients):
         idxs = dataidx_map[client]
-        datas[client] = np.concatenate(
-            [dataset_content[idxs], dataset_label[idxs].reshape(-1, 1)], axis=1).copy()
-
-        for i in np.unique(datas[client][:, -1]):
-            statistic[client].append((int(i), int(sum(datas[client][:, -1] == i))))
+        datas[client] = np.concatenate([dataset_content[idxs], target[idxs].reshape(-1, 1)], axis=1).copy()
 
     return datas
 

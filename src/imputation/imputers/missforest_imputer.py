@@ -1,36 +1,28 @@
 from collections import OrderedDict
-
 from sklearn.model_selection import StratifiedKFold
-from sklearn.preprocessing import OneHotEncoder
 from src.imputation.base.ice_imputer import ICEImputerMixin
 from src.imputation.base.base_imputer import BaseMLImputer
 import numpy as np
-from sklearn.linear_model import LogisticRegressionCV
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from ..model_loader_utils import load_sklearn_model
 
 
-class LinearICEImputer(BaseMLImputer, ICEImputerMixin):
+class MissForestImputer(BaseMLImputer, ICEImputerMixin):
 
     def __init__(
             self,
-            estimator_num,
-            estimator_cat,
-            mm_model,
-            mm_model_params,
+            imp_model_params: dict,
             clip: bool = True,
             use_y: bool = False,
     ):
         super().__init__()
 
         # estimator for numerical and categorical columns
-        self.estimator_num = estimator_num
-        self.estimator_cat = estimator_cat
-        self.mm_model_name = mm_model
-        self.mm_model_params = mm_model_params
         self.clip = clip
         self.min_values = None
         self.max_values = None
         self.use_y = use_y
+        self.imp_model_params = imp_model_params
 
         # Imputation models
         self.imp_models = None
@@ -44,7 +36,7 @@ class LinearICEImputer(BaseMLImputer, ICEImputerMixin):
     ) -> None:
         """
         Initialize imputer - statistics imputation models etc.
-        :param X: data with intial imputed values
+        :param X: data with initially imputed values
         :param missing_mask: missing mask of data
         :param data_utils:  utils dictionary - contains information about data
         :param params: params for initialization
@@ -56,25 +48,18 @@ class LinearICEImputer(BaseMLImputer, ICEImputerMixin):
         self.imp_models = []
         for i in range(data_utils['n_features']):
             if i < data_utils['num_cols']:
-                estimator = self.estimator_num
+                estimator = RandomForestRegressor(**self.imp_model_params, random_state=seed)
             else:
-                estimator = self.estimator_cat
+                estimator = RandomForestClassifier(**self.imp_model_params, class_weight='balanced', random_state=seed)
 
-            self.imp_models.append(load_sklearn_model(estimator))
+            X_train = X[:, np.arange(X.shape[1]) != i][0:10]
+            y_train = X[:, i][0:10]
+            estimator.fit(X_train, y_train)
 
-        # Missing Mechanism Model
-        if self.mm_model_name == 'logistic':  # TODO: make mechanism model as a separate component
-            self.mm_model = LogisticRegressionCV(
-                Cs=self.mm_model_params['Cs'], class_weight=self.mm_model_params['class_weight'],
-                cv=StratifiedKFold(self.mm_model_params['cv']), random_state=seed, max_iter=1000, n_jobs=-1
-            )
-        else:
-            raise ValueError("Invalid missing mechanism model")
+            self.imp_models.append(estimator)
 
         # initialize min max values for a clipping threshold
         self.min_values, self.max_values = self.get_clip_thresholds(data_utils)
-
-        # seed same as a client
         self.seed = seed
         self.data_utils_info = data_utils
 
@@ -89,10 +74,8 @@ class LinearICEImputer(BaseMLImputer, ICEImputerMixin):
         if 'feature_idx' not in params:
             raise ValueError("Feature index not found in params")
         feature_idx = params['feature_idx']
-        updated_model_dict['w_b'] = np.array(updated_model_dict['w_b'])
-        # TODO: make imp model as a class that has get_params() interface so it can using non-sklearn models
-        self.imp_models[feature_idx].coef_ = updated_model_dict['w_b'][:-1]
-        self.imp_models[feature_idx].intercept_ = updated_model_dict['w_b'][-1]
+        imp_model = self.imp_models[feature_idx]
+        imp_model.estimators_ = updated_model_dict['estimators']
 
     def get_imp_model_params(self, params: dict) -> OrderedDict:
         """
@@ -105,11 +88,10 @@ class LinearICEImputer(BaseMLImputer, ICEImputerMixin):
             raise ValueError("Feature index not found in params")
         feature_idx = params['feature_idx']
         imp_model = self.imp_models[feature_idx]
-        try:
-            parameters = np.concatenate([imp_model.coef_, np.expand_dims(imp_model.intercept_, 0)])
-        except AttributeError:
-            parameters = np.zeros(self.data_utils_info['n_features'] + 1)
-        return OrderedDict({"w_b": parameters})
+        if 'estimators_' not in imp_model.__dict__:
+            return OrderedDict({"estimators": []})
+        else:
+            return OrderedDict({"estimators": imp_model.estimators_})
 
     def fit(self, X: np.array, y: np.array, missing_mask: np.array, params: dict) -> dict:
         """
@@ -134,26 +116,15 @@ class LinearICEImputer(BaseMLImputer, ICEImputerMixin):
         # fit linear imputation models
         estimator = self.imp_models[feature_idx]
         estimator.fit(X_train, y_train)
-        y_pred = estimator.predict(X_train)
-        coef = np.concatenate([estimator.coef_, np.expand_dims(estimator.intercept_, 0)])
-
-        # Fit mechanism models
-        # if row_mask.sum() == 0:
-        #     mm_coef = np.zeros(X.shape[1]) + 0.001
-        # else:
-        #     self.mm_model.fit(X, row_mask)
-        #     mm_coef = np.concatenate([self.mm_model.coef_[0], self.mm_model.intercept_])
 
         return {
-            'coef': coef,
-            #'mm_coef': mm_coef,
             'loss': {},
             'sample_size': X_train.shape[0]
         }
 
     def impute(self, X: np.array, y: np.array, missing_mask: np.array, params: dict) -> np.ndarray:
         """
-        Impute missing values using imputation model
+        Impute missing values using an imputation model
         :param X: numpy array of features
         :param y: numpy array of target
         :param missing_mask: missing mask
