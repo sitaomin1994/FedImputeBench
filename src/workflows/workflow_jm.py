@@ -30,29 +30,26 @@ class WorkflowJM(BaseWorkflow):
             self, clients: List[Client], server: Server, evaluator: Evaluator, tracker: Tracker, train_params: dict
     ) -> Tracker:
 
-        """
-        Imputation workflow for Joint Modeling Imputation
-        """
-        # evaluation_interval = self.workflow_params['evaluation_interval']
+        ############################################################################################################
+        # Initial Imputation and Evaluation
         if server.fed_strategy.name == 'central':
             clients.append(formulate_centralized_client(clients))
 
-        ############################################################################################################
-        # Initial Imputation
-        clients = initial_imputation(server.fed_strategy.strategy_params['initial_impute'], clients)
+        #clients = initial_imputation(server.fed_strategy.strategy_params['initial_impute'], clients)
+        if train_params['initial_zero_impute']:
+            clients = initial_imputation('zero', clients)
+        else:
+            clients = initial_imputation(server.fed_strategy.strategy_params['initial_impute'], clients)
         if server.fed_strategy.name != 'local':
             update_clip_threshold(clients)
 
-        self.eval_and_track(evaluator, tracker, clients, phase='initial')
+        self.eval_and_track(
+            evaluator, tracker, clients, phase='initial', central_client=server.fed_strategy.name == 'central'
+        )
 
         ############################################################################################################
         # Federated Imputation Workflow
-        # early stopping
-        use_early_stopping = train_params['use_early_stopping']
-        train_params['use_early_stopping_local'] = False
-        train_params['use_early_stopping_global'] = use_early_stopping
-
-        use_early_stopping_global = train_params['use_early_stopping_global']
+        use_early_stopping_global = train_params['use_early_stopping']
         model_converge_tol = train_params['model_converge']['tolerance']
         model_converge_patience = train_params['model_converge']['patience']
         model_converge_window_size = train_params['model_converge']['window_size']
@@ -67,7 +64,8 @@ class WorkflowJM(BaseWorkflow):
         ]
         all_clients_converged_sign = [False for _ in clients]
 
-        # training epochs
+        ################################################################################################################
+        # Federated Training
         global_model_epochs = train_params['global_epoch']
         log_interval = train_params['log_interval']
         imp_interval = train_params['imp_interval'] if 'imp_interval' in train_params else 1e8
@@ -76,7 +74,7 @@ class WorkflowJM(BaseWorkflow):
 
         for epoch in trange(global_model_epochs, desc='Global Epoch', colour='blue'):
 
-            ########################################################################################################
+            ###########################################################################################
             # Local training of an imputation model
             local_models, clients_fit_res = [], []
 
@@ -92,19 +90,17 @@ class WorkflowJM(BaseWorkflow):
                 local_models.append(model_parameter)
                 clients_fit_res.append(fit_res)
 
-            ########################################################################################################
+            #############################################################################################
             # Early Stopping
             if epoch % log_interval == 0:
                 self.logging_loss(clients_fit_res)
-
             if use_early_stopping_global:
                 self.early_stopping_step(clients_fit_res, early_stoppings, all_clients_converged_sign)
                 if all(all_clients_converged_sign):
                     print("All clients have converged. Stopping training at {}.".format(epoch))
                     break
 
-
-            ########################################################################################################
+            ############################################################################################
             # Aggregate local imputation model
             global_models, agg_res = server.fed_strategy.aggregate_parameters(
                 local_model_parameters=local_models, fit_res=clients_fit_res, params={
@@ -112,32 +108,28 @@ class WorkflowJM(BaseWorkflow):
                 }
             )
 
-            ########################################################################################################
+            ###########################################################################################
             # Updates local imputation model and do imputation
             for client_idx, (global_model, client) in enumerate(zip(global_models, clients)):
                 if not all_clients_converged_sign[client_idx]:
                     client.update_local_imp_model(global_model, params={})
 
+            ###########################################################################################
+            # if epoch == 0:
+            #     for client in clients:
+            #         client.local_imputation(params={})
+
             if epoch > 0 and epoch % imp_interval == 0:
                 for client in clients:
                     client.local_imputation(params={})
                 self.eval_and_track(
-                    evaluator, tracker, clients, phase='round', epoch=epoch, iterations=global_model_epochs,
-                    evaluation_interval=imp_interval
+                    evaluator, tracker, clients, phase='round', epoch=epoch,
+                    central_client=server.fed_strategy.name == 'central'
                 )
 
-            ########################################################################################################
-            # Imputation Evaluation and Check Convergence
-            # imp_qualities = None
-            #
-            #     self.eval_and_track(
-            #         evaluator, tracker, clients, phase='round', epoch=epoch, iterations=global_model_epochs,
-            #         evaluation_interval=imp_interval
-            #     )
-
-        ############################################################################################################
+        ################################################################################################################
         print("start fine tuning ...")
-        ############################################################################################################
+        ################################################################################################################
         # local training of an imputation model
         early_stoppings = [
             nn_utils.EarlyStopping(
@@ -164,9 +156,17 @@ class WorkflowJM(BaseWorkflow):
                 clients_fit_res.append(fit_res)
 
             ####################################################################################################
-            # Early Stopping
+            # Early Stopping and Logging and Evaluation
             if epoch % log_interval == 0:
                 self.logging_loss(clients_fit_res)
+
+            if epoch > 0 and epoch % imp_interval == 0:
+                for client in clients:
+                    client.local_imputation(params={})
+                self.eval_and_track(
+                    evaluator, tracker, clients, phase='round', epoch=epoch + global_model_epochs,
+                    central_client=server.fed_strategy.name == 'central'
+                )
 
             if use_early_stopping_global:
                 self.early_stopping_step(clients_fit_res, early_stoppings, all_clients_converged_sign)
@@ -174,12 +174,14 @@ class WorkflowJM(BaseWorkflow):
                     print("All clients have converged. Stopping training at {}.".format(epoch))
                     break
 
-
         #########################################################################################################
         # Final imputation and Evaluation
         for client in clients:
             client.local_imputation(params={})
-        self.eval_and_track(evaluator, tracker, clients, phase='final', iterations=global_model_epochs)
+
+        self.eval_and_track(
+            evaluator, tracker, clients, phase='final', central_client=server.fed_strategy.name == 'central'
+        )
 
         return tracker
 

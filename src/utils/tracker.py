@@ -53,11 +53,13 @@ class Tracker:
         self.split_indices = None  # tracking split indices
         self.imp_data_final = None  # tracking final imputed data
 
-    def record_initial(self, data: List[np.ndarray], mask: List[np.ndarray]):
+    def record_initial(self, data: List[np.ndarray], mask: List[np.ndarray], imp_quality: dict):
 
         self.origin_data = np.concatenate(data)
         self.mask = np.concatenate(mask)
         self.split_indices = np.cumsum([item.shape[0] for item in data])[:-1]
+        self.rounds.append(0)
+        self.imp_quality.append(imp_quality)
 
     def record_round(
             self, round_num: int, imp_quality: dict,
@@ -78,11 +80,11 @@ class Tracker:
 
     def record_final(
             self,
-            final_round, imp_quality: dict,
+            imp_quality: dict,
             data: List[np.ndarray], model_params: List[dict], other_info: List[dict]
     ):
 
-        self.rounds.append(final_round)
+        self.rounds.append(len(self.rounds) + 1)
         self.imp_quality.append(imp_quality)
         self.imp_data_final = np.concatenate(data)
 

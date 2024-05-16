@@ -1,4 +1,4 @@
 fed_strategy_name: 'fedavg'
 fed_strategy_client_params: {}
 fed_strategy_server_params:
-  initial_impute: zero
+  initial_impute: fedavg

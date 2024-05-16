@@ -6,7 +6,7 @@ os.environ['FOR_DISABLE_CONSOLE_CTRL_HANDLER'] = '1'
 warnings.filterwarnings("ignore", category=UserWarning)
 from omegaconf import DictConfig, OmegaConf
 import hydra
-
+from hydra.core.hydra_config import HydraConfig
 from src.exp_manager import FedMissExpManager
 
 
@@ -15,6 +15,7 @@ def my_app(cfg: DictConfig) -> None:
     print(cfg.experiment.output_path)
     config_dict = OmegaConf.to_container(cfg, resolve=True)
     print(config_dict)
+    print("gpu id:", HydraConfig.get().job.num % cfg.num_gpus)
 
     exp_manager = FedMissExpManager()
     exp_manager.execute_experiment(

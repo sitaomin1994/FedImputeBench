@@ -11,6 +11,7 @@ imp_params:
     loss_alpha: 50
     hint_rate: 0.3
 model_train_params:
+  initial_zero_impute: true
   global_epoch: 200
   local_epoch: 5
   batch_size: 256
@@ -22,12 +23,12 @@ model_train_params:
     gamma: 0.5
     schedule_last_epoch: -1
   optimizer: 'adam'
-  use_early_stopping: false
+  use_early_stopping: true
   model_converge:
-    tolerance: 0.001
+    tolerance: 0.01
     patience: 10
     window_size: 4
     check_steps: 1
-    back_steps: 10
-  log_interval: 10
-  imp_interval: 10
+    back_steps: 20
+  log_interval: 100
+  imp_interval: 100

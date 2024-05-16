@@ -9,4 +9,4 @@ model_train_params:
   max_iterations: 400
   convergence_thres: 0.001
   local_epoch: 1
-  evaluation_interval: 20
+  evaluation_interval: 1

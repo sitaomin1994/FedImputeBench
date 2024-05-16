@@ -15,17 +15,10 @@ def fit_fed_nn_model(
         imputer: BaseNNImputer, training_params: dict, fed_strategy: StrategyClient,
         X_train_imp: np.ndarray, y_train: np.ndarray, X_train_mask: np.ndarray
 ) -> Tuple[torch.nn.Module, dict]:
-
     ######################################################################################
     # training params
     try:
         local_epochs = training_params['local_epoch']
-        use_early_stopping = training_params['use_early_stopping_local']
-        model_converge_tol = training_params['model_converge']['tolerance']
-        model_converge_patience = training_params['model_converge']['patience']
-        model_converge_window_size = training_params['model_converge']['window_size']
-        model_converge_steps = training_params['model_converge']['check_steps']
-        model_converge_back_steps = training_params['model_converge']['back_steps']
     except KeyError as e:
         raise ValueError(f"Parameter {str(e)} not found in params")
 
@@ -44,10 +37,6 @@ def fit_fed_nn_model(
     ######################################################################################
     # training loop
     total_loss, total_iters = 0, 0
-    early_stopping = nn_utils.EarlyStopping(
-        patience=model_converge_patience, tolerance=model_converge_tol, window_size=model_converge_window_size,
-        check_steps=model_converge_steps, backward_window_size=model_converge_back_steps
-    )
 
     # for ep in trange(local_epochs, desc='Local Epoch', colour='blue'):
     for ep in range(local_epochs):
@@ -77,16 +66,8 @@ def fit_fed_nn_model(
         if DEVICE == "cuda":
             torch.cuda.empty_cache()
 
-        losses_epoch = np.array(losses_epoch)/len(train_dataloader)
+        losses_epoch = np.array(losses_epoch) / len(train_dataloader)
         epoch_loss = losses_epoch.mean()
-
-        # tqdm.write(f'Epoch {ep} Loss: {epoch_loss}')
-
-        if use_early_stopping:
-            early_stopping.update(epoch_loss)
-            if early_stopping.check_convergence():
-                print(f'Early stopping at {ep} epoch with loss {epoch_loss}')
-                break
 
         # update lr scheduler
         # for scheduler in lr_schedulers:
@@ -103,3 +84,6 @@ def fit_fed_nn_model(
     final_loss = total_loss / total_iters
 
     return model, {'loss': final_loss, 'sample_size': len(train_dataloader.dataset)}
+
+
+

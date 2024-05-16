@@ -69,12 +69,12 @@ class Client:
         Fit a local imputation model
         """
         if not params['fit_model']:
-            #print('No model fitting')
-            return self.imputer.get_imp_model_params(params), {'sample_size': self.X_train_imp.shape[0]}
+            return self.imputer.get_imp_model_params(params), {
+                'sample_size': self.X_train_imp.shape[0], 'converged': True
+            }
         else:
             # NN based Imputation Models
             if isinstance(self.imputer, BaseNNImputer):
-                #print('Fitting NN based Imputation Model')
 
                 imp_model, fit_res = fit_fed_nn_model(
                     self.imputer, params, self.fed_strategy, self.X_train_imp, self.y_train, self.X_train_mask

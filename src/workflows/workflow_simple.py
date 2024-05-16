@@ -35,7 +35,9 @@ class WorkflowSimple(BaseWorkflow):
         clients = initial_imputation(server.fed_strategy.strategy_params['initial_impute'], clients)
 
         # initial evaluation and tracking
-        self.eval_and_track(evaluator, tracker, clients, phase='initial')
+        self.eval_and_track(
+            evaluator, tracker, clients, phase='initial', central_client=server.fed_strategy.name == 'central'
+        )
 
         ############################################################################################################
         # federated imputation
@@ -55,7 +57,9 @@ class WorkflowSimple(BaseWorkflow):
 
         ########################################################################################################
         # Final Evaluation and Tracking
-        self.eval_and_track(evaluator, tracker, clients, phase='final', iterations=1)
+        self.eval_and_track(
+            evaluator, tracker, clients, phase='final', central_client=server.fed_strategy.name == 'central'
+        )
 
         return tracker
 

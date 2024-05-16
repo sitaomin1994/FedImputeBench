@@ -4,9 +4,14 @@ defaults:
 imp_name: 'missforest'
 imp_params:
   imp_model_params:
-    n_estimators: 100
+    n_estimators: 200
     bootstrap: True
     n_jobs: -1
   clip: True
   use_y: False
-model_train_params: {}
+model_train_params:
+  early_stopping: True
+  patience: 3
+  tolerance: 0.001
+  window_size: 3
+  log_interval: 1

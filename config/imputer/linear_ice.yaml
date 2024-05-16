@@ -12,4 +12,9 @@ imp_params:
     cv: 3
   clip: True
   use_y: False
-model_train_params: {}
+model_train_params:
+  early_stopping: True
+  patience: 5
+  tolerance: 0.001
+  window_size: 3
+  log_interval: 1

@@ -7,6 +7,7 @@ from src.imputation.base.ice_imputer import ICEImputerMixin
 from src.imputation.base.base_imputer import BaseMLImputer
 import numpy as np
 
+
 # TODO:
 #  1. singular matrix convergence logic
 #  2. global convergence checking logic
@@ -81,7 +82,7 @@ class EMImputer(BaseMLImputer, ICEImputerMixin):
 
         local_epochs = params['local_epoch']
         converged = False
-        convergence_threshold =  params['convergence_thres']
+        convergence_threshold = params['convergence_thres']
 
         for iteration in range(local_epochs):
             try:

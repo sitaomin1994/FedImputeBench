@@ -23,7 +23,8 @@ class Evaluator:
 
     @staticmethod
     def evaluate_imputation(
-            X_train_imps: List[np.ndarray], X_train_origins: List[np.ndarray], X_train_masks: List[np.ndarray]
+            X_train_imps: List[np.ndarray], X_train_origins: List[np.ndarray], X_train_masks: List[np.ndarray],
+            central_client: bool = False
     ) -> dict:
 
         evaluation_results = {
@@ -42,8 +43,12 @@ class Evaluator:
             evaluation_results['imp_rmse_clients'].append(imp_rmse)
             evaluation_results['imp_ws_clients'].append(imp_ws)
 
-        evaluation_results['imp_rmse_avg'] = float(np.mean(evaluation_results['imp_rmse_clients']))
-        evaluation_results['imp_ws_avg'] = float(np.mean(evaluation_results['imp_ws_clients']))
+        if central_client:
+            evaluation_results['imp_rmse_avg'] = float(np.mean(evaluation_results['imp_rmse_clients'][:-1]))
+            evaluation_results['imp_ws_avg'] = float(np.mean(evaluation_results['imp_ws_clients'][:-1]))
+        else:
+            evaluation_results['imp_rmse_avg'] = float(np.mean(evaluation_results['imp_rmse_clients']))
+            evaluation_results['imp_ws_avg'] = float(np.mean(evaluation_results['imp_ws_clients']))
 
         # global imputation quality evaluation
         # merged_X_imp = np.concatenate(X_train_imps, axis=0)
