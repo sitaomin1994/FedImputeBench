@@ -1,0 +1,19 @@
+defaults:
+  - _self_
+  - override hydra/launcher: submitit_local
+
+hydra:
+  launcher:
+    cpus_per_task: 1
+    gpus_per_node: 1
+    tasks_per_node: 1
+    mem_gb: 4
+    timeout_min: 1
+    name: test
+    partition: p_jsvaidya_1
+    array_parallelism: 20
+    setup:
+      - conda activate impute4fair
+      - export CUBLAS_WORKSPACE_CONFIG=:4096:8
+
+seed: 2180279
