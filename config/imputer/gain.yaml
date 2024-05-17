@@ -8,8 +8,8 @@ imp_params:
     h_dim: 64
     n_layers: 2
     activation: 'relu'
-    loss_alpha: 50
-    hint_rate: 0.3
+    loss_alpha: 20
+    hint_rate: 0.5
 model_train_params:
   initial_zero_impute: true
   global_epoch: 200
@@ -24,11 +24,13 @@ model_train_params:
     schedule_last_epoch: -1
   optimizer: 'adam'
   use_early_stopping: true
+  early_stopping_mode: 'local'
   model_converge:
-    tolerance: 0.01
-    patience: 10
-    window_size: 4
+    tolerance: 0.005
+    tolerance_patience: 20
+    increase_patience: 20
+    window_size: 20
     check_steps: 1
-    back_steps: 20
+    back_steps: 1
   log_interval: 100
   imp_interval: 100

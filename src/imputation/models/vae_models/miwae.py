@@ -11,13 +11,9 @@ import torch.distributions as td
 from emf.reproduce_utils import set_seed
 from .decoder import GaussianDecoder, BernoulliDecoder, StudentTDecoder
 from .encoder import BaseEncoder
+from src.utils.nn_utils import weights_init
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-
-def weights_init(layer: Any) -> None:
-    if type(layer) == nn.Linear:
-        torch.nn.init.orthogonal_(layer.weight)
 
 
 class MIWAE(nn.Module):
@@ -52,6 +48,8 @@ class MIWAE(nn.Module):
             out_dist='studentt',
             K: int = 20,
             L: int = 1000,
+            activation='tanh',
+            initializer='xavier'
     ) -> None:
 
         super().__init__()
@@ -68,6 +66,7 @@ class MIWAE(nn.Module):
         # encoder
         self.encoder = BaseEncoder(
             self.num_features, self.latent_size, [self.n_hidden for _ in range(self.n_hidden_layers)],
+            activation = activation
         ).to(DEVICE)
 
         # decoder
@@ -75,14 +74,17 @@ class MIWAE(nn.Module):
         if out_dist == 'studentt':
             self.decoder = StudentTDecoder(
                 self.latent_size, self.num_features, [self.n_hidden for _ in range(self.n_hidden_layers)],
+                activation=activation
             )
         elif out_dist == 'gaussian':
             self.decoder = GaussianDecoder(
                 self.latent_size, self.num_features, [self.n_hidden for _ in range(self.n_hidden_layers)],
+                activation=activation
             )
         elif out_dist == 'bernoulli':
             self.decoder = BernoulliDecoder(
                 self.latent_size, self.num_features, [self.n_hidden for _ in range(self.n_hidden_layers)],
+                activation=activation
             )
         else:
             raise ValueError("Invalid output distribution")
@@ -101,8 +103,8 @@ class MIWAE(nn.Module):
 
     def init(self, seed):
         set_seed(seed)
-        self.encoder.apply(weights_init)
-        self.decoder.apply(weights_init)
+        self.encoder.apply(lambda x: weights_init(x, self.initializer))
+        self.decoder.apply(lambda x: weights_init(x, self.initializer))
 
     def compute_loss(self, inputs: tuple[torch.Tensor, ...]) -> Tuple[torch.Tensor, Dict]:
         x, mask = inputs  # x - data, mask - missing mask
@@ -141,12 +143,9 @@ class MIWAE(nn.Module):
             optimizers: List[torch.optim.Optimizer], optimizer_idx: int
     ) -> tuple[float, dict]:
 
-        optimizer = optimizers[0]
         batch = tuple(item.to(DEVICE) for item in batch)
-        optimizer.zero_grad()
         loss, train_res_dict = self.compute_loss(batch)
         loss.backward()
-        optimizer.step()
 
         return loss.item(), {}
 

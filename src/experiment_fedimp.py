@@ -1,4 +1,3 @@
-import numpy as np
 from emf.base_experiment import BaseExperiment
 from src.evaluation.evaluator import Evaluator
 from src.loaders.load_environment import setup_clients, setup_server

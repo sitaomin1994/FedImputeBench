@@ -1,5 +1,6 @@
-from typing import Iterable, Union
+from typing import Iterable, Union, Any
 import torch
+from torch import nn
 
 
 def load_optimizer(
@@ -45,11 +46,24 @@ def load_lr_scheduler(
         raise ValueError(f"Scheduler {scheduler_name} not supported")
 
 
+def weights_init(layer: Any, initializer: str) -> None:
+    if type(layer) == nn.Linear:
+        if initializer == 'xavier':
+            torch.nn.init.xavier_normal_(layer.weight, gain=1)
+        elif initializer == 'orthogonal':
+            torch.nn.init.orthogonal_(layer.weight)
+        elif initializer == 'kaiming':
+            torch.nn.init.kaiming_normal_(layer.weight, mode='fan_in', nonlinearity='relu')
+        else:
+            raise ValueError(f"Unknown initializer: {initializer}")
+
+
 class EarlyStopping:
     def __init__(
             self,
             tolerance=1e-4,
-            patience=3,
+            tolerance_patience=3,
+            increase_patience=20,
             window_size=5,
             check_steps=1,
             backward_window_size=20
@@ -65,12 +79,14 @@ class EarlyStopping:
         - max_tolerance_steps: int, 允许的最大连续容差超出次数。
         """
         self.tolerance = tolerance
-        self.patience = patience
+        self.patience = tolerance_patience
         self.window_size = window_size
+        self.increase_patience = increase_patience
         self.backward_window_size = backward_window_size
         self.check_steps = check_steps
         self.metrics = []
         self.patience_counter = 0
+        self.increase_patience_counter = 0
         self.best_metric = float('inf')
         self.early_stop = False
 
@@ -108,10 +124,12 @@ class EarlyStopping:
             backward_window_metrics = self.metrics[
                                       -(self.backward_window_size + self.window_size): -self.backward_window_size
                                       ]
+
             backward_window_avg = sum(backward_window_metrics) / self.window_size
 
             # 计算指标变化
             metric_change = abs(window_avg - backward_window_avg)
+
             if metric_change < self.tolerance:
                 self.patience_counter += 1
                 # self.tolerance_counter = 0
@@ -119,18 +137,22 @@ class EarlyStopping:
                 self.patience_counter = 0
                 # self.tolerance_counter += 1
 
-            # 更新最佳指标
-            if metric_change < self.best_metric:
-                self.best_metric = metric_change
+            # update the current best metric if current window_avg is smaller
+            if window_avg <= self.best_metric:
+                self.best_metric = window_avg
+                self.increase_patience_counter = 0
+            else:
+                self.increase_patience_counter += 1
 
-            # 判断是否超过耐心次数或连续超出容差次数
-            if self.patience_counter >= self.patience:
+            if self.patience_counter >= self.patience or self.increase_patience_counter >= self.increase_patience:
                 self.early_stop = True
 
-            print(f"Window Average: {window_avg:.4f}, Backpoint Window Average: {backward_window_avg:.4f}, "
-                  f"Best Metric Change: {self.best_metric:.4f}, "
-                  f"Metric Change: {metric_change:.4f}, Patience Counter: {self.patience_counter}, "
-                  f"Early Stop: {self.early_stop}")
+            print(
+                f"Window Average: {window_avg:.4f}, Backpoint Window Average: {backward_window_avg:.4f}, "
+                f"Best Metric Change: {self.best_metric:.4f}, "
+                f"Metric Change: {metric_change:.4f}, Patience Counter: {self.patience_counter}, "
+                f"Early Stop: {self.early_stop}"
+            )
 
         return self.early_stop
 

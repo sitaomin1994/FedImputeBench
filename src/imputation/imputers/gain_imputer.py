@@ -92,12 +92,6 @@ class GAINImputer(BaseNNImputer, JMImputerMixin):
             X_mask = missing_mask.copy()
             bs = min(batch_size, n)
 
-            # for i in range(X_imp.shape[1]):
-            #     min_val = self.norm_parameters["min"][i]
-            #     max_val = self.norm_parameters["max"][i]
-            #     X_imp[:, i] = X_imp[:, i] - min_val
-            #     X_imp[:, i] = X_imp[:, i] / (max_val + 1e-8)
-
             train_dataset = torch.utils.data.TensorDataset(
                 torch.from_numpy(X_imp).float(), torch.from_numpy(~X_mask).float()
             )
@@ -136,7 +130,7 @@ class GAINImputer(BaseNNImputer, JMImputerMixin):
         d_lr_scheduler = load_lr_scheduler(scheduler_name, d_solver, scheduler_params)
 
         return (
-            [g_solver, d_solver], [g_lr_scheduler, d_lr_scheduler]
+            [d_solver, g_solver], [d_lr_scheduler, g_lr_scheduler]
         )
 
     def impute(
@@ -151,27 +145,10 @@ class GAINImputer(BaseNNImputer, JMImputerMixin):
         X = torch.from_numpy(X.copy()).float()
         mask = torch.from_numpy(~missing_mask.copy()).float()
 
-        # MinMaxScaler normalization
-        # min_val = self.norm_parameters["min"]
-        # max_val = self.norm_parameters["max"]
-        # for i in range(X.shape[1]):
-        #     X[:, i] = X[:, i] - min_val[i]
-        #     X[:, i] = X[:, i] / (max_val[i] + 1e-8)
-        #
-        # mask = 1 - (1 * (np.isnan(X)))
-        # mask = mask.to(DEVICE)
-        #
-        # # Set missing
-        # x = np.nan_to_num(X)
         with torch.no_grad():
             self.model.to(DEVICE)
             x_imp = self.model.impute(X, mask)
             self.model.to('cpu')
-
-        # Renormalize
-        # for i in range(x_imp.shape[1]):
-        #     x_imp[:, i] = x_imp[:, i] * (max_val[i] + 1e-8)
-        #     x_imp[:, i] = x_imp[:, i] + min_val[i]
 
         if self.clip:
             for i in range(x_imp.shape[1]):

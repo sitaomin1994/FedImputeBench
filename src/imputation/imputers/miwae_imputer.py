@@ -5,6 +5,7 @@ from typing import Dict, Union, List, Tuple, OrderedDict
 import numpy as np
 from torch.utils.data import DataLoader
 
+from ..models.vae_models.gnr import GNR
 from ..models.vae_models.miwae import MIWAE
 from ..models.vae_models.notmiwae import NOTMIWAE
 import torch
@@ -71,6 +72,8 @@ class MIWAEImputer(BaseNNImputer, JMImputerMixin):
             self.model = MIWAE(num_features=data_utils['n_features'], **self.imp_model_params)
         elif self.name == 'notmiwae':
             self.model = NOTMIWAE(num_features=data_utils['n_features'], **self.imp_model_params)
+        elif self.model == 'gnr':
+            self.model = GNR(num_features=data_utils['n_features'], **self.imp_model_params)
         else:
             raise ValueError(f"Model {self.name} not supported")
 

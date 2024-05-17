@@ -17,8 +17,20 @@ class FedProxStrategyClient(StrategyClient):
         self.strategy_params = strategy_params
         super().__init__('fedprox')
 
-        self.mu = strategy_params.get('mu', 0.01)
+        self.mu = strategy_params.get('mu', 1)
         self.global_model_params = None
+
+    def pre_training_setup(self, model: torch.nn.Module, params: dict):
+        self.global_model_params = trainable_params(model, detach=True)
+
+    def fed_updates(self, model: torch.nn.Module):
+        #print(self.global_model_params)
+        for w, w_t in zip(trainable_params(model), self.global_model_params):
+            w.grad.data += self.mu * (w.data - w_t.data)
+
+    def post_training_setup(self, model: torch.nn.Module):
+        self.global_model_params = None
+        gc.collect()
 
     def train_local_nn_model(
             self, imputer: BaseNNImputer, training_params: dict, X_train_imp: np.ndarray,

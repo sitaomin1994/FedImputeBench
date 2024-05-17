@@ -1,24 +1,16 @@
 from typing import Any, List, Dict, Tuple
-
-# third party
 import numpy as np
 import torch
 from torch import nn, optim
 import torch.distributions as td
-import torch.nn.functional as F
 
 # hyperimpute absolute
 from emf.reproduce_utils import set_seed
-from decoder import GaussianDecoder, BernoulliDecoder, StudentTDecoder
 from encoder import BaseEncoder
 from ..common_blocks import LinearLayers
+from src.utils.nn_utils import weights_init
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-
-def weights_init(layer: Any) -> None:
-    if type(layer) == nn.Linear:
-        torch.nn.init.orthogonal_(layer.weight)
 
 
 class FusionDecoder(nn.Module):
@@ -39,16 +31,16 @@ class FusionDecoder(nn.Module):
         )
 
         # reconstruction x
-        self.mu_layer = nn.Linear(hidden_dims[-1], output_dim)
+        self.mu_layer = nn.Linear(
+            hidden_dims[-1], output_dim
+        )
         self.std_layer = nn.Sequential(
-            nn.Linear(hidden_dims[-1], output_dim),
-            nn.Softplus()
+            nn.Linear(hidden_dims[-1], output_dim), nn.Softplus()
         )
 
         # reconstruction mask
         self.mask_layer = nn.Sequential(
-            nn.Linear(hidden_dims[-1], output_dim),
-            nn.Softplus(),
+            nn.Linear(hidden_dims[-1], output_dim), nn.Softplus(),
             # nn.Lambda(lambda x: x + 2)  # Ensure df > 2
         )
 
@@ -79,10 +71,12 @@ class GNR(nn.Module):
             n_hidden_layers: int = 2,
             seed: int = 0,
             out_dist=None,  # TODO: add this option later
-            activation_fn: Any = None,
-            out_activation_fn: Any = None,
             K: int = 20,
-            loss_ceof = 10
+            loss_ceof=10,
+            L: int = 1000,
+            activation='tanh',
+            initializer='xavier',
+            mr_loss_coef: bool = True
     ) -> None:
         super().__init__()
         set_seed(seed)
@@ -91,17 +85,23 @@ class GNR(nn.Module):
         self.n_hidden = n_hidden  # number of hidden units in (same for all MLPs)
         self.latent_size = latent_size  # dimension of the latent space
         self.K = K  # number of IS during training
+        self.L = L  # number of samples for imputation
+        self.n_hidden_layers = n_hidden_layers  # number of hidden layers in (same for all MLPs)
         self.loss_coef = loss_ceof
+        self.mr_loss_coef = mr_loss_coef
+        self.initializer = initializer
 
         # encoder
         self.encoder = BaseEncoder(
             self.num_features, 2 * self.latent_size, [self.n_hidden for _ in range(self.n_hidden_layers)],
+            activation=activation
         ).to(DEVICE)
 
         # fusion decoder
         self.out_dist = out_dist
         self.decoder = FusionDecoder(
             self.latent_size, self.num_features, [self.n_hidden for _ in range(self.n_hidden_layers)],
+            activation=activation
         ).to(DEVICE)
 
         # prior
@@ -114,41 +114,42 @@ class GNR(nn.Module):
     def name() -> str:
         return "gnr"
 
-    def init(self):
-        self.encoder.apply(weights_init)
-        self.decoder.apply(weights_init)
+    def init(self, seed):
+        set_seed(seed)
+        self.encoder.apply(lambda x: weights_init(x, self.initializer))
+        self.decoder.apply(lambda x: weights_init(x, self.initializer))
 
-    def compute_loss(self, inputs: List[torch.Tensor]) -> Tuple[torch.Tensor, Dict]:
-
+    def compute_loss(self, inputs: Tuple[torch.Tensor, ...]) -> Tuple[torch.Tensor, Dict]:
         x, mask = inputs  # x - data, mask - missing mask
         batch_size = x.shape[0]
+        missing_ratio = (1 - mask).sum() / (mask.shape[0] * mask.shape[1]) + 1e-6
 
         # encoder
         q_mu, q_logvar = self.encoder(x)  # (batch_size, latent_size)
         q_std = torch.sqrt(torch.exp(q_logvar))
 
-        q_zgivenx = td.Normal(loc=q_mu, scale=q_std)   # todo check consistency of std and logvar
+        q_zgivenx = td.Normal(loc=q_mu, scale=q_std)  # todo check consistency of std and logvar
         l_z = q_zgivenx.rsample([self.K])  # (K, batch_size, latent_size)
         l_z = torch.transpose(l_z, 0, 1)  # (batch_size, K, latent_size)
 
         # decoder
-        mu, std, mask = self.decoder(l_z) # (batch_size, K, num_features)
+        mu, std, mask_pred = self.decoder(l_z)  # (batch_size, K, num_features)
 
         ################################################################################################################
         # Loss
         # p(x|z)
         p_x_given_z = td.Normal(loc=mu, scale=std)
         log_px_given_z = torch.sum(
-            torch.unsqueeze(mask, 1)*p_x_given_z.log_prob(torch.unsqueeze(x, 1)),  # (batch_size, 1, num_features)
+            torch.unsqueeze(mask, 1) * p_x_given_z.log_prob(torch.unsqueeze(x, 1)),  # (batch_size, 1, num_features)
             dim=-1
         )  # (batch_size, K)
 
         # p(m|x)
-        p_m_given_z = td.Bernoulli(logits=mask)
+        p_m_given_z = td.Bernoulli(logits=mask_pred)
         log_pm_given_z = torch.sum(
             p_m_given_z.log_prob(torch.unsqueeze(mask, dim=1)),  # (batch_size, 1, num_features)
             dim=-1
-        ) # (batch_size, K)
+        )  # (batch_size, K)
 
         # q(z|x)
         q_z_given_x2 = td.Normal(loc=torch.unsqueeze(q_mu, dim=1), scale=torch.unsqueeze(q_std, dim=1))
@@ -161,15 +162,30 @@ class GNR(nn.Module):
         log_pz = torch.sum(self.p_z.log_prob(l_z), dim=-1)  # (batch_size, K)
 
         # final loss
-        l_w = log_px_given_z + self.loss_coef*log_pm_given_z + log_pz - log_qz_given_x  # (batch_size, K)
+        if self.mr_loss_coef:
+            l_w = log_px_given_z + self.loss_coef * log_pm_given_z / missing_ratio + log_pz - log_qz_given_x
+        else:
+            l_w = log_px_given_z + self.loss_coef * log_pm_given_z + log_pz - log_qz_given_x
+
+        # (batch_size, K)
         l_w = torch.logsumexp(l_w, dim=1) - np.log(float(self.K))  # (batch_size,)
-        neg_bound = -torch.mean(l_w, dim=-1) # (1,)
+        neg_bound = -torch.mean(l_w, dim=-1)  # (1,)
 
         return neg_bound, {}
 
-    def impute(self, x: torch.Tensor, mask: torch.Tensor, L: int) -> torch.Tensor:
-        batch_size = x.shape[0]
-        p = x.shape[1]
+    def train_step(
+            self, batch: Tuple[torch.Tensor, ...], batch_idx: int,
+            optimizers: List[torch.optim.Optimizer], optimizer_idx: int
+    ) -> tuple[float, dict]:
+        batch = tuple(item.to(DEVICE) for item in batch)
+        loss, train_res_dict = self.compute_loss(batch)
+        loss.backward()
+
+        return loss.item(), {}
+
+    def impute(self, x: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
+        L = self.L
+        missing_ratio = (1 - mask).sum() / (mask.shape[0] * mask.shape[1]) + 1e-6
 
         # encoder
         self.encoder.to(DEVICE)
@@ -178,48 +194,51 @@ class GNR(nn.Module):
         q_std = torch.sqrt(torch.exp(q_logvar))
 
         q_zgivenx = td.Normal(loc=q_mu, scale=q_std)  # todo check consistency of std and logvar
-        l_z = q_zgivenx.rsample([L])  # (K, batch_size, latent_size)
+        l_z = q_zgivenx.rsample([L])  # (L, batch_size, latent_size)
         l_z = torch.transpose(l_z, 0, 1)  # (batch_size, L, latent_size)
 
         # decoder
-        mu, std, mask = self.decoder(l_z)  # (batch_size, L, num_features)
+        mu, std, mask_pred = self.decoder(l_z)  # (batch_size, K, num_features)
 
         ################################################################################################################
         # Loss
         # p(x|z)
         p_x_given_z = td.Normal(loc=mu, scale=std)
         log_px_given_z = torch.sum(
-            torch.unsqueeze(mask, 1) * p_x_given_z.log_prob(torch.unsqueeze(x, 1)),  # (batch_size, L, num_features)
-            dim=-1
+            # (batch_size, L, num_features)
+            torch.unsqueeze(mask, 1) * p_x_given_z.log_prob(torch.unsqueeze(x, 1)), dim=-1
         )  # (batch_size, L)
 
         # p(m|x)
-        p_m_given_z = td.Bernoulli(logits=mask)
+        p_m_given_z = td.Bernoulli(logits=mask_pred)
         log_pm_given_z = torch.sum(
-            p_m_given_z.log_prob(torch.unsqueeze(mask, dim=1)),  # (batch_size, L, num_features)
-            dim=-1
+            p_m_given_z.log_prob(torch.unsqueeze(mask, dim=1)), dim=-1  # (batch_size, L, num_features)
         )  # (batch_size, L)
 
         # q(z|x)
         q_z_given_x2 = td.Normal(loc=torch.unsqueeze(q_mu, dim=1), scale=torch.unsqueeze(q_std, dim=1))
         log_qz_given_x = torch.sum(
-            q_z_given_x2.log_prob(l_z),  # (batch_size, L, 1, latent_size)
-            dim=-1
+            q_z_given_x2.log_prob(l_z), dim=-1  # (batch_size, L, 1, latent_size)
         )
 
         # p(z)
         log_pz = torch.sum(self.p_z.log_prob(l_z), dim=-1)  # (batch_size, L)
 
         # final loss
-        l_w = log_px_given_z + self.loss_coef * log_pm_given_z + log_pz - log_qz_given_x  # (batch_size, L)
-        l_w = torch.nn.Softmax(dim=1)(l_w) # (batch_size, L)
+        if self.mr_loss_coef:
+            l_w = log_px_given_z + self.loss_coef * log_pm_given_z / missing_ratio + log_pz - log_qz_given_x
+        else:
+            l_w = log_px_given_z + self.loss_coef * log_pm_given_z + log_pz - log_qz_given_x
+
+        # (batch_size, L)
+        l_w = torch.nn.Softmax(dim=1)(l_w)  # (batch_size, L)
 
         # imputation weighted samples
         l_x_given_z = td.Normal(loc=mu, scale=std).rsample([L])  # (L, batch_size, num_features)
         l_x_given_z = torch.transpose(l_x_given_z, 0, 1)  # (batch_size, L, num_features)
 
         # imputation
-        xm = torch.einsum("ki,kij->ij", l_w, l_x_given_z) # (batch_size, num_features)
+        xm = torch.einsum("ki,kij->ij", l_w, l_x_given_z)  # (batch_size, num_features)
         xhat = torch.clone(x)
         xhat[~mask.bool()] = xm[~mask.bool()]
 

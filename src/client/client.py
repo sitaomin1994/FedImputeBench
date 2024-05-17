@@ -101,11 +101,16 @@ class Client:
         if updated_local_model is not None:
             self.imputer.set_imp_model_params(updated_local_model, params)
 
-    def local_imputation(self, params: dict) -> None:
+    def local_imputation(self, params: dict) -> Union[None, np.ndarray]:
         """
         Imputation
         """
-        self.X_train_imp = self.imputer.impute(self.X_train_imp, self.y_train, self.X_train_mask, params)
+        if 'temp_imp' in params and params['temp_imp']:
+            X_train_imp = self.imputer.impute(self.X_train_imp, self.y_train, self.X_train_mask, params)
+            return X_train_imp
+        else:
+            self.X_train_imp = self.imputer.impute(self.X_train_imp, self.y_train, self.X_train_mask, params)
+            return None
 
     def calculate_data_utils(self, data_config: dict) -> dict:
         """

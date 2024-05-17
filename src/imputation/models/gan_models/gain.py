@@ -1,20 +1,13 @@
-import os
-from copy import deepcopy
-import random
 from typing import Union, Tuple, Any, List
 from emf.reproduce_utils import set_seed
 import torch
 import numpy as np
 import torch.nn as nn
+from ..common_blocks import LinearLayers
+from src.utils.nn_utils import weights_init
 
 EPS = 1e-8
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-from ..common_blocks import LinearLayers
-
-
-def weights_init(layer: Any) -> None:
-    if type(layer) == nn.Linear:
-        torch.nn.init.orthogonal_(layer.weight)
 
 
 class GainModel(nn.Module):
@@ -35,6 +28,7 @@ class GainModel(nn.Module):
             h_dim: int,
             n_layers: int = 2,
             activation: str = 'relu',
+            initializer: str = 'kaiming',
             loss_alpha: float = 10,
             hint_rate: float = 0.9,
             *args, **kwargs
@@ -66,8 +60,8 @@ class GainModel(nn.Module):
 
     def init(self, seed):
         set_seed(seed)
-        self.generator_layer.apply(weights_init)
-        self.discriminator_layer.apply(weights_init)
+        self.encoder.apply(lambda x: weights_init(x, self.initializer))
+        self.decoder.apply(lambda x: weights_init(x, self.initializer))
 
     def discriminator(self, X: torch.Tensor, hints: torch.Tensor) -> torch.Tensor:
         inputs = torch.cat([X, hints], dim=1).float()
@@ -133,7 +127,7 @@ class GainModel(nn.Module):
         mb_size = x_mb.size(0)
         dim = x_mb.size(1)
 
-        #x_mb, h_mb, m_mb = sample(256, x_mb.size(0), x_mb, m_mb, x_mb.size(1), self.hint_rate)
+        # x_mb, h_mb, m_mb = sample(256, x_mb.size(0), x_mb, m_mb, x_mb.size(1), self.hint_rate)
 
         # if optimizer_idx == 0:
         z_mb = sample_Z(mb_size, dim)
@@ -141,18 +135,21 @@ class GainModel(nn.Module):
         h_mb = m_mb * h_mb
         x_mb = m_mb * x_mb + (1 - m_mb) * z_mb
 
-        G_solver, D_solver = optimizers
-        D_solver.zero_grad()
-        D_loss = self.discr_loss(x_mb, m_mb, h_mb)
-        D_loss.backward()
-        D_solver.step()
+        if optimizer_idx == 0:  # discriminator
 
-        G_solver.zero_grad()
-        G_loss = self.gen_loss(x_mb, m_mb, h_mb)
-        G_loss.backward()
-        G_solver.step()
-
-        return (D_loss.item() + G_loss.item()) / 2, {}
+            # G_solver, D_solver = optimizers
+            # D_solver.zero_grad()
+            D_loss = self.discr_loss(x_mb, m_mb, h_mb)
+            D_loss.backward()
+            return D_loss.item(), {}
+        # D_solver.step()
+        else:  # generator
+            # G_solver.zero_grad()
+            G_loss = self.gen_loss(x_mb, m_mb, h_mb)
+            G_loss.backward()
+            # G_solver.step()
+            return G_loss.item(), {}
+        # return (D_loss.item() + G_loss.item()) / 2, {}
 
         #     return D_loss.item(), {}
         # else:
@@ -218,7 +215,6 @@ def sample_idx(m: int, n: int) -> torch.Tensor:
 
 
 def sample(batch_size, no, X, mask, dim, hint_rate) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-
     mb_size = min(batch_size, no)
 
     mb_idx = sample_idx(no, mb_size)

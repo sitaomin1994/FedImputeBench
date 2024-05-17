@@ -4,6 +4,7 @@ import numpy as np
 from tqdm import trange, tqdm
 
 from src.fed_strategy.fed_strategy_client import StrategyClient
+from src.fed_strategy.fed_strategy_client.utils import trainable_params
 from src.imputation.base import BaseNNImputer
 import delu
 import src.utils.nn_utils as nn_utils
@@ -45,19 +46,21 @@ def fit_fed_nn_model(
         # training one epoch
         losses_epoch, ep_iters = [0 for _ in range(len(optimizers))], 0
         for batch_idx, batch in enumerate(train_dataloader):
-            # for optimizer_idx, optimizer in enumerate(optimizers):
-            #########################################################################
-            # training step
-            model.train()
-            loss, res = model.train_step(batch, batch_idx, optimizers, optimizer_idx=0)
-            #########################################################################
-            # fed updates
-            fed_strategy.fed_updates(model)
-
-            #########################################################################
-            # update loss
             for optimizer_idx, optimizer in enumerate(optimizers):
+                #########################################################################
+                # training step
+                model.train()
+                optimizer.zero_grad()
+                loss, res = model.train_step(batch, batch_idx, optimizers, optimizer_idx=optimizer)
                 losses_epoch[optimizer_idx] += loss
+
+                ########################################################################
+                #fed updates
+                fed_strategy.fed_updates(model)
+
+                #########################################################################
+                # backpropagation
+                optimizer.step()
 
             ep_iters += 1
 

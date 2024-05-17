@@ -15,7 +15,6 @@ def my_app(cfg: DictConfig) -> None:
     print(cfg.experiment.output_path)
     config_dict = OmegaConf.to_container(cfg, resolve=True)
     print(config_dict)
-    print("gpu id:", HydraConfig.get().job.num % cfg.num_gpus)
 
     exp_manager = FedMissExpManager()
     exp_manager.execute_experiment(

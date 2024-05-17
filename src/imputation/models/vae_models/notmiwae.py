@@ -1,8 +1,5 @@
 # stdlib
 from typing import Any, List, Dict, Tuple
-
-# third party
-import numpy as np
 import torch
 from torch import nn, optim
 import torch.distributions as td
@@ -11,13 +8,9 @@ import torch.distributions as td
 from emf.reproduce_utils import set_seed
 from .decoder import GaussianDecoder, BernoulliDecoder, StudentTDecoder
 from .encoder import BaseEncoder
+from src.utils.nn_utils import weights_init
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-
-def weights_init(layer: Any) -> None:
-    if type(layer) == nn.Linear:
-        torch.nn.init.orthogonal_(layer.weight)
 
 
 # TODO: move this MM model to a separate file
@@ -30,7 +23,6 @@ class MaskNet(nn.Module):
         """
         Args:
             input_dim: Dimension of observed features.
-            device: torch device to use.
         """
         super().__init__()
         self._device = DEVICE
@@ -63,7 +55,6 @@ class MaskNet2(nn.Module):
         """
         Args:
             input_dim: Dimension of observed features.
-            device: torch device to use.
         """
         super().__init__()
         self._device = DEVICE
@@ -91,21 +82,6 @@ class MaskNet2(nn.Module):
 class NOTMIWAE(nn.Module):
     """
     Not-MIWAE imputation plugin
-
-    Args:
-        n_epochs: int
-            Number of training iterations
-        batch_size: int
-            Batch size
-        latent_size: int
-            dimension of the latent space
-        n_hidden: int
-            number of hidden units
-        K: int
-            number of IS during training
-        random_state: int
-            random seed
-
     Reference: "MIWAE: Deep Generative Modelling and Imputation of Incomplete Data", Pierre-Alexandre Mattei,
     Jes Frellsen
     Original code: https://github.com/pamattei/miwae
@@ -122,6 +98,8 @@ class NOTMIWAE(nn.Module):
             K: int = 20,
             L: int = 100,
             mask_net_type: str = 'linear',
+            activation='tanh',
+            initializer='xavier'
     ) -> None:
 
         super().__init__()
@@ -132,20 +110,22 @@ class NOTMIWAE(nn.Module):
         self.n_hidden = n_hidden  # number of hidden units in (same for all MLPs)
         self.n_hidden_layers = n_hidden_layers  # number of hidden layers in (same for all MLPs)
         self.latent_size = latent_size  # dimension of the latent space
+        self.initializer = initializer
         self.K = K  # number of IS during training
         self.L = L  # number of samples for imputation
 
         # mask encoder
-        self.mask_enc_dim = 0
-        self.mask_enc = nn.Sequential(
-            torch.nn.Linear(num_features, self.n_hidden),
-            torch.nn.ReLU(),
-            torch.nn.Linear(self.n_hidden, self.mask_enc_dim)
-        )
+        # self.mask_enc_dim = 0
+        # self.mask_enc = nn.Sequential(
+        #     torch.nn.Linear(num_features, self.n_hidden),
+        #     torch.nn.ReLU(),
+        #     torch.nn.Linear(self.n_hidden, self.mask_enc_dim)
+        # )
 
         # encoder
         self.encoder = BaseEncoder(
             self.num_features, self.latent_size, [self.n_hidden for _ in range(self.n_hidden_layers)],
+            activation=activation
         ).to(DEVICE)
 
         # decoder
@@ -153,14 +133,17 @@ class NOTMIWAE(nn.Module):
         if out_dist == 'studentt':
             self.decoder = StudentTDecoder(
                 self.latent_size, self.num_features, [self.n_hidden for _ in range(self.n_hidden_layers)],
+                activation=activation
             )
         elif out_dist == 'gaussian':
             self.decoder = GaussianDecoder(
                 self.latent_size, self.num_features, [self.n_hidden for _ in range(self.n_hidden_layers)],
+                activation=activation
             )
         elif out_dist == 'bernoulli':
             self.decoder = BernoulliDecoder(
                 self.latent_size, self.num_features, [self.n_hidden for _ in range(self.n_hidden_layers)],
+                activation=activation
             )
         else:
             raise ValueError("Invalid output distribution")
@@ -184,8 +167,8 @@ class NOTMIWAE(nn.Module):
 
     def init(self, seed):
         set_seed(seed)
-        self.encoder.apply(weights_init)
-        self.decoder.apply(weights_init)
+        self.encoder.apply(lambda x: weights_init(x, self.initializer))
+        self.decoder.apply(lambda x: weights_init(x, self.initializer))
 
     def compute_loss(self, inputs: tuple[torch.Tensor, ...]) -> Tuple[torch.Tensor, Dict]:
 
@@ -193,13 +176,13 @@ class NOTMIWAE(nn.Module):
         batch_size = x.shape[0]
 
         # encoder and z distribution
-        #mask_ = self.mask_enc(mask)
+        # mask_ = self.mask_enc(mask)
         mu, logvar = self.encoder(x)
 
         # q(z|x)
         q_zgivenxobs = td.Independent(td.Normal(loc=mu, scale=logvar), 1)
         zgivenx = q_zgivenxobs.rsample([self.K])
-        #print(zgivenx.shape)
+        # print(zgivenx.shape)
         zgivenx_flat = zgivenx.reshape([self.K * batch_size, self.latent_size])
 
         # decoder and x distribution
@@ -217,7 +200,7 @@ class NOTMIWAE(nn.Module):
 
         # compute loss
         # p(x|z)
-        all_log_pxgivenz_flat = self.decoder.dist_xgivenz(out_decoder, flat = True).log_prob(data_flat)
+        all_log_pxgivenz_flat = self.decoder.dist_xgivenz(out_decoder, flat=True).log_prob(data_flat)
         all_log_pxgivenz = all_log_pxgivenz_flat.reshape([self.K * batch_size, self.num_features])
 
         # p(m|x)
@@ -240,12 +223,9 @@ class NOTMIWAE(nn.Module):
             optimizers: List[torch.optim.Optimizer], optimizer_idx: int
     ) -> tuple[float, dict]:
 
-        optimizer = optimizers[0]
         batch = tuple(item.to(DEVICE) for item in batch)
-        optimizer.zero_grad()
         loss, train_res_dict = self.compute_loss(batch)
         loss.backward()
-        optimizer.step()
 
         return loss.item(), {}
 
@@ -259,7 +239,7 @@ class NOTMIWAE(nn.Module):
         self.encoder.to(DEVICE)
         self.decoder.to(DEVICE)
         self.mask_net.to(DEVICE)
-        self.mask_enc.to(DEVICE)
+        # self.mask_enc.to(DEVICE)
 
         mu, logvar = self.encoder(x)
         q_zgivenxobs = td.Independent(td.Normal(loc=mu, scale=logvar), 1)
@@ -282,7 +262,8 @@ class NOTMIWAE(nn.Module):
         p_mgivenx = td.Bernoulli(logits=mask_recon)  # (L * batch_size*p, 1)
 
         # loss
-        all_log_pxgivenz_flat = self.decoder.dist_xgivenz(out_decoder, flat=True).log_prob(data_flat)  # (L * batch_size, 1)
+        all_log_pxgivenz_flat = self.decoder.dist_xgivenz(out_decoder, flat=True).log_prob(
+            data_flat)  # (L * batch_size, 1)
         all_log_pxgivenz = all_log_pxgivenz_flat.reshape([L * batch_size, p])  # (L * batch_size, p)
         all_log_p_mgivenx = p_mgivenx.log_prob(tiled_mask.reshape([-1, 1])).reshape(
             [L * batch_size, p])  # (L * batch_size, p)

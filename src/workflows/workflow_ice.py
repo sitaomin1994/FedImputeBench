@@ -87,7 +87,8 @@ class WorkflowICE(BaseWorkflow):
             all_clients_converged = [False for _ in range(len(clients))]
             early_stoppings = [
                 nn_utils.EarlyStopping(
-                    patience=train_params['patience'],
+                    tolerance_patience=train_params['tolerance_patience'],
+                    increase_patience=train_params['increase_patience'],
                     tolerance=train_params['tolerance'],
                     window_size=train_params['window_size'],
                     check_steps=1,

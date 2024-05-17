@@ -2,10 +2,11 @@ from copy import deepcopy
 from typing import List, Tuple
 from collections import OrderedDict
 
+from src.fed_strategy.fed_strategy_server import StrategyServer
 from src.fed_strategy.fed_strategy_server.fedavg import FedAvgStrategyServer
 
 
-class FedProxStrategyServer(FedAvgStrategyServer):
+class FedProxStrategyServer(StrategyServer):
 
     def __init__(self, strategy_params):
         super(FedProxStrategyServer, self).__init__('fedprox')
