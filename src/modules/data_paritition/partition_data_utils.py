@@ -1,8 +1,10 @@
 from typing import List, Tuple
 import math
 import numpy as np
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import KBinsDiscretizer
+from sklearn.cluster import KMeans
 
 
 def binning_target(y, reg_bins, seed):
@@ -21,6 +23,24 @@ def binning_target(y, reg_bins, seed):
     )
     y = est.fit_transform(y).flatten()
     return y
+
+
+def binning_features(X, reg_bins=10, seed=0):
+    """
+    binning
+    :param X: feature matrix
+    :param reg_bins: number of bin
+    :param seed: random seed
+    :return: binned target variable
+    """
+    assert reg_bins > 1, "reg_bins should be greater than 1"
+    X = X.copy().reshape(-1, 1)
+    import warnings
+    warnings.filterwarnings("ignore", category=ConvergenceWarning)
+    warnings.filterwarnings("ignore", category=UserWarning)
+    est = KMeans(n_clusters=reg_bins, random_state=seed)
+    clusters_label = est.fit_predict(X)
+    return clusters_label
 
 
 def calculate_data_partition_stats(
@@ -118,7 +138,7 @@ def generate_samples_iid(
     :param reg_bins: bins for a regression target
     :return: list of a data array for each client
     """
-    if sample_iid_direct:                      # directly sampling without iid based on target
+    if sample_iid_direct:  # directly sampling without iid based on target
         ret = []
         for idx, sample_frac in enumerate(sample_fracs):
             np.random.seed(seeds[idx])
@@ -129,7 +149,7 @@ def generate_samples_iid(
             ret.append(sampled_data)
 
         return ret
-    else:                               # iid based on target
+    else:  # iid based on target
         ret = []
 
         # set features and target
@@ -201,7 +221,6 @@ def generate_local_test_data(
 
 def generate_global_test_data(
         data: np.ndarray, data_config: dict, test_size: float = 0.2, seed: int = 42):
-
     """
     Split data into train and test set
     """

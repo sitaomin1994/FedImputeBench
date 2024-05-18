@@ -16,10 +16,14 @@ class TestCalculateDataPartitionStatsTestSuite:
 
     def test_calculate_data_partition_stats_reg(self):
         datas = [
-            3 + 1.5*np.random.randn(50, 2), 10 + np.random.randn(50, 2),
-            20 + 1.5*np.random.randn(50, 2)
+            3 + 1.5 * np.random.randn(50, 2), 10 + np.random.randn(50, 2),
+            20 + 1.5 * np.random.randn(50, 2)
         ]
 
         stats = calculate_data_partition_stats(datas, regression=True, reg_bins=10)
 
         assert True
+
+
+def test_binning_features():
+    assert False

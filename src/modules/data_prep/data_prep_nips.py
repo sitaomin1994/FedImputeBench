@@ -13,6 +13,13 @@ from .utils import (
 from sklearn.feature_selection import mutual_info_classif
 from imblearn.under_sampling import RandomUnderSampler
 import json
+from collections import OrderedDict
+
+def avg_correlation(df):
+    avg_correlation_cols = list(OrderedDict(df.corr().abs().mean().sort_values(ascending=False).to_dict()).items())
+    features = set(df.columns.tolist()[:-1])
+    avg_correlation_cols = [col for col in avg_correlation_cols if col[0] in features]
+    return avg_correlation_cols
 
 
 def process_codrna(normalize=True, verbose=False, threshold=None, sample=True, gaussian=True):
@@ -52,11 +59,15 @@ def process_codrna(normalize=True, verbose=False, threshold=None, sample=True, g
 
     if len(data) >= 20000:
         data = data.sample(n=20000, random_state=0).reset_index(drop=True)
+    
+    avg_cols = avg_correlation(data)
+    avg_cols = [col[0] for col in avg_cols]
+    split_col_idx = [data.columns.tolist().index(col) for col in avg_cols]
 
     data_config = {
         'target': target_col,
         'features_idx': [idx for idx in range(0, data.shape[1]) if data.columns[idx] != target_col],
-        'split_col_idx': [0],
+        'split_col_idx': split_col_idx,
         'ms_col_idx': [idx for idx in range(0, data.shape[1]) if data.columns[idx] != target_col],
         'obs_col_idx': [1, 4, 7],
         "num_cols": data.shape[1] - 1,

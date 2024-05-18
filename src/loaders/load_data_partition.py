@@ -103,6 +103,15 @@ def load_data_partition(
                 )
             else:
                 split_col_idx = data_config['split_col_idx'][0]
+        elif split_col == 'feature_cluster':
+            if 'split_col_idx' not in data_config:
+                raise ValueError('split_col_idx is not provided')
+            elif len(data_config['split_col_idx']) == 0:
+                raise ValueError(
+                    'split_col_idx should have at least one split column index, when split col option is feature'
+                )
+            else:
+                split_col_idx = data_config['split_col_idx']
         else:
             raise ValueError(
                 'split_col_idx should have only one split column index, when split col option is feature'

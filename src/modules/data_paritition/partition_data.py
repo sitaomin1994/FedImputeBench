@@ -3,7 +3,7 @@ import numpy as np
 from emf.reproduce_utils import set_seed
 from typing import List, Union, Tuple
 from src.modules.data_paritition.partition_data_utils import (
-    binning_target, noniid_sample_dirichlet, generate_samples_iid
+    binning_target, binning_features, noniid_sample_dirichlet, generate_samples_iid
 )
 
 import gc
@@ -39,20 +39,29 @@ import gc
 
 
 def separate_data_niid(
-        data: np.ndarray, data_config: dict, num_clients: int, split_col_idx: int = -1, niid: bool = True, partition: str = 'dir',
-        balance: bool = False, class_per_client: Union[None, int] = None, niid_alpha: float = 0.1,
-        min_samples: int = 50, reg_bins: int = 50, seed: int = 201030
+        data: np.ndarray, data_config: dict, num_clients: int, split_col_idx: Union[int, list] = -1,
+        niid: bool = True, partition: str = 'dir', balance: bool = False,
+        class_per_client: Union[None, int] = None, niid_alpha: float = 0.1,
+        min_samples: int = 50, reg_bins: int = 20, seed: int = 201030
 ):
-
     rng = np.random.default_rng(seed)
+
+    # split based on target
     if split_col_idx == -1:
         dataset_label = data[:, -1]
         if data_config['task_type'] == 'regression':  # if regression task, bin the target # TODO: refactor this
             dataset_label = binning_target(dataset_label, reg_bins, seed)
+    # split based on feature
     else:
-        dataset_label = data[:, split_col_idx]
-        if np.unique(dataset_label).shape[0] > 10:
-            dataset_label = binning_target(dataset_label, reg_bins, seed)
+        # split based on one feature
+        if not isinstance(split_col_idx, list):
+            dataset_label = data[:, split_col_idx]
+            if np.unique(dataset_label).shape[0] > reg_bins:
+                dataset_label = binning_target(dataset_label, reg_bins, seed)
+        # split based on multiple features (feature clustering)
+        else:
+            X = data[: split_col_idx]
+            dataset_label = binning_features(X, reg_bins=10, seed=seed)
 
     dataset_content, target = data[:, :-1], data[:, -1]
 
@@ -109,14 +118,14 @@ def separate_data_niid(
 
         try_cnt = 1
         idx_clients = [[] for _ in range(num_clients)]
-        #class_condition = False
-        while (min_size < min_samples) :
+        # class_condition = False
+        while (min_size < min_samples):
             # if try_cnt > 1:
             #     print(f'Client data size does not meet the minimum requirement {min_samples}. '
             #           f'Try allocating again for the {try_cnt}-th time.')
 
             idx_clients = [[] for _ in range(num_clients)]
-            #all_class_condition = np.zeros(num_classes, dtype=bool)
+            # all_class_condition = np.zeros(num_classes, dtype=bool)
             for class_id in range(num_classes):
                 class_indices = np.where(dataset_label == class_id)[0]
                 # split classes indices into num_clients parts
@@ -148,7 +157,7 @@ def separate_data_niid(
                 min_size = min([len(item) for item in idx_clients])
 
             try_cnt += 1
-            #class_condition = ~(all_class_condition.any())
+            # class_condition = ~(all_class_condition.any())
 
         for j in range(num_clients):
             dataidx_map[j] = idx_clients[j]
