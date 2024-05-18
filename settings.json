@@ -7,5 +7,6 @@
     "raw": "raw_results"
   },
   "notebook_dir": "notebooks",
-  "script_dir": "scripts"
+  "script_dir": "scripts",
+  "scenario_dir": "scenario_data"
 }

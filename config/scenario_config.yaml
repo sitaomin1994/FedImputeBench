@@ -1,0 +1,13 @@
+defaults:
+  - _self_
+  - data_partition: niid-f1
+  - missing_scenario: mcar
+
+#########################################################
+# Scenario Configuration Content
+scenario_version: 'alpha'
+dataset_name: codrna
+num_clients: 10
+seed: 2180279
+n_rounds: 10
+scenario_name: ${data_partition.name}_${missing_scenario.name}

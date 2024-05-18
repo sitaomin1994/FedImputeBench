@@ -1,10 +1,9 @@
-name: 'iid2'
+name: 'iid-even'
 partition_params:
   partition_strategy: "iid"
   split_col: 'target'
-  size_strategy: "dir"
-  min_samples: 50
-  max_samples: 5000
-  size_niid_alpha: 0.1
+  size_strategy: "even"
+  min_samples: 100
+  max_samples: 2000
   local_test_size: 0.1
   global_test_size: 0.1

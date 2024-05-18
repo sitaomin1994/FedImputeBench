@@ -62,6 +62,7 @@ class MIWAE(nn.Module):
         self.latent_size = latent_size  # dimension of the latent space
         self.K = K  # number of IS during training
         self.L = L  # number of samples for imputation
+        self.initializer = initializer
 
         # encoder
         self.encoder = BaseEncoder(

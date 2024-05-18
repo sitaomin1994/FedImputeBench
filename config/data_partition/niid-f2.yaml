@@ -1,4 +1,4 @@
-name: 'niidf2'
+name: 'niid-f2'
 partition_params:
   partition_strategy: "niid_dir"
   split_col: 'feature'

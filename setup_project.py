@@ -50,6 +50,12 @@ if not os.path.exists(script_dir):
 print(f"Setting up script directory in {'./' + script_dir}")
 
 ########################################################################################################################
+script_dir = project_setting['scenario_dir'] if 'scenario_dir' in project_setting else 'scenario_data'
+if not os.path.exists(script_dir):
+    os.makedirs(script_dir)
+print(f"Setting up script directory in {'./' + script_dir}")
+
+########################################################################################################################
 # create test_directory
 test_dir = 'tests'
 if not os.path.exists(test_dir):

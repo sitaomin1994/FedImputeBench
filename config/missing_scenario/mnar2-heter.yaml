@@ -1,4 +1,4 @@
-name: 'mnar_homo'
+name: 'mnar2-heter'
 params:
   global_missing: False
   mf_strategy: "all"
@@ -9,5 +9,5 @@ params:
   mm_strictness: True
   mm_feature_option: 'allk=0.1'
   mm_beta_option: 'self'
-  mm_funcs_dist: 'identity'
+  mm_funcs_dist: 'random2'
   mm_funcs_bank: 'lr'

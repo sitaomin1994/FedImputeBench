@@ -1,9 +1,9 @@
 defaults:
   - _self_
-  - data_partition: niidf1
-  - missing_scenario: mnar_heter
-  - imputer: miwae
-  - fed_strategy: fedprox
+  - data_partition: niidf2
+  - missing_scenario: mcar
+  - imputer: missforest
+  - fed_strategy: local
   - tracker: none
   - override hydra/launcher: joblib
 

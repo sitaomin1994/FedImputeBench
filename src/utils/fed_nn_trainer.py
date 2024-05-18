@@ -53,14 +53,18 @@ def fit_fed_nn_model(
                 optimizer.zero_grad()
                 loss, res = model.train_step(batch, batch_idx, optimizers, optimizer_idx=optimizer)
                 losses_epoch[optimizer_idx] += loss
-
+                #print('===================================================================')
+                #print(torch.norm(model.state_dict()['encoder.hidden_layers.model.0.weight']))
                 ########################################################################
-                #fed updates
+                # fed updates
                 fed_strategy.fed_updates(model)
 
                 #########################################################################
                 # backpropagation
                 optimizer.step()
+                #print(torch.norm(model.state_dict()['encoder.0.weight']))
+                #print(torch.norm(model.state_dict()['encoder.hidden_layers.model.0.weight']))
+                #print('===================================================================')
 
             ep_iters += 1
 

@@ -11,6 +11,8 @@ imp_params:
     out_dist: 'gaussian'
     K: 20
     L: 500
+    loss_coef: 10
+    mr_loss_coef: true
     activation: 'tanh',
     initializer: 'xavier'
 model_train_params:

@@ -6,7 +6,7 @@ import torch.distributions as td
 
 # hyperimpute absolute
 from emf.reproduce_utils import set_seed
-from encoder import BaseEncoder
+from .encoder import BaseEncoder
 from ..common_blocks import LinearLayers
 from src.utils.nn_utils import weights_init
 

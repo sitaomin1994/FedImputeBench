@@ -32,6 +32,8 @@ def load_fed_strategy_client(strategy_name: str, strategy_params: dict) -> Strat
         return FedAvgFtStrategyClient(strategy_params)
     elif strategy_name == 'fedprox':
         return FedProxStrategyClient(strategy_params)
+    elif strategy_name == 'fedavg_ft':
+        return FedProxStrategyClient(strategy_params)
     else:
         raise ValueError(f"Invalid strategy name: {strategy_name}")
 
@@ -49,6 +51,8 @@ def load_fed_strategy_server(strategy_name: str, strategy_params: dict) -> Strat
     elif strategy_name == 'fedprox':
         return FedProxStrategyServer(strategy_params)
     elif strategy_name == 'fedavg_ft':
+        return FedAvgFtStrategyServer(strategy_params)
+    elif strategy_name == 'fedprox_ft':
         return FedAvgFtStrategyServer(strategy_params)
     else:
         raise ValueError(f"Invalid strategy name: {strategy_name}")

@@ -1,6 +1,6 @@
-name: 'mar_homo'
+name: 'mnar1-homog'
 params:
-  global_missing: False
+  global_missing: True
   mf_strategy: "all"
   mr_dist: "uniform_int"
   mr_lower: 0.3
@@ -9,5 +9,5 @@ params:
   mm_strictness: True
   mm_obs: False
   mm_feature_option: 'allk=0.2'
-  mm_beta_option: 'fixed'
+  mm_beta_option: 'randu'
   mm_funcs_bank: 'lr'

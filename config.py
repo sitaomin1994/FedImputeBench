@@ -1,6 +1,7 @@
 import os
 from dynaconf import Dynaconf
 import torch
+
 settings = Dynaconf(
     envvar_prefix="DYNACONF",
     settings_files=['settings.json', '.secrets.json'],

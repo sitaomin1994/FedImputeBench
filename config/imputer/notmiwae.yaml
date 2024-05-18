@@ -11,6 +11,9 @@ imp_params:
     out_dist: 'gaussian'
     K: 20
     L: 100
+    activation: 'tanh',
+    initializer: 'xavier'
+    mask_net_type: 'linear'
 model_train_params:
   initial_zero_impute: true
   global_epoch: 300

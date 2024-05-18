@@ -1,6 +1,7 @@
 data
 files
 results
+scenario_data
 outputs
 multirun
 __pycache__/

@@ -17,7 +17,6 @@ class Server:
         self.fed_strategy = load_fed_strategy_server(fed_strategy_name, fed_strategy_params)
         self.server_config = server_config
 
-
     def global_evaluation(self, eval_res: dict) -> dict:
         # global evaluation of imputation models
         raise NotImplementedError

@@ -1,9 +1,10 @@
-name: 'iid'
+name: 'niid-t2'
 partition_params:
-  partition_strategy: "iid"
+  partition_strategy: "niid_dir"
   split_col: 'target'
   size_strategy: "even"
   min_samples: 100
-  max_samples: 2000
+  max_samples: 8000
+  niid_alpha: 0.1
   local_test_size: 0.1
   global_test_size: 0.1
