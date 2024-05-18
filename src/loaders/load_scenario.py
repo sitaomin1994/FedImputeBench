@@ -64,15 +64,16 @@ def simulate_scenario(
 
     # ========================================================================================
     # simulate missing data globally
+    cols = data_config['ms_col_idx']
     if 'mm_obs' in missing_simulate_params and missing_simulate_params['mm_obs']:
         if 'obs_col_idx' in data_config and len(data_config['obs_col_idx']) > 0:
             obs_cols = np.array(data_config['obs_col_idx'])
-            cols = np.arange(data.shape[1] - 1)[~np.isin(np.arange(data.shape[1] - 1), obs_cols)]
+            cols = cols[~np.isin(cols, obs_cols)]
         else:
-            size = (data.shape[1] - 1) // 4
-            cols = global_rng.choice(data.shape[1] - 1, size=size, replace=False)
-    else:
-        cols = np.arange(data.shape[1] - 1)
+            # size = (data.shape[1] - 1) // 4
+            # cols = global_rng.choice(cols, size=size, replace=False)
+            raise ValueError('obs col is zero or not found, at least one obs col need for mar missing (mm_obs=True)')
+
     client_train_data_ms_list = add_missing(
         clients_train_data_list, cols, client_rngs, seed=global_seed, **missing_simulate_params
     )

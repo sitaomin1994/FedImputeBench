@@ -57,7 +57,7 @@ def process_codrna(normalize=True, verbose=False, threshold=None, sample=True, g
         'target': target_col,
         'features_idx': [idx for idx in range(0, data.shape[1]) if data.columns[idx] != target_col],
         'split_col_idx': [0],
-        'ms_col_idx': [data.columns.tolist().index(feature) for feature in important_features],
+        'ms_col_idx': [idx for idx in range(0, data.shape[1]) if data.columns[idx] != target_col],
         'obs_col_idx': [1, 4, 7],
         "num_cols": data.shape[1] - 1,
         'task_type': 'classification',
