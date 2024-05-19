@@ -36,6 +36,7 @@ class EMImputer(BaseMLImputer, ICEImputerMixin):
         self.sigma = None
         self.miss = None
         self.obs = None
+        self.model_persistable = True
 
     def initialize(
             self, X: np.array, missing_mask: np.array, data_utils: dict, params: dict, seed: int

@@ -1,5 +1,7 @@
 from typing import List, Tuple
 import math
+
+import loguru
 import numpy as np
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import train_test_split
@@ -68,10 +70,13 @@ def calculate_data_partition_stats(
                 statistic[client].append((int(i), int(sum((target == i).tolist()))))
 
         for client in range(num_clients):
-            print(f"Client {client}\t Size of data: {len(datas[client])}\t Labels: ",
-                  np.unique(binner.transform(datas[client].reshape(-1, 1)).flatten()))
-            print(f"\t\t Samples of labels: ", [i for i in statistic[client]])
-            print("-" * 50)
+            loguru.logger.debug(
+                f"Client {client}\t Size of data: {len(datas[client])}\t Labels: ",
+                np.unique(binner.transform(datas[client][:, -1].reshape(-1, 1)).flatten())
+            )
+            loguru.logger.debug(f"\t\t Samples of labels: ", [i for i in statistic[client]])
+            loguru.logger.debug("-" * 50)
+
     else:
         num_clients = len(datas)
         statistic = [[] for _ in range(num_clients)]
@@ -80,10 +85,17 @@ def calculate_data_partition_stats(
                 statistic[client].append((int(i), int(sum((data[:, -1] == i).tolist()))))
 
         for client in range(num_clients):
-            print(f"Client {client}\t Size of data: {len(datas[client])}\t Labels: ",
-                  np.unique(datas[client][:, -1]))
-            print(f"\t\t Samples of labels: ", [i for i in statistic[client]])
-            print("-" * 50)
+            loguru.logger.info(
+                f"Client {client}\t Size of data: {len(datas[client])}\t Labels: ",
+                np.unique(datas[client][:, -1])
+            )
+            loguru.logger.debug(f"\t\t Samples of labels: ", [i for i in statistic[client]])
+            loguru.logger.debug("-" * 50)
+
+            # print(f"Client {client}\t Size of data: {len(datas[client])}\t Labels: ",
+            #       np.unique(datas[client][:, -1]))
+            # print(f"\t\t Samples of labels: ", [i for i in statistic[client]])
+            # print("-" * 50)
 
     return statistic
 
@@ -117,10 +129,10 @@ def noniid_sample_dirichlet(
         min_size = min(sizes)
         max_size = max(sizes)
         if repeat_times > max_repeat_times:
-            print('max repeat times reached')
+            loguru.logger.debug('max repeat times reached')
             raise ValueError('max repeat times reached')
 
-    print(repeat_times, sizes)
+    loguru.logger.debug(f"repeat time: {repeat_times} size: {sizes}")
     return list(sizes)
 
 

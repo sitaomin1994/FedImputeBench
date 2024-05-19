@@ -1,3 +1,5 @@
+import loguru
+
 from .utils import formulate_centralized_client, update_clip_threshold
 from .workflow import BaseWorkflow
 from src.server import Server
@@ -88,7 +90,7 @@ class WorkflowICE(BaseWorkflow):
                     central_imp_quality = imp_qualities[-1]
                     early_stopping.update(central_imp_quality)
                     if early_stopping.check_convergence():
-                        print(f"Central client converged, iteration {epoch}")
+                        loguru.logger.info(f"Central client converged, iteration {epoch}")
                         break
 
         else:
@@ -154,9 +156,10 @@ class WorkflowICE(BaseWorkflow):
                         early_stoppings[client_idx].update(imp_quality)
                         if early_stoppings[client_idx].check_convergence():
                             all_clients_converged[client_idx] = True
+                            loguru.logger.debug(f"Client {client_idx} converged, iteration {epoch}")
 
                     if all(all_clients_converged):
-                        print(f"All clients converged, iteration {epoch}")
+                        loguru.logger.info(f"All clients converged, iteration {epoch}")
                         break
 
         ########################################################################################################

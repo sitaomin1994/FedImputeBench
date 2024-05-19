@@ -1,4 +1,6 @@
 from typing import Iterable, Union, Any
+
+import loguru
 import torch
 from torch import nn
 
@@ -150,7 +152,7 @@ class EarlyStopping:
                 self.early_stop = True
 
             if self.verbose:
-                print(
+                loguru.logger.debug(
                     f"Window Average: {window_avg:.4f}, Backpoint Window Average: {backward_window_avg:.4f}, "
                     f"Best Metric Change: {self.best_metric:.4f}, "
                     f"Metric Change: {metric_change:.4f}, Patience Counter: {self.patience_counter}, "

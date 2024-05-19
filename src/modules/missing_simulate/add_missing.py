@@ -6,6 +6,7 @@ from typing import List, Union
 from src.modules.missing_simulate.add_missing_utils import (
     generate_missing_cols, generate_missing_ratios, generate_missing_mech_funcs
 )
+import loguru
 
 
 # TODO: make this to be a class
@@ -129,8 +130,9 @@ def _add_missing_central(
     )
     mm_funcs = mm_funcs[0]
 
+    loguru.logger.debug(f"{missing_cols} {missing_ratios} {mm_funcs}")
+
     # Simulate missing data
-    print(missing_cols, missing_ratios, mm_funcs)
     X_train, y_train = data[:, :-1], data[:, -1]
     rng = np.random.default_rng(seed)
     X_train_ms = simulate_nan(
@@ -206,7 +208,7 @@ def _add_missing_dist(
         missing_ratios = clients_missing_ratios[i]
         mm_funcs = clients_mm_funcs[i]
 
-        print(i, missing_cols, missing_ratios, mm_funcs, "\n")
+        loguru.logger.debug(f"{i} {missing_cols} {missing_ratios} {mm_funcs}")
 
         X_train, y_train = clients_data[i][:, :-1], clients_data[i][:, -1]
         X_train_ms = simulate_nan(

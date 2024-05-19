@@ -44,7 +44,7 @@ def process_adult(normalize=True, verbose=False, threshold=None, sample=False, p
         data_oh = pd.get_dummies(data.drop(target_col, axis=1), columns=cat_cols, drop_first=True)
         data = pd.concat([data[target_col], data_oh], axis=1)
         data.reset_index(drop=True, inplace=True)
-        print(data.shape)
+        #print(data.shape)
 
         pca = PCA(n_components=20)
         pca.fit(data.drop(target_col, axis=1))

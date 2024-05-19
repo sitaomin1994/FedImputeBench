@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from copy import deepcopy
 
+import loguru
 import numpy as np
 
 from .utils import formulate_centralized_client, update_clip_threshold
@@ -116,7 +117,7 @@ class WorkflowEM(BaseWorkflow):
 
                     # all converged
                     if all(clients_converged_signs):
-                        print(f"All clients converged, iteration {iteration}")
+                        loguru.logger.info(f"All clients converged, iteration {iteration}")
                         break
 
                 #####################################################################################################

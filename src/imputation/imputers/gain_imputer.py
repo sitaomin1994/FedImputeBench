@@ -30,6 +30,7 @@ class GAINImputer(BaseNNImputer, JMImputerMixin):
         # model and solvers
         self.train_dataloader = None
         self.model = None
+        self.model_persistable = True
 
     def initialize(
             self, X: np.array, missing_mask: np.array, data_utils: dict, params: dict, seed: int

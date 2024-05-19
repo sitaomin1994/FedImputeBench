@@ -24,6 +24,8 @@ experiment:
   seed: 2180279
   n_rounds: 1
   mtp: False
+  log_to_file: False
+  logging_level: INFO
 
 ########################################################################################################################
 # Experiment Configuration Content

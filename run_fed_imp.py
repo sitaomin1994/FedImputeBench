@@ -1,3 +1,4 @@
+import loguru
 from loguru import logger
 import sys
 import warnings
@@ -13,9 +14,10 @@ from src.exp_manager import FedMissExpManager
 
 @hydra.main(version_base=None, config_path="config", config_name="imp_config")
 def my_app(cfg: DictConfig) -> None:
-    print(cfg.experiment.output_path)
+
     config_dict = OmegaConf.to_container(cfg, resolve=True)
-    print(config_dict)
+    loguru.logger.debug(cfg.experiment.output_path)
+    loguru.logger.debug(config_dict)
 
     exp_manager = FedMissExpManager()
     exp_manager.execute_experiment(

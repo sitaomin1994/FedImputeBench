@@ -10,4 +10,4 @@ model_train_params:
   convergence_thres: 0.001
   local_epoch: 1
   evaluation_interval: 1
-  save_model_interval: 5
+  save_model_interval: 10

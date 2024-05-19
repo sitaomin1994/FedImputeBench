@@ -8,7 +8,7 @@ from src.imputation.base import BaseNNImputer
 from src.loaders.load_imputer import load_imputer
 from src.loaders.load_strategy import load_fed_strategy_client
 from src.utils.fed_nn_trainer import fit_fed_nn_model
-
+import loguru
 
 class Client:
 
@@ -83,8 +83,8 @@ class Client:
                 imp_model, fit_res = fit_fed_nn_model(
                     self.imputer, params, self.fed_strategy, self.X_train_imp, self.y_train, self.X_train_mask
                 )
-                #self.update_local_imp_model(imp_model.state_dict(), params)
-                #fit_res.update(self.data_utils)
+                # self.update_local_imp_model(imp_model.state_dict(), params)
+                # fit_res.update(self.data_utils)
                 model_parameters = imp_model.state_dict()
             # Traditional Imputation Models
             else:
@@ -120,7 +120,14 @@ class Client:
         """
         Save imputation model
         """
-        self.imputer.save_model(self.client_local_dir_path, version)
+        # save imp model params
+        if self.imputer.model_persistable:
+            self.imputer.save_model(self.client_local_dir_path, version)
+        # save imp data
+        else:
+            np.savez_compressed(
+                os.path.join(self.client_local_dir_path, f'imp_data_{version}.npz'), imp_data=self.X_train_imp
+            )
 
     def calculate_data_utils(self, data_config: dict) -> dict:
         """
@@ -202,17 +209,15 @@ class Client:
         mask_str_rows = [''.join(map(str, row)) for row in mask_int]
         pattern_counter = Counter(mask_str_rows)
 
-        print('-' * 120)
-        print("| Client {:2} | DS: {} | MissDS: {} | MaskDS: {} | ImputeDS: {} | MissRatio: {:.2f} |".format(
+        loguru.logger.debug('-' * 120)
+        loguru.logger.debug(
+            "| Client {:2} | DS: {} | MissDS: {} | MaskDS: {} | ImputeDS: {} | MissRatio: {:.2f} |".format(
             self.client_id, self.X_train.shape, self.X_train_ms.shape, self.X_train_mask.shape,
             self.X_train_imp.shape,
             np.isnan(self.X_train_ms).sum().sum() / (self.X_train_ms.shape[0] * self.X_train_ms.shape[1])
         ))
-        ms_ratio_cols = np.isnan(self.X_train_ms).sum(axis=0) / (self.X_train_ms.shape[0] * 0.9)
-        print("| MissRatio Cols: {} |".format(np.array2string(ms_ratio_cols, precision=2, suppress_small=True)))
-        #print(pattern_counter)
 
-        # print(f"Client {self.client_id} - Train data shape: {self.X_train.shape}, Test data shape: {self.X_test.shape}")
-        # print(f"Client {self.client_id} - Missing data shape: {self.X_train_ms.shape}, Missing data mask shape: {self.X_train_mask.shape}")
-        # print(f"Client {self.client_id} - Imputed data shape: {self.X_train_imp.shape}")
-        # print(f"Client {self.client_id} - Missing Ratio: {np.isnan(self.X_train_ms).sum().sum()/(self.X_train_ms.shape[0]*self.X_train_ms.shape[1])}")
+        ms_ratio_cols = np.isnan(self.X_train_ms).sum(axis=0) / (self.X_train_ms.shape[0] * 0.9)
+        loguru.logger.debug(
+            "| MissRatio Cols: {} |".format(np.array2string(ms_ratio_cols, precision=2, suppress_small=True))
+        )

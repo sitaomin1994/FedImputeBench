@@ -1,4 +1,7 @@
+import logging
+
 import delu
+import loguru
 import numpy as np
 from tqdm import tqdm
 
@@ -121,7 +124,7 @@ class WorkflowJM(BaseWorkflow):
                     clients_fit_res, early_stoppings, all_clients_converged_sign, early_stopping_mode
                 )
                 if all(all_clients_converged_sign):
-                    print("All clients have converged. Stopping training at {}.".format(epoch))
+                    loguru.logger.info("All clients have converged. Stopping training at {}.".format(epoch))
                     break
 
             if epoch == 0 and train_params['initial_zero_impute'] == False:
@@ -139,7 +142,7 @@ class WorkflowJM(BaseWorkflow):
             #self.pseudo_imp_eval(clients, evaluator)
 
         ################################################################################################################
-        print("start fine tuning ...")
+        loguru.logger.info("start fine tuning ...")
         ################################################################################################################
         # local training of an imputation model
         early_stoppings, all_clients_converged_sign = self.setup_early_stopping(
@@ -184,7 +187,7 @@ class WorkflowJM(BaseWorkflow):
             if use_early_stopping_global:
                 self.early_stopping_step(clients_fit_res, early_stoppings, all_clients_converged_sign)
                 if all(all_clients_converged_sign):
-                    print("All clients have converged. Stopping training at {}.".format(epoch))
+                    loguru.logger.info("All clients have converged. Stopping training at {}.".format(epoch))
                     break
 
         #########################################################################################################
@@ -242,7 +245,7 @@ class WorkflowJM(BaseWorkflow):
                 early_stopping.update(client_fit_res['loss'])
                 if early_stopping.check_convergence():
                     all_clients_converged_sign[idx] = True
-                    print(f"Client {idx} has converged.")
+                    loguru.logger.debug(f"Client {idx} has converged.")
 
         elif early_stopping_mode == 'global':
             avg_loss = np.array(
@@ -274,6 +277,8 @@ class WorkflowJM(BaseWorkflow):
             X_imps, [client.X_train for client in clients], [client.X_train_mask for client in clients]
         )
 
-        print(f"Average: {eval_results['imp_rmse_avg']}, {eval_results['imp_ws_avg']}")
+        loguru.logger.debug(f"Average: {eval_results['imp_rmse_avg']}, {eval_results['imp_ws_avg']}")
         for idx, client in enumerate(clients):
-            print(f"Client {idx}: {eval_results['imp_rmse_clients'][idx]}, {eval_results['imp_ws_clients'][idx]}")
+            loguru.logger.debug(
+                f"Client {idx}: {eval_results['imp_rmse_clients'][idx]}, {eval_results['imp_ws_clients'][idx]}"
+            )

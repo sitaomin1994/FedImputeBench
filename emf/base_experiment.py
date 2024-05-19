@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import List
 import joblib
+import loguru
+
 from .file_backend import FileBackend
 from .reproduce_utils import setup_seeds
 
@@ -75,7 +77,7 @@ class BaseExperiment(ABC):
         save_path = self.save_backend.consolidate_save_path(
             experiment_meta['experiment_name'], experiment_meta['output_path']
         )
-        print(f"Saving experiment results to {save_path}")
+        loguru.logger.debug(f"Saving experiment results to {save_path}")
         self.save_backend.save(save_path, exp_result_dict)
 
     def get_experiment_out_dir(self, experiment_meta: dict) -> str:

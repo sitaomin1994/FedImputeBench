@@ -1,3 +1,4 @@
+import loguru
 import numpy as np
 
 from src.server import Server
@@ -132,7 +133,7 @@ class WorkflowICEGrad(BaseWorkflow):
                         client.update_local_imp_model(global_model, params={'feature_idx': feature_idx})
 
                 if not all_clients_converged:
-                    print("Training completed without early stopping.")
+                    loguru.logger.debug("Training completed without early stopping.")
 
                 ###############################################################################################
                 # Local imputation using updated imputation models

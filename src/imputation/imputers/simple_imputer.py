@@ -15,6 +15,7 @@ class SimpleImputer(BaseMLImputer):
         self.strategy: str = strategy
         self.mean_params: np.array = None
         self.model_type = 'numpy'
+        self.model_persistable = True
 
     def get_imp_model_params(self, params: dict) -> OrderedDict:
         """

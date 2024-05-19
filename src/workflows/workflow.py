@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 
+import loguru
 from tqdm import tqdm
 
 from src.server import Server
@@ -59,8 +60,8 @@ class BaseWorkflow(ABC):
                 imp_quality=evaluation_results,
             )
 
-            tqdm.write(
-                f"Initial: rmse - {evaluation_results['imp_rmse_avg']} ws - {evaluation_results['imp_ws_avg']}"
+            loguru.logger.info(
+                f"\nInitial: rmse - {evaluation_results['imp_rmse_avg']} ws - {evaluation_results['imp_ws_avg']}"
             )
 
             return None
@@ -85,7 +86,7 @@ class BaseWorkflow(ABC):
             )
 
             if log_eval:
-                tqdm.write(
+                loguru.logger.info(
                     f"Epoch {epoch}: rmse - {evaluation_results['imp_rmse_avg']} ws - {evaluation_results['imp_ws_avg']}"
                 )
 
@@ -109,7 +110,7 @@ class BaseWorkflow(ABC):
                 other_info=[{} for _ in clients]
             )
 
-            tqdm.write(
+            loguru.logger.info(
                 f"Final: rmse - {evaluation_results['imp_rmse_avg']} ws - {evaluation_results['imp_ws_avg']}"
             )
 

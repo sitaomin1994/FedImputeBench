@@ -33,6 +33,7 @@ class MIWAEImputer(BaseNNImputer, JMImputerMixin):
         self.imp_model_params = imp_model_params
         self.model_type = 'torch_nn'
         self.train_dataloader = None
+        self.model_persistable = True
 
     def get_imp_model_params(self, params: dict) -> OrderedDict:
         """

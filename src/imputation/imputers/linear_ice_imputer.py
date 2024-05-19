@@ -40,6 +40,7 @@ class LinearICEImputer(BaseMLImputer, ICEImputerMixin):
         self.data_utils_info = None
         self.seed = None
         self.model_type = 'sklearn'
+        self.model_persistable = True
 
     def initialize(
             self, X: np.array, missing_mask: np.array, data_utils: dict, params: dict, seed: int

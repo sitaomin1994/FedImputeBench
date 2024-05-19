@@ -1,3 +1,4 @@
+import loguru
 from sklearn.model_selection import train_test_split
 import numpy as np
 from emf.reproduce_utils import set_seed
@@ -65,7 +66,7 @@ def separate_data_niid(
 
     dataset_content, target = data[:, :-1], data[:, -1]
 
-    print(dataset_label)
+    loguru.logger.debug(f"{dataset_label}")
     num_classes = len(np.unique(dataset_label))
     # guarantee that each client must have at least one batch of data for testing.
     min_samples = int(min(min_samples, int(len(dataset_label) / num_clients / 2)))  # ?

@@ -7,6 +7,7 @@ from src.imputation.base.base_imputer import BaseMLImputer
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from ..model_loader_utils import load_sklearn_model
+import joblib
 
 
 class MissForestImputer(BaseMLImputer, ICEImputerMixin):
@@ -32,6 +33,7 @@ class MissForestImputer(BaseMLImputer, ICEImputerMixin):
         self.data_utils_info = None
         self.seed = None
         self.model_type = 'sklearn'
+        self.model_persistable = False
 
     def initialize(
             self, X: np.array, missing_mask: np.array, data_utils: dict, params: dict, seed: int
@@ -167,13 +169,7 @@ class MissForestImputer(BaseMLImputer, ICEImputerMixin):
         :param model_path: path to save the model
         :return: None
         """
-        imp_model_params = []
-        for feature_idx in range(len(self.imp_models)):
-            params = self.get_imp_model_params({'feature_idx': feature_idx})
-            imp_model_params.append(params)
-
-        with open(os.path.join(model_path, f'imp_model_{version}.pkl'), 'wb') as f:
-            pickle.dump(imp_model_params, f)
+        pass
 
     def load_model(self, model_path: str, version: str) -> None:
         """
@@ -182,8 +178,4 @@ class MissForestImputer(BaseMLImputer, ICEImputerMixin):
         :param model_path: path to load the model
         :return: None
         """
-        with open(os.path.join(model_path, f'imp_model_{version}.pkl'), 'rb') as f:
-            imp_model_params = pickle.load(f)
-
-        for feature_idx, params in enumerate(imp_model_params):
-            self.set_imp_model_params(params, {'feature_idx': feature_idx})
+        pass
