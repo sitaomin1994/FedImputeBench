@@ -8,7 +8,7 @@ defaults:
 hydra:
   launcher:
     n_jobs: -1
-    verbose: 40
+    verbose: 51
 
 ########################################################################################################################
 # Experiment Meta
@@ -17,7 +17,7 @@ experiment:
   # name of prefix of experiments e.g., fed_imp, fed_pred etc.
   experiment_name: fed_imp_pc2
   # configuration of an output path to save the results
-  output_path: ${scenario_version}/${dataset_name}/${data_partition}-${missing_scenario}/${imputer.imp_name}/${fed_strategy.fed_strategy_name}
+  output_path: ${scenario_version}/${dataset_name}/${data_partition_name}-${missing_scenario_name}/${imputer.imp_name}/${fed_strategy.fed_strategy_name}
   # Other Options
   seed: 2180279
   n_rounds: 1
