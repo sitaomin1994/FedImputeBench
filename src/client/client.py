@@ -50,7 +50,6 @@ class Client:
         self.seed = seed
         self.client_config = client_config
         self.client_local_dir_path = os.path.join(client_config['local_dir_path'], 'client' + str(client_id))
-        print(self.client_local_dir_path)
         if not os.path.exists(self.client_local_dir_path):
             os.makedirs(self.client_local_dir_path)
 
