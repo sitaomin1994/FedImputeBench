@@ -11,7 +11,7 @@ from hydra.core.hydra_config import HydraConfig
 from src.exp_manager import FedMissExpManager
 
 
-@hydra.main(version_base=None, config_path="config", config_name="experiment_config")
+@hydra.main(version_base=None, config_path="config", config_name="imp_config")
 def my_app(cfg: DictConfig) -> None:
     print(cfg.experiment.output_path)
     config_dict = OmegaConf.to_container(cfg, resolve=True)
