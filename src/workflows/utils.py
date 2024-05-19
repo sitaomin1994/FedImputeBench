@@ -1,5 +1,6 @@
 from typing import List
 
+import loguru
 import numpy as np
 
 from src.client import Client
@@ -37,9 +38,11 @@ def formulate_centralized_client(clients: List[Client]) -> Client:
     centralized_client.X_train_mask = centralized_mask
     centralized_client.X_train_imp = centralized_ms_data.copy()
 
-    print(
-        f"Centralized Client - Train data shape: {centralized_client.X_train.shape}, Test data shape: {centralized_client.X_test.shape}"
-        f"Missing data shape: {centralized_client.X_train_ms.shape}, Missing data mask shape: {centralized_client.X_train_mask.shape}"
+    loguru.logger.debug(
+        f"Centralized Client - Train data shape: {centralized_client.X_train.shape}, "
+        f"Test data shape: {centralized_client.X_test.shape}"
+        f"Missing data shape: {centralized_client.X_train_ms.shape}, "
+        f"Missing data mask shape: {centralized_client.X_train_mask.shape}"
     )
 
     return centralized_client
