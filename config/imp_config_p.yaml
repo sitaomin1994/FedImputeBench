@@ -26,10 +26,10 @@ experiment:
 ########################################################################################################################
 # Experiment Configuration Content
 # scenarios
-scenario_version: alpha
-dataset_name: codrna
-data_partition: niid-f2
-missing_scenario: mar-homog
+scenario_version: "alpha"
+dataset_name: "codrna"
+data_partition_name: "niid-f2"
+missing_scenario_name: "mar-homog"
 round_id: 0
 client_config: {}
 server_config: {}  # todo

@@ -123,8 +123,8 @@ class Experiment(BaseExperiment):
 
         ###########################################################################################################
         # Parameters
-        data_partition_name = config['data_partition']
-        missing_data_scenario = config['missing_scenario']
+        data_partition_name = config['data_partition_name']
+        missing_data_scenario = config['missing_scenario_name']
         round_id = config['round_id']
         dataset_name = config['dataset_name']
         scenario_version = config['scenario_version']
