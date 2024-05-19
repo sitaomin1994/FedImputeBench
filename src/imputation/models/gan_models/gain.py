@@ -8,6 +8,8 @@ from src.utils.nn_utils import weights_init
 
 EPS = 1e-8
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+torch.backends.cuda.matmul.allow_tf32 = True
+torch.backends.cudnn.allow_tf32 = True
 
 
 class GainModel(nn.Module):
