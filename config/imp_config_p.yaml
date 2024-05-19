@@ -1,7 +1,7 @@
 defaults:
   - _self_
   - imputer: miwae
-  - fed_strategy: local
+  - fed_strategy: fedavg
   - tracker: none
   - override hydra/launcher: joblib
 
