@@ -15,8 +15,6 @@ from src.exp_manager import FedMissExpManager
 def my_app(cfg: DictConfig) -> None:
 
     config_dict = OmegaConf.to_container(cfg, resolve=True)
-    loguru.logger.debug(cfg.experiment.output_path)
-    loguru.logger.debug(config_dict)
 
     exp_manager = FedMissExpManager()
     exp_manager.execute_experiment(

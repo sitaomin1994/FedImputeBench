@@ -36,6 +36,7 @@ class GainModel(nn.Module):
         super().__init__(*args, **kwargs)
 
         # data + mask -> hidden -> hidden -> data
+        self.initializer = initializer
         h_dim = dim
         self.generator_layer = LinearLayers(
             input_dim=dim * 2,
@@ -60,8 +61,8 @@ class GainModel(nn.Module):
 
     def init(self, seed):
         set_seed(seed)
-        self.encoder.apply(lambda x: weights_init(x, self.initializer))
-        self.decoder.apply(lambda x: weights_init(x, self.initializer))
+        self.generator_layer.apply(lambda x: weights_init(x, self.initializer))
+        self.discriminator_layer.apply(lambda x: weights_init(x, self.initializer))
 
     def discriminator(self, X: torch.Tensor, hints: torch.Tensor) -> torch.Tensor:
         inputs = torch.cat([X, hints], dim=1).float()

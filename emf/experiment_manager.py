@@ -21,6 +21,9 @@ class ExperimentManager(ABC):
             level=experiment_meta['logging_level']
         )
 
+        loguru.logger.debug(config["experiment"]["output_path"])
+        loguru.logger.debug(config)
+
         # execute experiment
         start = timeit.default_timer()
         result = experiment.run(config, experiment_meta)

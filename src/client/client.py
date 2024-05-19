@@ -10,6 +10,7 @@ from src.loaders.load_strategy import load_fed_strategy_client
 from src.utils.fed_nn_trainer import fit_fed_nn_model
 import loguru
 
+
 class Client:
 
     def __init__(
@@ -212,10 +213,10 @@ class Client:
         loguru.logger.debug('-' * 120)
         loguru.logger.debug(
             "| Client {:2} | DS: {} | MissDS: {} | MaskDS: {} | ImputeDS: {} | MissRatio: {:.2f} |".format(
-            self.client_id, self.X_train.shape, self.X_train_ms.shape, self.X_train_mask.shape,
-            self.X_train_imp.shape,
-            np.isnan(self.X_train_ms).sum().sum() / (self.X_train_ms.shape[0] * self.X_train_ms.shape[1])
-        ))
+                self.client_id, self.X_train.shape, self.X_train_ms.shape, self.X_train_mask.shape,
+                self.X_train_imp.shape,
+                np.isnan(self.X_train_ms).sum().sum() / (self.X_train_ms.shape[0] * self.X_train_ms.shape[1])
+            ))
 
         ms_ratio_cols = np.isnan(self.X_train_ms).sum(axis=0) / (self.X_train_ms.shape[0] * 0.9)
         loguru.logger.debug(

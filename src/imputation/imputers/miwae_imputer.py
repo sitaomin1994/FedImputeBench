@@ -101,7 +101,7 @@ class MIWAEImputer(BaseNNImputer, JMImputerMixin):
         train_dataset = torch.utils.data.TensorDataset(
             torch.from_numpy(X_imp).float(), torch.from_numpy(~X_mask).float()
         )
-        train_dataloader = DataLoader(train_dataset, batch_size=bs, shuffle=True)
+        train_dataloader = DataLoader(train_dataset, batch_size=bs, shuffle=True, num_workers=0, pin_memory=False)
 
         return self.model, train_dataloader
 
@@ -120,7 +120,6 @@ class MIWAEImputer(BaseNNImputer, JMImputerMixin):
 
         optimizer = load_optimizer(optimizer_name, model.parameters(), learning_rate, weight_decay)
         lr_scheduler = load_lr_scheduler(scheduler_name, optimizer, scheduler_params)
-
 
         return [optimizer], [lr_scheduler]
 
@@ -232,12 +231,13 @@ class MIWAEImputer(BaseNNImputer, JMImputerMixin):
         :return: imputed data - numpy array - same dimension as X
         """
         # make complete
-        X_train_imp = X.copy()
+        X_train_imp = X
         X_train_imp[missing_mask] = 0
-        self.model.to(DEVICE)
-        self.model.eval()
         x = torch.from_numpy(X_train_imp.copy()).float().to(DEVICE)
         mask = torch.from_numpy(~missing_mask.copy()).float().to(DEVICE)
+
+        self.model.to(DEVICE)
+        self.model.eval()
         with torch.no_grad():
             x_imp = self.model.impute(x, mask)
 
@@ -246,6 +246,7 @@ class MIWAEImputer(BaseNNImputer, JMImputerMixin):
 
         del X
         gc.collect()
+
         if self.clip:
             for i in range(x_imp.shape[1]):
                 x_imp[:, i] = np.clip(x_imp[:, i], self.min_values[i], self.max_values[i])

@@ -59,6 +59,8 @@ class GAINImputer(BaseNNImputer, JMImputerMixin):
             max_val[i] = np.nanmax(X[:, i])
         self.norm_parameters = {"min": min_val, "max": max_val}
         self.min_values, self.max_values = self.get_clip_thresholds(data_utils)
+        del Xmiss
+        gc.collect()
 
     def get_imp_model_params(self, params: dict) -> OrderedDict:
         return deepcopy(self.model.state_dict())
@@ -96,7 +98,7 @@ class GAINImputer(BaseNNImputer, JMImputerMixin):
             train_dataset = torch.utils.data.TensorDataset(
                 torch.from_numpy(X_imp).float(), torch.from_numpy(~X_mask).float()
             )
-            train_dataloader = DataLoader(train_dataset, batch_size=bs, shuffle=True)
+            train_dataloader = DataLoader(train_dataset, batch_size=bs, shuffle=True, num_workers=0)
             self.train_dataloader = train_dataloader
 
             return self.model, train_dataloader
