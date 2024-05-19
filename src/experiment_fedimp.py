@@ -9,8 +9,6 @@ from src.utils.tracker import Tracker
 from src.utils.result_analyzer import ResultAnalyzer
 from src.utils.consistency_checker import check_consistency
 from src.loaders.load_data import load_data
-from src.server import Server
-from src.client import Client
 from src.loaders.load_workflow import load_workflow
 from src.loaders.load_scenario import simulate_scenario
 from config import settings
@@ -119,7 +117,6 @@ class Experiment(BaseExperiment):
     def single_run_scenario(self, config: dict) -> dict:
         """
         Run the single round experiment
-        :param seed: seed for running experiment
         :param config: configuration of the experiment
         :return: results dictionary
         """
