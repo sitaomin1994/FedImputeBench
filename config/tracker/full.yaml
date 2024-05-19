@@ -1,6 +1,0 @@
-name: 'full'
-params:
-  track_data: True
-  track_model_params: True
-  track_misc: True
-  persist: 'final'

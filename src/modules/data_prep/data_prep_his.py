@@ -282,6 +282,7 @@ def process_heart(verbose=False, threshold=None, pca=False, sample=False):
 
 ########################################################################################################################
 def process_codrna(normalize=True, verbose=False, threshold=None, sample=True, gaussian=True):
+
     if threshold is None:
         threshold = 0.1
 
@@ -323,7 +324,7 @@ def process_codrna(normalize=True, verbose=False, threshold=None, sample=True, g
         'target': target_col,
         'features_idx': [idx for idx in range(0, data.shape[1]) if data.columns[idx] != target_col],
         'split_col_idx': [0],
-        'ms_col_idx': [data.columns.tolist().index(feature) for feature in important_features],
+        'ms_col_idx': [idx for idx in range(0, data.shape[1]) if data.columns[idx] != target_col],
         'obs_col_idx': [1, 4, 7],
         "num_cols": data.shape[1] - 1,
         'task_type': 'classification',
@@ -331,10 +332,9 @@ def process_codrna(normalize=True, verbose=False, threshold=None, sample=True, g
         'data_type': 'tabular'
     }
 
-    if verbose:
-        logger.debug("Important features {}".format(important_features))
-        logger.debug("Data shape {}".format(data.shape, data.shape))
-        logger.debug(data_config)
+    print("Important features {}".format(important_features))
+    print("Data shape {}".format(data.shape, data.shape))
+    print(data_config)
 
     return data, data_config
 

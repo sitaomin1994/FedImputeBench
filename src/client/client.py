@@ -1,3 +1,4 @@
+import os.path
 from collections import Counter
 from typing import Tuple, Union
 import numpy as np
@@ -48,6 +49,10 @@ class Client:
         # others
         self.seed = seed
         self.client_config = client_config
+        self.client_local_dir_path = os.path.join(client_config['local_dir_path'], 'client' + str(client_id))
+        print(self.client_local_dir_path)
+        if not os.path.exists(self.client_local_dir_path):
+            os.makedirs(self.client_local_dir_path)
 
     def initial_impute(self, imp_values: np.ndarray, col_type: str = 'num') -> None:
         """
@@ -111,6 +116,12 @@ class Client:
         else:
             self.X_train_imp = self.imputer.impute(self.X_train_imp, self.y_train, self.X_train_mask, params)
             return None
+
+    def save_imp_model(self, version: str) -> None:
+        """
+        Save imputation model
+        """
+        self.imputer.save_model(self.client_local_dir_path, version)
 
     def calculate_data_utils(self, data_config: dict) -> dict:
         """

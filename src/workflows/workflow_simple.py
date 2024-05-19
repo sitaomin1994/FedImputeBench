@@ -56,10 +56,13 @@ class WorkflowSimple(BaseWorkflow):
             client.local_imputation(params={})
 
         ########################################################################################################
-        # Final Evaluation and Tracking
+        # Final Evaluation and Tracking and saving imputation model
         self.eval_and_track(
             evaluator, tracker, clients, phase='final', central_client=server.fed_strategy.name == 'central'
         )
+
+        for client in clients:
+            client.save_imp_model(version='final')
 
         return tracker
 

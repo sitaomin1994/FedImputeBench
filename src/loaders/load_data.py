@@ -27,11 +27,12 @@ from src.modules.data_prep.data_prep_reg import (
 )
 
 from src.modules.data_prep.data_prep_nips import (
-    process_codrna, process_hhip
+    process_hhip, process_codrna
 )
 
 
 def load_data(dataset_name, normalize=True, verbose=False, threshold=None, output_format='dataframe'):
+
     # ##################################################################################################################
     # Classification
     # ##################################################################################################################
@@ -198,7 +199,7 @@ def load_data(dataset_name, normalize=True, verbose=False, threshold=None, outpu
     # NIPS
     ####################################################################################################################
     elif dataset_name == 'codrna':
-        data, data_config = process_codrna(verbose)
+        data, data_config = process_codrna(normalize, verbose, threshold, sample=False)
     elif dataset_name == 'hhip':
         data, data_config = process_hhip(verbose)
     else:

@@ -1,8 +1,6 @@
 defaults:
   - _self_
-  - data_partition: niidf2
-  - missing_scenario: mcar
-  - imputer: missforest
+  - imputer: miwae
   - fed_strategy: local
   - tracker: none
   - override hydra/launcher: joblib
@@ -19,7 +17,7 @@ experiment:
   # name of prefix of experiments e.g., fed_imp, fed_pred etc.
   experiment_name: fed_imp_pc2
   # configuration of an output path to save the results
-  output_path: ${dataset_name}/${data_partition.name}/${missing_scenario.name}/${imputer.imp_name}/${fed_strategy.fed_strategy_name}
+  output_path: ${scenario_version}/${dataset_name}/${data_partition}-${missing_scenario}/${imputer.imp_name}/${fed_strategy.fed_strategy_name}
   # Other Options
   seed: 2180279
   n_rounds: 1
@@ -28,10 +26,13 @@ experiment:
 ########################################################################################################################
 # Experiment Configuration Content
 # scenarios
+scenario_version: alpha
 dataset_name: codrna
-num_clients: 10
-client: {}  # todo
-server: {}  # todo
+data_partition: niid-f2
+missing_scenario: mar-homog
+round_id: 0
+client_config: {}
+server_config: {}  # todo
 evaluator_params: {} # todo
 imp_workflow: null
 ret_analyze_params: null

@@ -33,7 +33,7 @@ class BaseExperiment(ABC):
         """
         pass
 
-    def multiple_runs(self, config, seed, n_rounds, mtp = False) -> List[dict]:
+    def multiple_runs(self, config, seed, n_rounds, mtp=False) -> List[dict]:
         """
         Run multiple rounds of the experiment
         :param mtp: whether to run multiple rounds experiment in parallel
@@ -78,11 +78,20 @@ class BaseExperiment(ABC):
         print(f"Saving experiment results to {save_path}")
         self.save_backend.save(save_path, exp_result_dict)
 
-    def merge_results(self, results: List[dict]) -> dict:   # TODO
+    def get_experiment_out_dir(self, experiment_meta: dict) -> str:
+        """
+        Get the experiment output directory
+        :param experiment_meta: experiment meta-configuration
+        :return: output directory path
+        """
+        return self.save_backend.consolidate_save_path(
+            experiment_meta['experiment_name'], experiment_meta['output_path']
+        )
+
+    def merge_results(self, results: List[dict]) -> dict:  # TODO
         """
         Merge results from multiple rounds
         :param results: list of results from multiple rounds
         :return: merged results
         """
         pass
-

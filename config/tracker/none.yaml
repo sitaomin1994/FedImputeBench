@@ -3,4 +3,4 @@ params:
   track_data: False
   track_model_params: False
   track_misc: False
-  persist: 'none'
+  persist: False

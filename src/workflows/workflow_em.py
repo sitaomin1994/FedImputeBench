@@ -36,6 +36,7 @@ class WorkflowEM(BaseWorkflow):
         # Workflow Parameters
         evaluation_interval = train_params['evaluation_interval']
         max_iterations = train_params['max_iterations']
+        save_model_interval = train_params['save_model_interval']
 
         ############################################################################################################
         # Centralized Initialization
@@ -64,6 +65,7 @@ class WorkflowEM(BaseWorkflow):
                 client = clients[client_id]
                 fit_params = fit_params_list[client_id]
                 fit_params['local_epoch'] = max_iterations * train_params['local_epoch']
+                fit_params['save_model_interval'] = save_model_interval
                 fit_params.update(fit_instruction[client_id])
                 model_parameter, fit_res = client.fit_local_imp_model(params=fit_params)
                 local_models.append(model_parameter)
@@ -81,6 +83,7 @@ class WorkflowEM(BaseWorkflow):
         else:
             clients_converged_signs = [False for _ in range(len(clients))]
             clients_local_models_temp = [None for _ in range(len(clients))]
+
             for iteration in trange(max_iterations, desc='Iterations', leave=False, colour='blue'):
 
                 #####################################################################################################
@@ -116,6 +119,7 @@ class WorkflowEM(BaseWorkflow):
                         print(f"All clients converged, iteration {iteration}")
                         break
 
+                #####################################################################################################
                 # server aggregate local imputation models
                 global_models, agg_res = server.fed_strategy.aggregate_parameters(
                     local_model_parameters=local_models, fit_res=clients_fit_res, params={}
@@ -126,6 +130,8 @@ class WorkflowEM(BaseWorkflow):
                         continue
                     client.update_local_imp_model(global_model, params={})
                     client.local_imputation(params={})
+                    if iteration % save_model_interval == 0:
+                        client.save_imp_model(version=f'{iteration}')
 
                 ########################################################################################################
                 # Impute and Evaluation
@@ -139,6 +145,8 @@ class WorkflowEM(BaseWorkflow):
         self.eval_and_track(
             evaluator, tracker, clients, phase='final', central_client=server.fed_strategy.name == 'central'
         )
+        for client in clients:
+            client.save_imp_model(version='final')
 
         return tracker
 

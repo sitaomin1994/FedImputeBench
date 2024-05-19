@@ -68,7 +68,8 @@ def simulate_scenario(
     if 'mm_obs' in missing_simulate_params and missing_simulate_params['mm_obs']:
         if 'obs_col_idx' in data_config and len(data_config['obs_col_idx']) > 0:
             obs_cols = np.array(data_config['obs_col_idx'])
-            cols = cols[~np.isin(cols, obs_cols)]
+            cols = np.array(cols)
+            cols = cols[~np.isin(cols, obs_cols)].tolist()
         else:
             # size = (data.shape[1] - 1) // 4
             # cols = global_rng.choice(cols, size=size, replace=False)

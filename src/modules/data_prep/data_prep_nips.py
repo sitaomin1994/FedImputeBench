@@ -15,6 +15,7 @@ from imblearn.under_sampling import RandomUnderSampler
 import json
 from collections import OrderedDict
 
+
 def avg_correlation(df):
     avg_correlation_cols = list(OrderedDict(df.corr().abs().mean().sort_values(ascending=False).to_dict()).items())
     features = set(df.columns.tolist()[:-1])
@@ -59,7 +60,7 @@ def process_codrna(normalize=True, verbose=False, threshold=None, sample=True, g
 
     if len(data) >= 20000:
         data = data.sample(n=20000, random_state=0).reset_index(drop=True)
-    
+
     avg_cols = avg_correlation(data)
     avg_cols = [col[0] for col in avg_cols]
     split_col_idx = [data.columns.tolist().index(col) for col in avg_cols]
@@ -84,14 +85,14 @@ def process_codrna(normalize=True, verbose=False, threshold=None, sample=True, g
     return data, data_config
 
 
-
 def process_hhip(verbose=False):
-    data = pd.read_csv('./data/HHP_herrotage_health/data_cleaned.csv')
-    with open('./data/HHP_herrotage_health/data_config.json') as f:
+    data = pd.read_csv('./data/HHP_herritage_health/data_cleaned.csv')
+    with open('./data/HHP_herritage_health/data_config.json') as f:
         data_config = json.load(f)
-    
+    data = data.astype(float)
+
     if verbose:
         logger.debug("Data shape {}".format(data.shape))
         logger.debug(data_config)
-        
+
     return data, data_config

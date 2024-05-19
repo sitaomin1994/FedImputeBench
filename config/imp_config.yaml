@@ -1,0 +1,37 @@
+defaults:
+  - _self_
+  - data_partition: niid-f2
+  - missing_scenario: mar-homog
+  - imputer: em
+  - fed_strategy: fedavg
+  - tracker: none
+  - override hydra/launcher: joblib
+
+hydra:
+  launcher:
+    n_jobs: 7
+    verbose: 1
+
+########################################################################################################################
+# Experiment Meta
+debug: false
+experiment:
+  # name of prefix of experiments e.g., fed_imp, fed_pred etc.
+  experiment_name: fed_imp_pc2
+  # configuration of an output path to save the results
+  output_path: ${dataset_name}/${data_partition.name}/${missing_scenario.name}/${imputer.imp_name}/${fed_strategy.fed_strategy_name}
+  # Other Options
+  seed: 2180279
+  n_rounds: 1
+  mtp: False
+
+########################################################################################################################
+# Experiment Configuration Content
+# scenarios
+dataset_name: codrna
+num_clients: 10
+client_config: {}
+server_config: {}  # todo
+evaluator_params: {} # todo
+imp_workflow: null
+ret_analyze_params: null

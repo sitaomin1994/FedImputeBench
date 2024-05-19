@@ -66,7 +66,8 @@ class EarlyStopping:
             increase_patience=20,
             window_size=5,
             check_steps=1,
-            backward_window_size=20
+            backward_window_size=20,
+            verbose = False
     ):
         """
         初始化EarlyStopping对象。
@@ -89,6 +90,7 @@ class EarlyStopping:
         self.increase_patience_counter = 0
         self.best_metric = float('inf')
         self.early_stop = False
+        self.verbose = verbose
 
     def update(self, current_metric):
         """
@@ -147,12 +149,13 @@ class EarlyStopping:
             if self.patience_counter >= self.patience or self.increase_patience_counter >= self.increase_patience:
                 self.early_stop = True
 
-            print(
-                f"Window Average: {window_avg:.4f}, Backpoint Window Average: {backward_window_avg:.4f}, "
-                f"Best Metric Change: {self.best_metric:.4f}, "
-                f"Metric Change: {metric_change:.4f}, Patience Counter: {self.patience_counter}, "
-                f"Early Stop: {self.early_stop}"
-            )
+            if self.verbose:
+                print(
+                    f"Window Average: {window_avg:.4f}, Backpoint Window Average: {backward_window_avg:.4f}, "
+                    f"Best Metric Change: {self.best_metric:.4f}, "
+                    f"Metric Change: {metric_change:.4f}, Patience Counter: {self.patience_counter}, "
+                    f"Early Stop: {self.early_stop}"
+                )
 
         return self.early_stop
 

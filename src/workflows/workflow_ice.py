@@ -32,6 +32,7 @@ class WorkflowICE(BaseWorkflow):
         # Workflow Parameters
         data_dim = clients[0].X_train.shape[1]
         iterations = self.workflow_params['imp_iterations']
+        save_model_interval = train_params['save_model_interval']
 
         if server.fed_strategy.name == 'central':
             clients.append(formulate_centralized_client(clients))
@@ -48,10 +49,15 @@ class WorkflowICE(BaseWorkflow):
         )
 
         if server.fed_strategy.name == 'central':
+
             # centralized training
             early_stopping = nn_utils.EarlyStopping(
-                patience=train_params['patience'], tolerance=train_params['tolerance'],
-                window_size=train_params['window_size'], check_steps=1, backward_window_size=1
+                tolerance_patience=train_params['tolerance_patience'],
+                increase_patience=train_params['increase_patience'],
+                tolerance=train_params['tolerance'],
+                window_size=train_params['window_size'],
+                check_steps=1,
+                backward_window_size=1
             )
 
             central_client = clients[-1]
@@ -69,11 +75,15 @@ class WorkflowICE(BaseWorkflow):
                         client.update_local_imp_model(model_parameter, params={'feature_idx': feature_idx})
                         client.local_imputation(params={'feature_idx': feature_idx})
 
-                # evaluation and early stopping
+                # evaluation and early stopping and model saving
                 imp_qualities = self.eval_and_track(
                     evaluator, tracker, clients, phase='round', epoch=epoch,
                     central_client=server.fed_strategy.name == 'central'
                 )
+
+                if epoch % save_model_interval == 0:
+                    central_client.save_imp_model(version=f'{epoch}')
+
                 if train_params['early_stopping']:
                     central_imp_quality = imp_qualities[-1]
                     early_stopping.update(central_imp_quality)
@@ -133,6 +143,11 @@ class WorkflowICE(BaseWorkflow):
                     evaluator, tracker, clients, phase='round', epoch=epoch,
                     central_client=server.fed_strategy.name == 'central'
                 )
+
+                if epoch % save_model_interval == 0:
+                    for client in clients:
+                        client.save_imp_model(version=f'{epoch}')
+
                 if train_params['early_stopping']:
                     for client_idx in range(len(clients)):
                         imp_quality = imp_qualities[client_idx]
@@ -149,6 +164,8 @@ class WorkflowICE(BaseWorkflow):
         self.eval_and_track(
             evaluator, tracker, clients, phase='final', central_client=server.fed_strategy.name == 'central'
         )
+        for client in clients:
+            client.save_imp_model(version='final')
 
         return tracker
 

@@ -11,7 +11,7 @@ imp_params:
     out_dist: 'gaussian'
     K: 20
     L: 500
-    activation: 'tanh',
+    activation: 'tanh'
     initializer: 'xavier'
 model_train_params:
   initial_zero_impute: true
@@ -36,3 +36,5 @@ model_train_params:
     check_steps: 1
     back_steps: 1
   log_interval: 20
+  imp_interval: 1000
+  save_model_interval: 30

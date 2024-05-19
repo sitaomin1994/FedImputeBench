@@ -80,6 +80,7 @@ class EMImputer(BaseMLImputer, ICEImputerMixin):
 
     def fit(self, X: np.array, y: np.array, missing_mask: np.array, params: dict) -> dict:
 
+        # TODO: SAVE MODEL INTERVAL FOR LOCAL STRATEGY
         local_epochs = params['local_epoch']
         converged = False
         convergence_threshold = params['convergence_thres']

@@ -11,7 +11,7 @@ imp_params:
     out_dist: 'gaussian'
     K: 20
     L: 100
-    activation: 'tanh',
+    activation: 'tanh'
     initializer: 'xavier'
     mask_net_type: 'linear'
 model_train_params:
@@ -37,3 +37,5 @@ model_train_params:
     check_steps: 1
     back_steps: 1
   log_interval: 1000
+  imp_interval: 1000
+  save_model_interval: 30

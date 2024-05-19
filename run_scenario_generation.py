@@ -16,6 +16,7 @@ import numpy as np
 
 @hydra.main(version_base=None, config_path="config", config_name="scenario_config")
 def my_app(cfg: DictConfig) -> None:
+
     config_dict: dict = OmegaConf.to_container(cfg, resolve=True)
 
     scenario_name = config_dict['scenario_name']
@@ -47,6 +48,7 @@ def my_app(cfg: DictConfig) -> None:
         json.dump(meta_info, f)
 
     for round_id, seed in enumerate(seeds):
+
         ###########################################################################################################
         data, data_config = load_data(dataset_name)
 
@@ -60,7 +62,7 @@ def my_app(cfg: DictConfig) -> None:
         )
 
         save_scenario_data(
-            scenario_dir_path, round_id, seed, clients_data, global_test_data, client_seeds, stats
+            scenario_dir_path, round_id, seed, clients_data, global_test_data, client_seeds, stats, data_config
         )
 
         del data, data_config, clients_data, global_test_data, client_seeds, stats
@@ -69,7 +71,7 @@ def my_app(cfg: DictConfig) -> None:
 
 def save_scenario_data(
         scenario_dir_path: str, round_num: int, seed: int,
-        clients_data: list, global_test_data: np.ndarray, client_seeds: list, stats: list
+        clients_data: list, global_test_data: np.ndarray, client_seeds: list, stats: list, data_config: dict
 ):
 
     dir_path = os.path.join(scenario_dir_path, str(round_num))
@@ -98,6 +100,7 @@ def save_scenario_data(
         'client_seeds': [int(item) for item in client_seeds],
         'num_clients': len(clients_data),
         'class_distribution': stats,
+        'data_config': data_config
     }
 
     with open(os.path.join(dir_path, 'stats.json'), 'w') as f:

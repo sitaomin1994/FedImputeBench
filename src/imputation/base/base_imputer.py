@@ -1,3 +1,5 @@
+import os
+import pickle
 from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
 from typing import Tuple, List
@@ -68,6 +70,29 @@ class BaseMLImputer(metaclass=ABCMeta):
         :return: imputed data - numpy array - same dimension as X
         """
         pass
+
+    def save_model(self, model_path: str, version: str) -> None:
+        """
+        Save the imputer model
+        :param version: version key of model
+        :param model_path: path to save the model
+        :return: None
+        """
+        params = self.get_imp_model_params({})
+        with open(os.path.join(model_path, f'imp_model_{version}.pkl'), 'wb') as f:
+            pickle.dump(params, f)
+
+    def load_model(self, model_path: str, version: str) -> None:
+        """
+        Load the imputer model
+        :param version: version key of a model
+        :param model_path: path to load the model
+        :return: None
+        """
+        with open(os.path.join(model_path, f'imp_model_{version}.pkl'), 'rb') as f:
+            params = pickle.load(f)
+
+        self.set_imp_model_params(params, {})
 
 
 class BaseNNImputer(metaclass=ABCMeta):
@@ -146,3 +171,23 @@ class BaseNNImputer(metaclass=ABCMeta):
         :return: imputed data - numpy array - same dimension as X
         """
         pass
+
+    def save_model(self, model_path: str, version: str) -> None:
+        """
+        Save the imputer model
+        :param version: version key of model
+        :param model_path: path to save the model
+        :return: None
+        """
+        params = self.get_imp_model_params({})
+        torch.save(params, os.path.join(model_path, f'imp_model_{version}.pt'))
+
+    def load_model(self, model_path: str, version: str) -> None:
+        """
+        Load the imputer model
+        :param version: version key of a model
+        :param model_path: path to load the model
+        :return: None
+        """
+        params = torch.load(os.path.join(model_path, f'imp_model_{version}.pt'))
+        self.set_imp_model_params(params, {})

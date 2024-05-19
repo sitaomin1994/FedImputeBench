@@ -1,3 +1,5 @@
+import os
+import pickle
 from collections import OrderedDict
 
 from sklearn.model_selection import StratifiedKFold
@@ -60,7 +62,12 @@ class LinearICEImputer(BaseMLImputer, ICEImputerMixin):
             else:
                 estimator = self.estimator_cat
 
-            self.imp_models.append(load_sklearn_model(estimator))
+            estimator = load_sklearn_model(estimator)
+            X_train = X[:, np.arange(X.shape[1]) != i][0:10]
+            y_train = X[:, i][0:10]
+            estimator.fit(X_train, y_train)
+
+            self.imp_models.append(estimator)
 
         # Missing Mechanism Model
         if self.mm_model_name == 'logistic':  # TODO: make mechanism model as a separate component
@@ -146,7 +153,7 @@ class LinearICEImputer(BaseMLImputer, ICEImputerMixin):
 
         return {
             'coef': coef,
-            #'mm_coef': mm_coef,
+            # 'mm_coef': mm_coef,
             'loss': {},
             'sample_size': X_train.shape[0]
         }
@@ -186,3 +193,31 @@ class LinearICEImputer(BaseMLImputer, ICEImputerMixin):
         X[row_mask, feature_idx] = np.squeeze(imputed_values)
 
         return X
+
+    def save_model(self, model_path: str, version: str) -> None:
+        """
+        Save the imputer model
+        :param version: version key of model
+        :param model_path: path to save the model
+        :return: None
+        """
+        imp_model_params = []
+        for feature_idx in range(len(self.imp_models)):
+            params = self.get_imp_model_params({'feature_idx': feature_idx})
+            imp_model_params.append(params)
+
+        with open(os.path.join(model_path, f'imp_model_{version}.pkl'), 'wb') as f:
+            pickle.dump(imp_model_params, f)
+
+    def load_model(self, model_path: str, version: str) -> None:
+        """
+        Load the imputer model
+        :param version: version key of a model
+        :param model_path: path to load the model
+        :return: None
+        """
+        with open(os.path.join(model_path, f'imp_model_{version}.pkl'), 'rb') as f:
+            imp_model_params = pickle.load(f)
+
+        for feature_idx, params in enumerate(imp_model_params):
+            self.set_imp_model_params(params, {'feature_idx': feature_idx})

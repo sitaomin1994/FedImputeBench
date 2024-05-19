@@ -73,6 +73,7 @@ class WorkflowJM(BaseWorkflow):
         global_model_epochs = train_params['global_epoch']
         log_interval = train_params['log_interval']
         imp_interval = train_params['imp_interval'] if 'imp_interval' in train_params else 1e8
+        save_model_interval = train_params['save_model_interval']
         fit_params_list = [train_params.copy() for _ in clients]
 
         for epoch in trange(global_model_epochs, desc='Global Epoch', colour='blue'):
@@ -106,8 +107,9 @@ class WorkflowJM(BaseWorkflow):
             for client_idx, (global_model, client) in enumerate(zip(global_models, clients)):
                 if early_stopping_mode == 'local' and (all_clients_converged_sign[client_idx]):
                     continue
-
                 client.update_local_imp_model(global_model, params={})
+                if epoch % save_model_interval == 0:
+                    client.save_imp_model(version=f'{epoch}')
 
             #############################################################################################
             # Early Stopping, Loss, Evaluation
@@ -167,6 +169,10 @@ class WorkflowJM(BaseWorkflow):
             if epoch % log_interval == 0:
                 self.logging_loss(clients_fit_res)
 
+            if epoch % save_model_interval == 0:
+                for client in clients:
+                    client.save_imp_model(version=f'{epoch + global_model_epochs}')
+
             if epoch > 0 and epoch % imp_interval == 0:
                 for client in clients:
                     client.local_imputation(params={})
@@ -185,6 +191,7 @@ class WorkflowJM(BaseWorkflow):
         # Final imputation and Evaluation
         for client in clients:
             client.local_imputation(params={})
+            client.save_imp_model(version='final')
 
         self.eval_and_track(
             evaluator, tracker, clients, phase='final', central_client=server.fed_strategy.name == 'central'

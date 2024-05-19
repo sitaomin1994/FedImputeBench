@@ -1,8 +1,10 @@
+import os
+
 import numpy as np
 
 from src.imputation.base import BaseMLImputer
 from collections import OrderedDict
-
+import pickle
 
 class SimpleImputer(BaseMLImputer):
 
@@ -80,3 +82,4 @@ class SimpleImputer(BaseMLImputer):
             X[column_mask, i] = self.mean_params[i]
 
         return X
+

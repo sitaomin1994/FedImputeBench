@@ -23,12 +23,6 @@ class Tracker:
             assert isinstance(tracker_params['track_data'], bool), "track_data is not a boolean"
             self.track_data = tracker_params['track_data']
 
-        if 'track_model_params' not in tracker_params:
-            self.track_model_params = False
-        else:
-            assert isinstance(tracker_params['track_model_params'], bool), "track_model_params is not a boolean"
-            self.track_model_params = tracker_params['track_model_params']
-
         if 'track_misc' not in tracker_params:
             self.track_misc = False
         else:
@@ -36,9 +30,8 @@ class Tracker:
             self.track_misc = tracker_params['track_misc']
 
         if 'persist' not in tracker_params:
-            self.persist = 'none'
+            self.persist = False
         else:
-            assert tracker_params['persist'] in ['none', 'final', 'all'], "persist is not a valid option"
             self.persist = tracker_params['persist']
 
         # internal data structures
@@ -55,10 +48,10 @@ class Tracker:
 
     def record_initial(self, data: List[np.ndarray], mask: List[np.ndarray], imp_quality: dict):
 
-        self.origin_data = np.concatenate(data)
-        self.mask = np.concatenate(mask)
-        self.split_indices = np.cumsum([item.shape[0] for item in data])[:-1]
-        self.rounds.append(0)
+        # self.origin_data = np.concatenate(data)
+        # self.mask = np.concatenate(mask)
+        # self.split_indices = np.cumsum([item.shape[0] for item in data])[:-1]
+        # self.rounds.append(0)
         self.imp_quality.append(imp_quality)
 
     def record_round(
@@ -68,12 +61,6 @@ class Tracker:
 
         self.rounds.append(round_num)
         self.imp_quality.append(imp_quality)
-
-        if self.track_data and data is not None:
-            self.imp_data.append(data)
-
-        if self.track_model_params and model_params is not None:
-            self.model_params.append(model_params)
 
         if self.track_misc and other_info is not None:
             self.misc.append(other_info)
@@ -86,10 +73,7 @@ class Tracker:
 
         self.rounds.append(len(self.rounds) + 1)
         self.imp_quality.append(imp_quality)
-        self.imp_data_final = np.concatenate(data)
-
-        if self.track_model_params and model_params is not None:
-            self.model_params.append(model_params)
+        # self.imp_data_final = np.concatenate(data)
 
         if self.track_misc and other_info is not None:
             self.misc.append(other_info)
@@ -103,13 +87,9 @@ class Tracker:
             }
         }
 
-        if self.persist == 'final':
+        if self.persist:
             raise NotImplementedError("Final persist is not implemented yet")
-        elif self.persist == 'all':
-            raise NotImplementedError("All persist is not implemented yet")
-        elif self.persist == 'none':
-            ret['persist'] = {}
         else:
-            raise ValueError("Invalid persist option")
+            ret['persist'] = {}
 
         return ret

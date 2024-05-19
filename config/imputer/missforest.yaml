@@ -16,3 +16,4 @@ model_train_params:
   increase_patience: 5
   window_size: 3
   log_interval: 1
+  save_model_interval: 2
