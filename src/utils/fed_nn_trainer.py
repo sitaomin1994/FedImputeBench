@@ -26,6 +26,7 @@ def fit_fed_nn_model(
     ######################################################################################
     # model and dataloader
     model, train_dataloader = imputer.configure_model(training_params, X_train_imp, y_train, X_train_mask)
+    print(DEVICE)
 
     # optimizer and scheduler
     optimizers, lr_schedulers = imputer.configure_optimizer(training_params, model)
