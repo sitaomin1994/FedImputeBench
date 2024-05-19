@@ -1,0 +1,1 @@
+srun --mail-type=ALL --mail-user=sm2370@rutgers.edu --partition=p_jsvaidya_1 --nodes=1 --ntasks=1 --cpus-per-task=15 --mem-per-cpu=5G --time=1-00:00:00 --export=ALL --pty bash -i
