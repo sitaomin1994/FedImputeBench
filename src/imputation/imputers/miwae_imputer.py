@@ -79,6 +79,7 @@ class MIWAEImputer(BaseNNImputer, JMImputerMixin):
             raise ValueError(f"Model {self.name} not supported")
 
         self.model.init(seed)
+        #self.model = torch.compile(self.model)
         self.min_values, self.max_values = self.get_clip_thresholds(data_utils)
 
     def configure_model(

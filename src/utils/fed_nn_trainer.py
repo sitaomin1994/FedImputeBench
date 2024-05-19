@@ -23,10 +23,12 @@ def fit_fed_nn_model(
     except KeyError as e:
         raise ValueError(f"Parameter {str(e)} not found in params")
 
+    torch.backends.cuda.matmul.allow_tf32 = True
+    torch.backends.cudnn.allow_tf32 = True
+
     ######################################################################################
     # model and dataloader
     model, train_dataloader = imputer.configure_model(training_params, X_train_imp, y_train, X_train_mask)
-    print(DEVICE)
 
     # optimizer and scheduler
     optimizers, lr_schedulers = imputer.configure_optimizer(training_params, model)

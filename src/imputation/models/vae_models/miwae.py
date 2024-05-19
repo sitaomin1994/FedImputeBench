@@ -14,6 +14,8 @@ from .encoder import BaseEncoder
 from src.utils.nn_utils import weights_init
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+torch.backends.cuda.matmul.allow_tf32 = True
+torch.backends.cudnn.allow_tf32 = True
 
 
 class MIWAE(nn.Module):
