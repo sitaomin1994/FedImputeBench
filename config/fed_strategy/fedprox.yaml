@@ -1,5 +1,5 @@
 fed_strategy_name: 'fedprox'
 fed_strategy_client_params:
-  mu: 0.1
+  mu: 1
 fed_strategy_server_params:
   initial_impute: fedavg

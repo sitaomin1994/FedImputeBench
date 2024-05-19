@@ -2,4 +2,4 @@ fed_strategy_name: 'fedavg_ft'
 fed_strategy_client_params: {}
 fed_strategy_server_params:
   initial_impute: fedavg
-  fine_tune_steps: 50
+  fine_tune_steps: 100

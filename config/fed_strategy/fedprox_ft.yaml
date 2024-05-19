@@ -1,6 +1,6 @@
 fed_strategy_name: 'fedprox_ft'
 fed_strategy_client_params:
-  mu: 100
+  mu: 1
 fed_strategy_server_params:
   initial_impute: fedavg
   fine_tune_steps: 50
