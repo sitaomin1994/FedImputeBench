@@ -10,6 +10,8 @@ def load_optimizer(
 ) -> torch.optim.Optimizer:
     if optimizer_name == 'adam':
         return torch.optim.Adam(parameters, lr=learning_rate, weight_decay=weight_decay)
+    elif optimizer_name == 'adamw':
+        return torch.optim.AdamW(parameters, lr=learning_rate, weight_decay=weight_decay)
     elif optimizer_name == 'sgd':
         return torch.optim.SGD(parameters, lr=learning_rate, weight_decay=weight_decay)
     elif optimizer_name == 'asgd':

@@ -34,7 +34,7 @@ def fit_fed_nn_model(
 
     # optimizer and scheduler
     optimizers, lr_schedulers = imputer.configure_optimizer(training_params, model)
-    scaler = GradScaler()
+    #scaler = GradScaler()
     model.to(DEVICE)
 
     ######################################################################################
@@ -57,8 +57,8 @@ def fit_fed_nn_model(
                 # training step
                 model.train()
                 optimizer.zero_grad()
-                with autocast(dtype=torch.float16):
-                    loss, res = model.train_step(batch, batch_idx, optimizers, optimizer_idx=optimizer, grad_scaler=scaler)
+                #with autocast(dtype=torch.float16):
+                loss, res = model.train_step(batch, batch_idx, optimizers, optimizer_idx=optimizer)
 
                 losses_epoch[optimizer_idx] += loss
                 #print('===================================================================')
@@ -69,9 +69,9 @@ def fit_fed_nn_model(
 
                 #########################################################################
                 # backpropagation
-                #optimizer.step()
-                scaler.step(optimizer)
-                scaler.update()
+                optimizer.step()
+                # scaler.step(optimizer)
+                # scaler.update()
                 #print(torch.norm(model.state_dict()['encoder.0.weight']))
                 #print(torch.norm(model.state_dict()['encoder.hidden_layers.model.0.weight']))
                 #print('===================================================================')

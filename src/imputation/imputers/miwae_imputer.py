@@ -44,7 +44,7 @@ class MIWAEImputer(BaseNNImputer, JMImputerMixin):
         """
         Return model parameters
         """
-        return deepcopy(self.model.state_dict())
+        return self.model.state_dict()
 
     def set_imp_model_params(self, updated_model_dict: OrderedDict, params: dict) -> None:
         """

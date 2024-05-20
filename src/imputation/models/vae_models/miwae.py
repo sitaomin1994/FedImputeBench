@@ -143,13 +143,13 @@ class MIWAE(nn.Module):
 
     def train_step(
             self, batch: Tuple[torch.Tensor, ...], batch_idx: int,
-            optimizers: List[torch.optim.Optimizer], optimizer_idx: int, grad_scaler: Any
+            optimizers: List[torch.optim.Optimizer], optimizer_idx: int
     ) -> tuple[float, dict]:
 
         batch = tuple(item.to(DEVICE) for item in batch)
         loss, train_res_dict = self.compute_loss(batch)
-        #loss.backward()
-        grad_scaler.scale(loss).backward()
+        loss.backward()
+        #grad_scaler.scale(loss).backward()
 
         return loss.item(), {}
 
