@@ -8,6 +8,8 @@ from src.fed_strategy.fed_strategy_client.utils import trainable_params
 from src.imputation.base import BaseNNImputer
 import delu
 import src.utils.nn_utils as nn_utils
+from torch.cuda.amp import autocast, GradScaler
+
 
 DEVICE = "cuda" if torch.cuda.is_available() else 'cpu'
 
@@ -32,6 +34,7 @@ def fit_fed_nn_model(
 
     # optimizer and scheduler
     optimizers, lr_schedulers = imputer.configure_optimizer(training_params, model)
+    scaler = GradScaler()
     model.to(DEVICE)
 
     ######################################################################################
@@ -54,7 +57,9 @@ def fit_fed_nn_model(
                 # training step
                 model.train()
                 optimizer.zero_grad()
-                loss, res = model.train_step(batch, batch_idx, optimizers, optimizer_idx=optimizer)
+                with autocast(dtype=torch.float16):
+                    loss, res = model.train_step(batch, batch_idx, optimizers, optimizer_idx=optimizer, grad_scaler=scaler)
+
                 losses_epoch[optimizer_idx] += loss
                 #print('===================================================================')
                 #print(torch.norm(model.state_dict()['encoder.hidden_layers.model.0.weight']))
@@ -64,7 +69,9 @@ def fit_fed_nn_model(
 
                 #########################################################################
                 # backpropagation
-                optimizer.step()
+                #optimizer.step()
+                scaler.step(optimizer)
+                scaler.update()
                 #print(torch.norm(model.state_dict()['encoder.0.weight']))
                 #print(torch.norm(model.state_dict()['encoder.hidden_layers.model.0.weight']))
                 #print('===================================================================')
