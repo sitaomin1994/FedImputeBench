@@ -68,6 +68,7 @@ def separate_data_niid(
 
     loguru.logger.debug(f"{dataset_label}")
     num_classes = len(np.unique(dataset_label))
+    loguru.logger.debug(f"{len(np.unique(dataset_label))}")
     # guarantee that each client must have at least one batch of data for testing.
     min_samples = int(min(min_samples, int(len(dataset_label) / num_clients / 2)))  # ?
     dataidx_map = {}
@@ -134,7 +135,8 @@ def separate_data_niid(
                 alphas = np.repeat(niid_alpha, num_clients)
                 proportions = rng.dirichlet(alphas)
                 proportions = np.array(
-                    [p * (len(idx_client) < N / num_clients) for p, idx_client in zip(proportions, idx_clients)])
+                    [p * (len(idx_client) < N / num_clients) for p, idx_client in zip(proportions, idx_clients)]
+                )
                 proportions = proportions / proportions.sum()
 
                 # limited numbers

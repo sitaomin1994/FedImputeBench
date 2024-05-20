@@ -129,8 +129,8 @@ class GAINImputer(BaseNNImputer, JMImputerMixin):
             optimizer_name, model.discriminator_layer.parameters(), learning_rate, weight_decay
         )
 
-        g_lr_scheduler = load_lr_scheduler(scheduler_name, g_solver, scheduler_params)
         d_lr_scheduler = load_lr_scheduler(scheduler_name, d_solver, scheduler_params)
+        g_lr_scheduler = load_lr_scheduler(scheduler_name, g_solver, scheduler_params)
 
         return (
             [d_solver, g_solver], [d_lr_scheduler, g_lr_scheduler]

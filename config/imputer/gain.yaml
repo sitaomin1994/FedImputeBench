@@ -7,13 +7,13 @@ imp_params:
   imp_model_params:
     h_dim: 8
     n_layers: 2
-    activation: 'tanh'
-    initializer: 'xavier'
-    loss_alpha: 10
+    activation: 'relu'
+    initializer: 'kaiming'
+    loss_alpha: 20
     hint_rate: 0.5
 model_train_params:
   initial_zero_impute: true
-  global_epoch: 200
+  global_epoch: 400
   local_epoch: 5
   batch_size: 256
   learning_rate: 0.001
@@ -23,8 +23,8 @@ model_train_params:
     step_size: 10
     gamma: 0.5
     schedule_last_epoch: -1
-  optimizer: 'adamw'
-  use_early_stopping: true
+  optimizer: 'adam'
+  use_early_stopping: false
   early_stopping_mode: 'local'
   model_converge:
     tolerance: 0.001
@@ -35,4 +35,4 @@ model_train_params:
     back_steps: 1
   log_interval: 10
   imp_interval: 10
-  save_model_interval: 30
+  save_model_interval: 200

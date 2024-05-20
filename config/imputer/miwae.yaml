@@ -5,7 +5,7 @@ imp_name: miwae
 imp_params:
   clip: true
   imp_model_params:
-    latent_size: 4
+    latent_size: 8
     n_hidden: 16
     n_hidden_layers: 2
     out_dist: 'gaussian'

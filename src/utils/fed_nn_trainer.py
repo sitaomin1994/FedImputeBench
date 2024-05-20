@@ -59,7 +59,7 @@ def fit_fed_nn_model(
                 model.train()
                 optimizer.zero_grad()
                 #with autocast(dtype=torch.float16):
-                loss, res = model.train_step(batch, batch_idx, optimizers, optimizer_idx=optimizer)
+                loss, res = model.train_step(batch, batch_idx, optimizers, optimizer_idx=optimizer_idx)
                 loss_opt += loss
                 #print('===================================================================')
                 #print(torch.norm(model.state_dict()['encoder.hidden_layers.model.0.weight']))
@@ -75,6 +75,7 @@ def fit_fed_nn_model(
                 #print(torch.norm(model.state_dict()['encoder.0.weight']))
                 #print(torch.norm(model.state_dict()['encoder.hidden_layers.model.0.weight']))
                 #print('===================================================================')
+
             loss_opt /= len(optimizers)
             losses_epoch += loss_opt
             ep_iters += 1

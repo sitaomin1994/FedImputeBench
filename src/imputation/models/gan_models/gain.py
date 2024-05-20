@@ -138,7 +138,7 @@ class GainModel(nn.Module):
         h_mb = m_mb * h_mb
         x_mb = m_mb * x_mb + (1 - m_mb) * z_mb
 
-        if batch_idx % 2 == 0:  # discriminator
+        if optimizer_idx == 0:  # discriminator
             # G_solver, D_solver = optimizers
             # D_solver.zero_grad()
             D_loss = self.discr_loss(x_mb, m_mb, h_mb)

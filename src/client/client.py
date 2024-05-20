@@ -64,7 +64,7 @@ class Client:
                 self.X_train_imp[:, i][self.X_train_mask[:, i]] = imp_values[i]
         elif col_type == 'cat':
             for i in range(num_cols, self.X_train.shape[1]):
-                self.X_train_imp[:, i][self.X_train_mask[:, i]] = imp_values[i]
+                self.X_train_imp[:, i][self.X_train_mask[:, i]] = imp_values[i - num_cols]
 
         # initialize imputer after local imputation
         self.imputer.initialize(self.X_train_imp, self.X_train_mask, self.data_utils, {}, self.seed)
