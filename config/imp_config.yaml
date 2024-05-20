@@ -1,9 +1,9 @@
 defaults:
   - _self_
-  - data_partition: niid-f2
-  - missing_scenario: mar-homog
-  - imputer: miwae
-  - fed_strategy: fedavg
+  - data_partition: iid-even
+  - missing_scenario: mcar
+  - imputer: gain
+  - fed_strategy: local
   - tracker: none
   - override hydra/launcher: joblib
 
@@ -19,13 +19,13 @@ experiment:
   # name of prefix of experiments e.g., fed_imp, fed_pred etc.
   experiment_name: fed_imp_pc2
   # configuration of an output path to save the results
-  output_path: ${dataset_name}/${data_partition.name}_{missing_scenario.name}/${imputer.imp_name}/${fed_strategy.fed_strategy_name}
+  output_path: ${dataset_name}/${data_partition.name}_${missing_scenario.name}/${imputer.imp_name}/${fed_strategy.fed_strategy_name}
   # Other Options
   seed: 2180279
   n_rounds: 1
   mtp: False
   log_to_file: False
-  logging_level: INFO
+  logging_level: DEBUG
 
 ########################################################################################################################
 # Experiment Configuration Content

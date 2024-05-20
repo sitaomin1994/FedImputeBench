@@ -5,10 +5,11 @@ imp_name: gain
 imp_params:
   clip: true
   imp_model_params:
-    h_dim: 64
+    h_dim: 8
     n_layers: 2
-    activation: 'relu'
-    loss_alpha: 20
+    activation: 'tanh'
+    initializer: 'xavier'
+    loss_alpha: 10
     hint_rate: 0.5
 model_train_params:
   initial_zero_impute: true
@@ -16,22 +17,22 @@ model_train_params:
   local_epoch: 5
   batch_size: 256
   learning_rate: 0.001
-  weight_decay: 0.0001
+  weight_decay: 0.001
   scheduler: "step"
   scheduler_params:
     step_size: 10
     gamma: 0.5
     schedule_last_epoch: -1
-  optimizer: 'adam'
+  optimizer: 'adamw'
   use_early_stopping: true
   early_stopping_mode: 'local'
   model_converge:
-    tolerance: 0.005
+    tolerance: 0.001
     tolerance_patience: 20
     increase_patience: 20
     window_size: 20
     check_steps: 1
     back_steps: 1
-  log_interval: 100
-  imp_interval: 1000
+  log_interval: 10
+  imp_interval: 10
   save_model_interval: 30

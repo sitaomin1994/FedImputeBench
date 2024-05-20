@@ -23,11 +23,11 @@ from src.modules.data_prep.data_prep import (
 )
 
 from src.modules.data_prep.data_prep_reg import (
-    process_diabetes, process_california_housing, process_housing, process_red_reg, process_white_reg
+    process_diabetes, process_housing, process_red_reg, process_white_reg
 )
 
 from src.modules.data_prep.data_prep_nips import (
-    process_hhip, process_codrna
+    process_hhip, process_codrna, process_california
 )
 
 
@@ -202,6 +202,8 @@ def load_data(dataset_name, normalize=True, verbose=False, threshold=None, outpu
         data, data_config = process_codrna(normalize, verbose, threshold, sample=False)
     elif dataset_name == 'hhip':
         data, data_config = process_hhip(verbose)
+    elif dataset_name == 'california':
+        data, data_config = process_california(verbose)
     else:
         raise Exception("Unknown dataset name {}".format(dataset_name))
 
