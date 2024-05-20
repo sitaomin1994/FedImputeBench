@@ -5,8 +5,8 @@ imp_name: miwae
 imp_params:
   clip: true
   imp_model_params:
-    latent_size: 20
-    n_hidden: 64
+    latent_size: 32
+    n_hidden: 32
     n_hidden_layers: 2
     out_dist: 'gaussian'
     K: 20
@@ -19,7 +19,7 @@ model_train_params:
   local_epoch: 5
   batch_size: 512
   learning_rate: 0.001
-  weight_decay: 0.001
+  weight_decay: 0.01
   scheduler: "step"
   scheduler_params:
     step_size: 10
