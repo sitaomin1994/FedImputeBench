@@ -27,7 +27,7 @@ from src.modules.data_prep.data_prep_reg import (
 )
 
 from src.modules.data_prep.data_prep_nips import (
-    process_hhip, process_codrna, process_california
+    process_hhip, process_codrna, process_california, process_dvisits
 )
 
 
@@ -186,8 +186,8 @@ def load_data(dataset_name, normalize=True, verbose=False, threshold=None, outpu
     ####################################################################################################################
     elif dataset_name == 'diabetes':
         data, data_config = process_diabetes(normalize, verbose, threshold)
-    elif dataset_name == 'california_housing':
-        data, data_config = process_california_housing(normalize, verbose, threshold)
+    # elif dataset_name == 'california_housing':
+    #     data, data_config = process_california_housing(normalize, verbose, threshold)
     elif dataset_name == 'housing':
         data, data_config = process_housing(normalize, verbose, threshold)
     elif dataset_name == 'red_reg':
@@ -204,6 +204,8 @@ def load_data(dataset_name, normalize=True, verbose=False, threshold=None, outpu
         data, data_config = process_hhip(verbose)
     elif dataset_name == 'california':
         data, data_config = process_california(verbose)
+    elif dataset_name == 'dvisits':
+        data, data_config = process_dvisits(verbose)
     else:
         raise Exception("Unknown dataset name {}".format(dataset_name))
 

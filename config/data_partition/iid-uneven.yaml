@@ -4,7 +4,7 @@ partition_params:
   split_col: 'target'
   size_strategy: "dir"
   min_samples: 50
-  max_samples: 5000
+  max_samples: 3000
   size_niid_alpha: 0.1
   local_test_size: 0.1
   global_test_size: 0.1

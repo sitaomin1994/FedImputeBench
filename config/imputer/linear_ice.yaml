@@ -4,7 +4,7 @@ defaults:
 imp_name: 'linear_ice'
 imp_params:
   estimator_num: 'ridge_cv'
-  estimator_cat: 'logistic_cv'
+  estimator_cat: 'ridge_cv'
   mm_model: 'logistic'
   mm_model_params:
     class_weight: 'balanced'
