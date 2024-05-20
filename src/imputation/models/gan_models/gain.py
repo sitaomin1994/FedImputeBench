@@ -39,7 +39,7 @@ class GainModel(nn.Module):
 
         # data + mask -> hidden -> hidden -> data
         self.initializer = initializer
-        h_dim = dim
+        h_dim = h_dim
         self.generator_layer = LinearLayers(
             input_dim=dim * 2,
             output_dim=dim,
@@ -138,8 +138,7 @@ class GainModel(nn.Module):
         h_mb = m_mb * h_mb
         x_mb = m_mb * x_mb + (1 - m_mb) * z_mb
 
-        if optimizer_idx == 0:  # discriminator
-
+        if batch_idx % 2 == 0:  # discriminator
             # G_solver, D_solver = optimizers
             # D_solver.zero_grad()
             D_loss = self.discr_loss(x_mb, m_mb, h_mb)

@@ -96,3 +96,16 @@ def process_hhip(verbose=False):
         logger.debug(data_config)
 
     return data, data_config
+
+
+def process_california(verbose=False):
+    data = pd.read_csv('./data/california/data_cleaned.csv')
+    with open('./data/california/data_config.json') as f:
+        data_config = json.load(f)
+    data = data.astype(float)
+
+    if verbose:
+        logger.debug("Data shape {}".format(data.shape))
+        logger.debug(data_config)
+
+    return data, data_config

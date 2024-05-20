@@ -50,8 +50,9 @@ def fit_fed_nn_model(
 
         #################################################################################
         # training one epoch
-        losses_epoch, ep_iters = [0 for _ in range(len(optimizers))], 0
+        losses_epoch, ep_iters = 0, 0
         for batch_idx, batch in enumerate(train_dataloader):
+            loss_opt = 0
             for optimizer_idx, optimizer in enumerate(optimizers):
                 #########################################################################
                 # training step
@@ -59,8 +60,7 @@ def fit_fed_nn_model(
                 optimizer.zero_grad()
                 #with autocast(dtype=torch.float16):
                 loss, res = model.train_step(batch, batch_idx, optimizers, optimizer_idx=optimizer)
-
-                losses_epoch[optimizer_idx] += loss
+                loss_opt += loss
                 #print('===================================================================')
                 #print(torch.norm(model.state_dict()['encoder.hidden_layers.model.0.weight']))
                 ########################################################################
@@ -75,7 +75,8 @@ def fit_fed_nn_model(
                 #print(torch.norm(model.state_dict()['encoder.0.weight']))
                 #print(torch.norm(model.state_dict()['encoder.hidden_layers.model.0.weight']))
                 #print('===================================================================')
-
+            loss_opt /= len(optimizers)
+            losses_epoch += loss_opt
             ep_iters += 1
 
         #################################################################################
@@ -83,8 +84,8 @@ def fit_fed_nn_model(
         if DEVICE == "cuda":
             torch.cuda.empty_cache()
 
-        losses_epoch = np.array(losses_epoch) / len(train_dataloader)
-        epoch_loss = losses_epoch.mean()
+        #losses_epoch = losses_epoch / len(train_dataloader)
+        epoch_loss = losses_epoch / len(train_dataloader)
 
         # update lr scheduler
         # for scheduler in lr_schedulers:

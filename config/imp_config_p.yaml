@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - imputer: miwae
+  - imputer: gain
   - fed_strategy: local
   - tracker: none
   - override hydra/launcher: joblib
@@ -23,8 +23,8 @@ experiment:
   seed: 2180279
   n_rounds: 1
   mtp: False
-  log_to_file: True
-  logging_level: INFO
+  log_to_file: False
+  logging_level: DEBUG
 
 ########################################################################################################################
 # Experiment Configuration Content

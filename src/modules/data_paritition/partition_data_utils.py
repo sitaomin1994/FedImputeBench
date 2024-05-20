@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Union
 import math
 
 import loguru
@@ -18,6 +18,8 @@ def binning_target(y, reg_bins, seed):
     :return: binned target variable
     """
     assert reg_bins > 1, "reg_bins should be greater than 1"
+    if np.unique(y).shape[0] <= reg_bins:
+        return y
     y = y.copy().reshape(-1, 1)
     est = KBinsDiscretizer(
         n_bins=reg_bins, encode='ordinal', strategy='uniform',
@@ -138,7 +140,7 @@ def noniid_sample_dirichlet(
 
 def generate_samples_iid(
         data: np.ndarray, sample_fracs: List[float], seeds: List[int], global_seed: int = 10023,
-        sample_iid_direct: bool = False, regression: bool = False, reg_bins: int = 20
+        sample_iid_direct: bool = False, regression: bool = False, reg_bins: Union[int, None] = None
 ) -> List[np.ndarray]:
     """
     generate samples iid
@@ -166,8 +168,8 @@ def generate_samples_iid(
 
         # set features and target
         X, y = data[:, :-1], data[:, -1]
-        if regression:
-            y = binning_target(y, reg_bins, global_seed)
+        # if regression:
+        #     y = binning_target(y, reg_bins, global_seed)
 
         # split using sample_fracs and train_test_split
         for idx, sample_frac in enumerate(sample_fracs):
@@ -175,7 +177,7 @@ def generate_samples_iid(
                 ret.append(data.copy())
             else:
                 # new_seed = seed
-                if regression and reg_bins is None:
+                if regression:
                     _, X_test, _, y_test = train_test_split(
                         X, y, test_size=sample_frac, random_state=seeds[idx]
                     )
