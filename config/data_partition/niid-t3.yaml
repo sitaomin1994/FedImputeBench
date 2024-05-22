@@ -1,4 +1,4 @@
-name: 'niid-t2'
+name: 'niid-t3'
 partition_params:
   partition_strategy: "niid_dir"
   split_col: 'target'
