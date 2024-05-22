@@ -47,7 +47,7 @@ def fedavg(clients_data_utils, key='mean', col_type='num'):
             raise ValueError("key must be one of 'mean', 'median'")
 
         sample_sizes = [
-            [item['col_stats'][col]['sample_size_obs'] for col in range(item['num_cols'], item['n_features'])]
+            [item['missing_stats_cols'][col]['sample_size_obs'] for col in range(item['num_cols'], item['n_features'])]
             for item in clients_data_utils
         ]  # (n_clients, )
 

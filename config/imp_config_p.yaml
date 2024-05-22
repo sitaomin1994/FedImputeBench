@@ -1,7 +1,7 @@
 defaults:
   - _self_
-  - imputer: gain
-  - fed_strategy: local
+  - imputer: miwae
+  - fed_strategy: fedavg
   - tracker: none
   - override hydra/launcher: joblib
 
@@ -30,9 +30,9 @@ experiment:
 # Experiment Configuration Content
 # scenarios
 scenario_version: "alpha"
-dataset_name: "codrna"
+dataset_name: "dvisits"
 data_partition_name: "iid-even"
-missing_scenario_name: "mcar"
+missing_scenario_name: "mnar1-homog"
 round_id: 0
 client_config: {}
 server_config: {}  # todo

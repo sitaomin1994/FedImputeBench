@@ -15,8 +15,8 @@ imp_params:
 model_train_params:
   early_stopping: True
   tolerance: 0.001
-  tolerance_patience: 5
-  increase_patience: 5
+  tolerance_patience: 3
+  increase_patience: 3
   window_size: 3
   log_interval: 1
   save_model_interval: 5

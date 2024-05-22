@@ -1,11 +1,10 @@
-name: 'niid-f3'
+name: 'niid-t2'
 partition_params:
   partition_strategy: "niid_dir"
-  split_col: 'feature'
+  split_col: 'target'
   size_strategy: "even"
   min_samples: 50
   max_samples: 4000
   niid_alpha: 0.01
   local_test_size: 0.1
   global_test_size: 0.1
-  reg_bins: 20

@@ -1,30 +1,33 @@
-export CUBLAS_WORKSPACE_CONFIG=":4096:8"
-python run_fed_imp_scenario.py --multirun \
-dataset_name=hhip \
-imputer=simple \
-data_partition_name=iid-even,iid-uneven,niid-t1,niid-t2,niid-f1,niid-f2 \
-missing_scenario_name=mcar,mar-homog,mar-heter,mnar1-homog,mnar1-heter,mnar2-homog,mnar2-heter \
-fed_strategy=local,fedavg,central \
-round_id=0,1,2,3,4,5,6,7,8,9
+#!/bin/bash
+
+# Read arguments from the command line
+dataset_name=$1
+scenario=$2
+n_jobs=-1
 
 export CUBLAS_WORKSPACE_CONFIG=":4096:8"
-python run_fed_imp_scenario.py --multirun \
-hydra.launcher.n_jobs=-1 \
-dataset_name=hhip \
+command1="python run_fed_imp_scenario.py --multirun \
+hydra.launcher.n_jobs=$n_jobs \
+dataset_name=$dataset_name \
+imputer=simple,em,linear_ice \
+data_partition_name=iid-even,iid-uneven,niid-t1,niid-t2,niid-t3 \
+missing_scenario_name=$scenario \
+fed_strategy=local,fedavg,central \
+round_id=0,1,2,3,4,5,6,7,8,9"
+
+export CUBLAS_WORKSPACE_CONFIG=":4096:8"
+command2="python run_fed_imp_scenario.py --multirun \
+hydra.launcher.n_jobs=$n_jobs \
+dataset_name=$dataset_name \
 imputer=em,linear_ice \
-data_partition_name=iid-even,iid-uneven,niid-t1,niid-t2,niid-f1,niid-f2 \
-missing_scenario_name=mcar,mar-homog,mar-heter,mnar1-homog,mnar1-heter,mnar2-homog,mnar2-heter \
-fed_strategy=local,fedavg,central \
-round_id=0,1,2,3,4,5,6,7,8,9
-
-export CUBLAS_WORKSPACE_CONFIG=":4096:8"
-python run_fed_imp_scenario.py --multirun \
-hydra.launcher.n_jobs=-1 \
-dataset_name=hhip \
-imputer=missforest \
-data_partition_name=iid-even,iid-uneven,niid-t1,niid-t2,niid-f1,niid-f2 \
-missing_scenario_name=mcar,mar-homog,mar-heter,mnar1-homog,mnar1-heter,mnar2-homog,mnar2-heter \
+data_partition_name=iid-even,iid-uneven,niid-t1,niid-t2,niid-t3 \
+missing_scenario_name=$scenario \
 fed_strategy=local,fedtree,central \
-round_id=0,1,2,3,4,5,6,7,8,9
+round_id=0,1,2,3,4,5,6,7,8,9"
 
+echo $command1
+eval $command1
+
+echo $command2
+eval $command2
 
