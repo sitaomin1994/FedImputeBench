@@ -3,7 +3,7 @@
 # Read arguments from the command line
 dataset_name=$1
 scenario=$2
-n_jobs=-1
+n_jobs=$3
 
 #export CUBLAS_WORKSPACE_CONFIG=":4096:8"
 #command1="python run_fed_imp_scenario.py --multirun \
