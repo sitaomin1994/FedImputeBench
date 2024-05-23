@@ -6,7 +6,7 @@ imp_params:
   clip: false
   use_y: false
 model_train_params:
-  max_iterations: 50
+  max_iterations: 100
   convergence_thres: 0.003
   local_epoch: 1
   evaluation_interval: 1

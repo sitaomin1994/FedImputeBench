@@ -44,6 +44,14 @@ elif [ "$dataset_name" = "dvisits" ]; then
         missing_scenario_name=$ms_scenario \
         fed_strategy=$fed_strategy \
         round_id=$rounds"
+elif [ "$dataset_name" = "vehicle" ]; then
+    command="python run_fed_imp_scenario.py --multirun \
+        dataset_name=$dataset_name \
+        imputer=$imputer_name \
+        data_partition_name=iid-even,iid-uneven,niid-f1,niid-f2 \
+        missing_scenario_name=$ms_scenario \
+        fed_strategy=$fed_strategy \
+        round_id=$rounds"
 else
     echo "Error: Unknown dataset name '$dataset_name'"
     exit 1

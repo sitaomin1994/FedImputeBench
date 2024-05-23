@@ -5,7 +5,7 @@ imp_name: gain
 imp_params:
   clip: true
   imp_model_params:
-    h_dim: 8
+    h_dim: 32
     n_layers: 2
     activation: 'relu'
     initializer: 'kaiming'
