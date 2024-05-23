@@ -27,7 +27,7 @@ from src.modules.data_prep.data_prep_reg import (
 )
 
 from src.modules.data_prep.data_prep_nips import (
-    process_hhip, process_codrna, process_california, process_dvisits
+    process_hhip, process_codrna, process_california, process_dvisits, process_vehicle
 )
 
 
@@ -206,6 +206,8 @@ def load_data(dataset_name, normalize=True, verbose=False, threshold=None, outpu
         data, data_config = process_california(verbose)
     elif dataset_name == 'dvisits':
         data, data_config = process_dvisits(verbose)
+    elif dataset_name == 'vehicle':
+        data, data_config = process_vehicle(verbose)
     else:
         raise Exception("Unknown dataset name {}".format(dataset_name))
 

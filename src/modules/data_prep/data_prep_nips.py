@@ -122,3 +122,16 @@ def process_dvisits(verbose=False):
         logger.debug(data_config)
 
     return data, data_config
+
+
+def process_vehicle(verbose=False):
+    data = pd.read_csv('./data/vehicle/data_cleaned.csv')
+    with open('./data/vehicle/data_config.json') as f:
+        data_config = json.load(f)
+    data = data.astype(float)
+
+    if verbose:
+        logger.debug("Data shape {}".format(data.shape))
+        logger.debug(data_config)
+
+    return data, data_config

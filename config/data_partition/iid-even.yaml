@@ -4,6 +4,6 @@ partition_params:
   split_col: 'target'
   size_strategy: "even"
   min_samples: 50
-  max_samples: 3000
+  max_samples: 8000
   local_test_size: 0.1
   global_test_size: 0.1
