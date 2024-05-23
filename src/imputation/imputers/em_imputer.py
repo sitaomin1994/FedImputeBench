@@ -142,13 +142,13 @@ class EMImputer(BaseMLImputer, ICEImputerMixin):
             # update mu params for calculate X
             M_grid = np.ix_(miss_ids)
             O_grid = np.ix_(obs_ids)
-            mu_tilde[row_id] = mu[M_grid] + S_MO @ np.linalg.inv(S_OO) @ (X[row_id, O_grid] - mu[O_grid]).flatten()
+            mu_tilde[row_id] = mu[M_grid] + S_MO @ np.linalg.pinv(S_OO) @ (X[row_id, O_grid] - mu[O_grid]).flatten()
 
             # update X
             X[row_id, M_grid] = mu_tilde[row_id]
 
             # update sigma
-            sigma_tilde[row_id][MM_grid] = S_MM - S_MO @ np.linalg.inv(S_OO) @ S_OM
+            sigma_tilde[row_id][MM_grid] = S_MM - S_MO @ np.linalg.pinv(S_OO) @ S_OM
 
         # update Mu and Sigma
         mu_new = np.mean(X, axis=0)

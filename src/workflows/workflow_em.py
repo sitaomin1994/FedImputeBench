@@ -171,6 +171,7 @@ class WorkflowEM(BaseWorkflow):
                     np.linalg.norm(mu - mu_new) < tolerance
                     and np.linalg.norm(sigma - sigma_new, ord=2) < tolerance
             )
+            loguru.logger.debug(f"{np.linalg.norm(mu - mu_new)} {np.linalg.norm(sigma - sigma_new, ord=2)}")
             clients_converged.append(converged)
 
         return clients_converged
