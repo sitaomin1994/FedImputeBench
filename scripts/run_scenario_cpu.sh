@@ -25,8 +25,8 @@ missing_scenario_name=$scenario \
 fed_strategy=local,fedtree,central \
 round_id=0,1,2,3,4,5,6,7,8,9"
 
-echo $command1
-eval $command1
+#echo $command1
+#eval $command1
 
 echo $command2
 eval $command2
