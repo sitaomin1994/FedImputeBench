@@ -5,8 +5,8 @@ imp_name: miwae
 imp_params:
   clip: true
   imp_model_params:
-    latent_size: 16
-    n_hidden: 64
+    latent_size: 8
+    n_hidden: 32
     n_hidden_layers: 2
     out_dist: 'gaussian'
     K: 20
@@ -14,9 +14,9 @@ imp_params:
     activation: 'tanh'
     initializer: 'xavier'
 model_train_params:
-  initial_zero_impute: true
-  global_epoch: 300
-  local_epoch: 5
+  initial_zero_impute: false
+  global_epoch: 500
+  local_epoch: 10
   batch_size: 512
   learning_rate: 0.001
   weight_decay: 0.0001

@@ -152,13 +152,15 @@ class WorkflowJM(BaseWorkflow):
         )
 
         fine_tune_epochs = server.fed_strategy.fine_tune_epochs
+        train_params['local_epoch'] = 1
+        fit_params_list = [train_params.copy() for _ in clients]
         for epoch in trange(fine_tune_epochs, desc='Fine Tuning Epoch', colour='blue'):
 
             clients_fit_res = []
             fit_instruction = server.fed_strategy.fit_instruction([{} for _ in range(len(clients))])
             for client_idx in range(len(clients)):
                 client = clients[client_idx]
-                fit_params = train_params.copy()
+                fit_params = fit_params_list[client_idx]
                 fit_params.update(fit_instruction[client_idx])
                 fit_params.update({'freeze_encoder': False})
                 # if it is converged, do not fit the model

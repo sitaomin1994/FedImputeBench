@@ -4,10 +4,11 @@
 dataset_name=$1
 imputer_name=$2
 ms_scenario=$3
-n_jobs=$4
+n_jobs=$5
+fed_strategy=$4
 
 # Predefined strings for fed_strategy and rounds
-fed_strategy='local,fedavg,fedavg_ft,fedprox,central'
+# fed_strategy='local,fedavg,fedavg_ft,fedprox,central'
 rounds='0,1,2,3,4'
 
 if [ "$dataset_name" = "codrna" ]; then

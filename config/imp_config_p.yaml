@@ -1,7 +1,7 @@
 defaults:
   - _self_
-  - imputer: em
-  - fed_strategy: local
+  - imputer: miwae
+  - fed_strategy: fedprox
   - tracker: none
   - override hydra/launcher: joblib
 
@@ -23,17 +23,17 @@ experiment:
   seed: 2180279
   n_rounds: 1
   mtp: False
-  log_to_file: True
+  log_to_file: False
   logging_level: INFO
 
 ########################################################################################################################
 # Experiment Configuration Content
 # scenarios
 scenario_version: "alpha"
-dataset_name: "hhip"
-data_partition_name: "iid-uneven"
+dataset_name: "codrna"
+data_partition_name: "iid-even"
 missing_scenario_name: "mar-homog"
-round_id: 1
+round_id: 0
 client_config: {}
 server_config: {}  # todo
 evaluator_params: {} # todo
