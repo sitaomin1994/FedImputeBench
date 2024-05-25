@@ -6,7 +6,7 @@ defaults:
 #########################################################
 # Scenario Configuration Content
 scenario_version: 'alpha'
-dataset_name: dvisits
+dataset_name: school
 num_clients: 10
 seed: 2180279
 n_rounds: 10

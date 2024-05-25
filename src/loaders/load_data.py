@@ -1,7 +1,7 @@
 from src.modules.data_prep.utils import split_train_test
 
 from src.modules.data_prep.data_prep_his import (
-    process_NHIS_income, process_heart, process_skin, process_codon, process_sepsis,
+    process_NHIS_income, process_heart, process_skin, process_sepsis,
     process_diabetic, process_diabetic2, process_cardio, process_mimiciii_mortality, process_genetic,
     process_mimiciii_mo2, process_mimic_icd, process_mimic_icd2, process_mimic_mo, process_mimic_los,
     process_breast, process_dermatology, process_pima_diabetes
@@ -27,7 +27,7 @@ from src.modules.data_prep.data_prep_reg import (
 )
 
 from src.modules.data_prep.data_prep_nips import (
-    process_hhip, process_codrna, process_california, process_dvisits, process_vehicle
+    process_hhip, process_codrna, process_california, process_dvisits, process_vehicle, process_codon, process_school
 )
 
 
@@ -152,8 +152,8 @@ def load_data(dataset_name, normalize=True, verbose=False, threshold=None, outpu
     #     data, data_config = process_codrna(normalize, verbose, threshold, sample=False)
     elif dataset_name == 'codrna_balanced':
         data, data_config = process_codrna(normalize, verbose, threshold, sample=True)
-    elif dataset_name == 'codon':
-        data, data_config = process_codon(verbose, threshold)
+    # elif dataset_name == 'codon':
+    #     data, data_config = process_codon(verbose, threshold)
     elif dataset_name == 'sepsis':
         data, data_config = process_sepsis(verbose, threshold)
     elif dataset_name == 'diabetic':
@@ -208,6 +208,10 @@ def load_data(dataset_name, normalize=True, verbose=False, threshold=None, outpu
         data, data_config = process_dvisits(verbose)
     elif dataset_name == 'vehicle':
         data, data_config = process_vehicle(verbose)
+    elif dataset_name == 'codon':
+        data, data_config = process_codon(verbose)
+    elif dataset_name == 'school':
+        data, data_config = process_school(verbose)
     else:
         raise Exception("Unknown dataset name {}".format(dataset_name))
 
