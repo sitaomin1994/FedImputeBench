@@ -4,8 +4,8 @@
 dataset_name=$1
 imputer_name=$2
 ms_scenario=$3
-n_jobs=$5
 fed_strategy=$4
+n_jobs=$5
 
 # Predefined strings for fed_strategy and rounds
 # fed_strategy='local,fedavg,fedavg_ft,fedprox,central'
@@ -19,19 +19,22 @@ if [ "$dataset_name" = "codrna" ]; then
         data_partition_name=iid-even,iid-uneven,niid-f1,niid-f2 \
         missing_scenario_name=$ms_scenario \
         fed_strategy=$fed_strategy \
-        round_id=$rounds"
+        round_id=$rounds \
+        experiment.log_to_file=True"
 
 elif [ "$dataset_name" = "hhip" ]; then
     command="python run_fed_imp_scenario.py --multirun \
+        hydra.launcher.n_jobs=$n_jobs \
         dataset_name=$dataset_name \
         imputer=$imputer_name \
         data_partition_name=iid-even,iid-uneven,niid-t1,niid-t2 \
         missing_scenario_name=$ms_scenario \
         fed_strategy=$fed_strategy \
         round_id=$rounds \
-        imputer.imp_params.imp_model_params.latent_size=32 imputer.imp_params.imp_model_params.hidden_size=64"
+        experiment.log_to_file=True"
 elif [ "$dataset_name" = "california" ]; then
     command="python run_fed_imp_scenario.py --multirun \
+        hydra.launcher.n_jobs=$n_jobs \
         dataset_name=$dataset_name \
         imputer=$imputer_name \
         data_partition_name=iid-even,iid-uneven,niid-t1,niid-t2 \
@@ -40,20 +43,34 @@ elif [ "$dataset_name" = "california" ]; then
         round_id=$rounds"
 elif [ "$dataset_name" = "dvisits" ]; then
     command="python run_fed_imp_scenario.py --multirun \
+        hydra.launcher.n_jobs=$n_jobs \
         dataset_name=$dataset_name \
         imputer=$imputer_name \
         data_partition_name=iid-even,iid-uneven,niid-t1,niid-t2,niid-t1,niid-t3 \
         missing_scenario_name=$ms_scenario \
         fed_strategy=$fed_strategy \
-        round_id=$rounds"
+        round_id=$rounds \
+        experiment.log_to_file=True"
 elif [ "$dataset_name" = "vehicle" ]; then
     command="python run_fed_imp_scenario.py --multirun \
+        hydra.launcher.n_jobs=$n_jobs \
         dataset_name=$dataset_name \
         imputer=$imputer_name \
         data_partition_name=iid-even,iid-uneven,niid-f1,niid-f2 \
         missing_scenario_name=$ms_scenario \
         fed_strategy=$fed_strategy \
-        round_id=$rounds"
+        round_id=$rounds \
+        experiment.log_to_file=True"
+elif [ "$dataset_name" = "school_pca" ]; then
+    command="python run_fed_imp_scenario.py --multirun \
+        hydra.launcher.n_jobs=$n_jobs \
+        dataset_name=$dataset_name \
+        imputer=$imputer_name \
+        data_partition_name=iid-even,iid-uneven,niid-f1,niid-f2 \
+        missing_scenario_name=$ms_scenario \
+        fed_strategy=$fed_strategy \
+        round_id=$rounds \
+        experiment.log_to_file=True"
 else
     echo "Error: Unknown dataset name '$dataset_name'"
     exit 1
