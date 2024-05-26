@@ -10,7 +10,7 @@ imp_params:
     activation: 'relu'
     initializer: 'kaiming'
     loss_alpha: 200
-    hint_rate: 0.3
+    hint_rate: 0.1
 model_train_params:
   initial_zero_impute: true
   global_epoch: 300
