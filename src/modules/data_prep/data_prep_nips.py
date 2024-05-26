@@ -137,11 +137,16 @@ def process_vehicle(verbose=False):
     return data, data_config
 
 
-def process_school(verbose=False):
-    data = pd.read_csv('./data/school/data_cleaned.csv')
-    with open('./data/school/data_config.json') as f:
-        data_config = json.load(f)
-    data = data.astype(float)
+def process_school(verbose=False, pca = True):
+    if pca:
+        data = pd.read_csv('./data/school/data_cleaned_pca.csv')
+        with open('./data/school/data_config_pca.json') as f:
+            data_config = json.load(f)
+    else:
+        data = pd.read_csv('./data/school/data_cleaned.csv')
+        with open('./data/school/data_config.json') as f:
+            data_config = json.load(f)
+        data = data.astype(float)
 
     if verbose:
         logger.debug("Data shape {}".format(data.shape))

@@ -211,7 +211,9 @@ def load_data(dataset_name, normalize=True, verbose=False, threshold=None, outpu
     elif dataset_name == 'codon':
         data, data_config = process_codon(verbose)
     elif dataset_name == 'school':
-        data, data_config = process_school(verbose)
+        data, data_config = process_school(verbose, pca = False)
+    elif dataset_name == 'school_pca':
+        data, data_config = process_school(verbose, pca = True)
     else:
         raise Exception("Unknown dataset name {}".format(dataset_name))
 

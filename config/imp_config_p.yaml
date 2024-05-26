@@ -1,7 +1,7 @@
 defaults:
   - _self_
-  - imputer: miwae
-  - fed_strategy: fedprox
+  - imputer: gain
+  - fed_strategy: local
   - tracker: none
   - override hydra/launcher: joblib
 
@@ -30,7 +30,7 @@ experiment:
 # Experiment Configuration Content
 # scenarios
 scenario_version: "alpha"
-dataset_name: "codrna"
+dataset_name: "school_pca"
 data_partition_name: "iid-even"
 missing_scenario_name: "mar-homog"
 round_id: 0
