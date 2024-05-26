@@ -9,12 +9,12 @@ imp_params:
     n_layers: 2
     activation: 'relu'
     initializer: 'kaiming'
-    loss_alpha: 20
-    hint_rate: 0.5
+    loss_alpha: 200
+    hint_rate: 0.3
 model_train_params:
   initial_zero_impute: true
   global_epoch: 300
-  local_epoch: 5
+  local_epoch: 10
   batch_size: 256
   learning_rate: 0.001
   weight_decay: 0.001
