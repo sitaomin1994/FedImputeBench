@@ -32,10 +32,10 @@ if [ "$dataset_name" = "codrna" ]; then
 elif [ "$dataset_name" = "hhip" ]; then
 
     if [ "$imputer_name" = "gain" ]; then
-      hyper_params="imputer.imp_params.imp_model_params.h_dim=32 imputer.imp_params.imp_model_params.loss_alpha=100 \
+      hyper_params="imputer.imp_params.imp_model_params.h_dim=40 imputer.imp_params.imp_model_params.loss_alpha=100 \
       imputer.imp_params.imp_model_params.hint_rate=0.5 \
-      imputer.model_train_params.local_epoch=5 imputer.model_train_params.global_epoch=600 \
-      imputer.model_train_params.weight_decay=0.01"
+      imputer.model_train_params.local_epoch=5 imputer.model_train_params.global_epoch=300 \
+      imputer.model_train_params.weight_decay=0.001"
     elif [ "$imputer_name" = "miwae" ]; then
       hyper_params="imputer.imp_params.imp_model_params.latent_size=32 imputer.imp_params.imp_model_params.n_hidden=32 \
       imputer.model_train_params.local_epoch=10 imputer.model_train_params.global_epoch=500 \
