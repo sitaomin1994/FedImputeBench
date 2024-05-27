@@ -58,7 +58,6 @@ class GainModel(nn.Module):
         ).to(DEVICE)
 
         self.hint_rate = hint_rate
-
         self.loss_alpha = loss_alpha
 
     def init(self, seed):
@@ -180,6 +179,7 @@ def sample_Z(m: int, n: int) -> torch.Tensor:
         np.ndarray: generated random values
     """
     res = np.random.uniform(0.0, 0.01, size=[m, n])
+    #res = np.random.normal(0.0, 0.001, size=[m, n])
     return torch.from_numpy(res).to(DEVICE)
 
 
