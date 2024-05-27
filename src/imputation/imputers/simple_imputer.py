@@ -17,6 +17,7 @@ class SimpleImputer(BaseMLImputer):
         self.mean_params: np.array = None
         self.model_type = 'numpy'
         self.model_persistable = True
+        self.name = 'simple'
 
     def get_imp_model_params(self, params: dict) -> OrderedDict:
         """

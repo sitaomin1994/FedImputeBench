@@ -34,6 +34,7 @@ class MissForestImputer(BaseMLImputer, ICEImputerMixin):
         self.seed = None
         self.model_type = 'sklearn'
         self.model_persistable = False
+        self.name = 'missforest'
 
     def initialize(
             self, X: np.array, missing_mask: np.array, data_utils: dict, params: dict, seed: int

@@ -49,10 +49,10 @@ def ws_cols(X: np.ndarray, X_true: np.ndarray) -> int:
     return res
 
 
-def sliced_ws(X: np.ndarray, X_true: np.ndarray, N=10) -> np.ndarray:
+def sliced_ws(X: np.ndarray, X_true: np.ndarray, N=10, seed=0) -> np.ndarray:
     rets = []
     for i in range(N):
-        rets.append(ot.sliced_wasserstein_distance(X_true, X, seed=i * 102930 + 109099))
+        rets.append(ot.sliced_wasserstein_distance(X_true, X, seed=(seed * 102930 + 109099) % (2 ^ 32 - 1)))
     return np.mean(rets)
 
 

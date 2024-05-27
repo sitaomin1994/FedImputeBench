@@ -1,0 +1,35 @@
+defaults:
+  - _self_
+  - override hydra/launcher: joblib
+
+hydra:
+  launcher:
+    n_jobs: 8
+    verbose: 51
+    pre_dispatch: n_jobs
+
+#########################################################
+# Configuration Content
+scenario_version: 'alpha'
+experiment_name: "fed_imp_pc2"
+eval_dir_name: 'eval_results'
+
+# Scenario params
+dataset_name: "codrna"
+data_partition_name: "iid-uneven"
+missing_scenario_name: "mcar"
+imputer_name: "linear_ice"
+fed_strategy_name: "fedavg"
+round_idx: 0
+
+# Evaluation params
+eval_params:
+  imp_quality_metrics: ['rmse', 'sliced-ws']
+  imp_fairness_metrics: ['variance', 'jain-index', 'entropy']
+  downstream: True
+  model: "linear"
+  model_params: {}
+  seed: 2180279
+
+log_to_file: False
+log_level: "DEBUG"

@@ -8,19 +8,19 @@ def task_eval(metric, task_type, clf_type, y_pred, y_test, y_pred_proba=None):
         if metric == 'accuracy':
             return np.mean(y_pred == y_test)
         elif metric == 'f1':
-            if clf_type == 'binary':
+            if clf_type == 'binary-class':
                 return f1_score(y_test, y_pred)
             else:
                 return f1_score(y_test, y_pred, average='weighted')
         elif metric == 'auc':
             assert y_pred_proba is not None, "y_pred_proba is None"
-            if clf_type == 'binary':
+            if clf_type == 'binary-class':
                 return roc_auc_score(y_test, y_pred_proba[:, 1])
             else:
                 return roc_auc_score(y_test, y_pred_proba, average='weighted', multi_class='ovr')
         elif metric == 'prc':
             assert y_pred_proba is not None, "y_pred_proba is None"
-            if clf_type == 'binary':
+            if clf_type == 'binary-class':
                 return average_precision_score(y_test, y_pred_proba[:, 1])
             else:
                 return average_precision_score(y_test, y_pred_proba, average='weighted')
@@ -33,7 +33,5 @@ def task_eval(metric, task_type, clf_type, y_pred, y_test, y_pred_proba=None):
             return mean_absolute_error(y_test, y_pred)
         elif metric == 'r2':
             return r2_score(y_test, y_pred)
-        elif metric == 'mlse':
-            return mean_squared_error(np.log1p(y_test), np.log1p(y_pred))
         else:
             raise ValueError(f"Invalid metric: {metric}")

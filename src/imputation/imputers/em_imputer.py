@@ -30,6 +30,7 @@ class EMImputer(BaseMLImputer, ICEImputerMixin):
         self.data_utils_info = None
         self.seed = None
         self.model_type = 'simple'
+        self.name = 'em'
 
         # parameters
         self.mu = None

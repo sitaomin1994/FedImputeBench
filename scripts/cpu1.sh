@@ -1,0 +1,1 @@
+./scripts/run_eval.sh codrna iid-even,iid-uneven,niid-f1,niid-f2 em local,fedavg,central linear -1
