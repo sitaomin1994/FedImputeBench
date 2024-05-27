@@ -31,7 +31,19 @@ if [ "$dataset_name" = "codrna" ]; then
 
 elif [ "$dataset_name" = "hhip" ]; then
 
-    hyper_params=""
+    if [ "$imputer_name" = "gain" ]; then
+      hyper_params="imputer.imp_params.imp_model_params.h_dim=32 imputer.imp_params.imp_model_params.loss_alpha=100 \
+      imputer.imp_params.imp_model_params.hint_rate=0.5 \
+      imputer.model_train_params.local_epoch=5 imputer.model_train_params.global_epoch=600 \
+      imputer.model_train_params.weight_decay=0.01"
+    elif [ "$imputer_name" = "miwae" ]; then
+      hyper_params="imputer.imp_params.imp_model_params.latent_size=32 imputer.imp_params.imp_model_params.n_hidden=32 \
+      imputer.model_train_params.local_epoch=10 imputer.model_train_params.global_epoch=500 \
+      imputer.model_train_params.weight_decay=0.0001"
+    else
+      echo "Error: Unknown imputer name '$imputer_name'"
+      exit 1
+    fi
     data_partition_name="iid-even,iid-uneven,niid-t1,niid-t2"
 
 elif [ "$dataset_name" = "california" ]; then
