@@ -4,7 +4,7 @@ scenario=$1
 
 export CUBLAS_WORKSPACE_CONFIG=":4096:8"
 command="python run_fed_imp_scenario.py --multirun \
-hydra.launcher.n_jobs=24 \
+hydra.launcher.n_jobs=-1 \
 dataset_name=vehicle \
 imputer=missforest \
 data_partition_name=iid-even,iid-uneven,niid-f1,niid-f2 \
