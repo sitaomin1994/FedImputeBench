@@ -87,7 +87,7 @@ class TwoNNRegressor(nn.Module):
         for epoch in range(self.epochs):
             self.train()
             epoch_loss = 0
-            for X_batch, y_batch in self.data_loader:
+            for X_batch, y_batch in self.dataloader:
                 X_batch, y_batch = X_batch.to(DEVICE), y_batch.to(DEVICE)
                 outputs = self(X_batch)
                 loss = self.criterion(outputs, y_batch)
@@ -97,7 +97,7 @@ class TwoNNRegressor(nn.Module):
                 optimizer.step()
                 epoch_loss += loss.item()
 
-            avg_epoch_loss = epoch_loss / len(self.data_loader)
+            avg_epoch_loss = epoch_loss / len(self.dataloader)
             final_loss = avg_epoch_loss
 
             early_stopping.update(avg_epoch_loss)

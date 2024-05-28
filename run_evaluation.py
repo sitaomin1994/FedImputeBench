@@ -53,7 +53,7 @@ def my_app(cfg: DictConfig) -> None:
     )
 
     loguru.logger.debug(scenario_dir_path)
-    print(os.path.join(scenario_dir_path, 'clients_train_data.npz'))
+    #(os.path.join(scenario_dir_path, 'clients_train_data.npz'))
     clients_train_data = np.load(os.path.join(scenario_dir_path, 'clients_train_data.npz'))
     clients_test_data = np.load(os.path.join(scenario_dir_path, 'clients_test_data.npz'))
     clients_train_data_ms = np.load(os.path.join(scenario_dir_path, 'clients_train_data_ms.npz'))
@@ -64,7 +64,7 @@ def my_app(cfg: DictConfig) -> None:
             (clients_train_data[client_id], clients_test_data[client_id], clients_train_data_ms[client_id])
         )
 
-    print("number of clients:", len(clients_data))
+    #print("number of clients:", len(clients_data))
 
     with open(os.path.join(scenario_dir_path, 'stats.json'), 'r') as f:
         stats_dict = json.load(f)
