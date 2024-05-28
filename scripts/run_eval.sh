@@ -7,6 +7,7 @@ imputer=$3
 fed_strategy=$4
 eval_model=$5
 n_jobs=$6
+experiment_name=$7
 
 if [ $imputer != "miwae" ] && [ $imputer != "gain" ]; then
     rounds="0,1,2,3,4,5,6,7,8,9"
@@ -24,7 +25,7 @@ missing_scenario_name=mcar,mar-homog,mar-heter,mnar1-homog,mnar1-heter,mnar2-hom
 fed_strategy_name=$fed_strategy \
 round_idx=$rounds \
 eval_params.model=$eval_model \
-log_to_file=True"
+log_to_file=True experiment_name=$experiment_name"
 
 echo $command
 eval $command
