@@ -97,6 +97,7 @@ class Evaluator:
             if metric == 'rmse':
                 ret = []
                 for X_train_imp, X_train_origin, X_train_mask in zip(X_train_imps, X_train_origins, X_train_masks):
+                    print(X_train_imp.shape, X_train_origin.shape, X_train_mask.shape)
                     ret.append(rmse(X_train_imp, X_train_origin, X_train_mask))
             elif metric == 'nrmse':
                 ret = []

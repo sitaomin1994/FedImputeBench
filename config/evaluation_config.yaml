@@ -15,11 +15,11 @@ experiment_name: "fed_imp_pc2"
 eval_dir_name: 'eval_results'
 
 # Scenario params
-dataset_name: "codrna"
-data_partition_name: "iid-uneven"
+dataset_name: "california"
+data_partition_name: "iid-even"
 missing_scenario_name: "mcar"
-imputer_name: "linear_ice"
-fed_strategy_name: "fedavg"
+imputer_name: "missforest"
+fed_strategy_name: "central"
 round_idx: 0
 
 # Evaluation params
