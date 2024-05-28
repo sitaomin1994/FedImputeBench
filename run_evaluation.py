@@ -63,6 +63,8 @@ def my_app(cfg: DictConfig) -> None:
             (clients_train_data[client_id], clients_test_data[client_id], clients_train_data_ms[client_id])
         )
 
+    print("number of clients:", len(clients_data))
+
     with open(os.path.join(scenario_dir_path, 'stats.json'), 'r') as f:
         stats_dict = json.load(f)
 
