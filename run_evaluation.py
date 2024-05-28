@@ -31,10 +31,11 @@ def my_app(cfg: DictConfig) -> None:
     fed_strategy = config_dict['fed_strategy_name']
     round_idx = config_dict['round_idx']
     eval_dir_name = config_dict['eval_dir_name']
+    model = config_dict['eval_params']['model']
 
     eval_ret_dir = os.path.join(
         ROOT_DIR, settings['result_dir']['base'], settings['result_dir']['raw'], eval_dir_name, scenario_version,
-        dataset_name, scenario_name, imputer, fed_strategy, str(round_idx)
+        dataset_name, scenario_name, imputer, fed_strategy, str(round_idx), model
     )
     if not os.path.exists(eval_ret_dir):
         os.makedirs(eval_ret_dir)

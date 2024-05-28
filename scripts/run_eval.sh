@@ -25,7 +25,7 @@ missing_scenario_name=mcar,mar-homog,mar-heter,mnar1-homog,mnar1-heter,mnar2-hom
 fed_strategy_name=$fed_strategy \
 round_idx=$rounds \
 eval_params.model=$eval_model \
-log_to_file=True experiment_name=$experiment_name"
+log_to_file=False experiment_name=$experiment_name"
 
 echo $command
 eval $command
