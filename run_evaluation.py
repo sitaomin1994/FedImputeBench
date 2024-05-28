@@ -47,18 +47,19 @@ def my_app(cfg: DictConfig) -> None:
     ####################################################################################################################
     # Read scenario data
     scenario_version = config_dict['scenario_version']
-    dataset_name = config_dict['dataset_name']
+    dataset_name = config_dict['dataset_namea = ']
     scenario_dir_path = os.path.join(
         ROOT_DIR, settings['scenario_dir'], scenario_version, dataset_name, scenario_name, str(round_idx)
     )
 
     loguru.logger.debug(scenario_dir_path)
-
+    print(os.path.join(scenario_dir_path, 'clients_train_data.npz'))
     clients_train_data = np.load(os.path.join(scenario_dir_path, 'clients_train_data.npz'))
     clients_test_data = np.load(os.path.join(scenario_dir_path, 'clients_test_data.npz'))
     clients_train_data_ms = np.load(os.path.join(scenario_dir_path, 'clients_train_data_ms.npz'))
     clients_data = []
     for client_id in clients_train_data.keys():
+        print(client_id)
         clients_data.append(
             (clients_train_data[client_id], clients_test_data[client_id], clients_train_data_ms[client_id])
         )
