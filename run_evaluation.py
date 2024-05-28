@@ -47,7 +47,7 @@ def my_app(cfg: DictConfig) -> None:
     ####################################################################################################################
     # Read scenario data
     scenario_version = config_dict['scenario_version']
-    dataset_name = config_dict['dataset_namea = ']
+    dataset_name = config_dict['dataset_name']
     scenario_dir_path = os.path.join(
         ROOT_DIR, settings['scenario_dir'], scenario_version, dataset_name, scenario_name, str(round_idx)
     )
