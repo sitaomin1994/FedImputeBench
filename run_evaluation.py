@@ -65,7 +65,6 @@ def my_app(cfg: DictConfig) -> None:
     with open(os.path.join(scenario_dir_path, 'stats.json'), 'r') as f:
         stats_dict = json.load(f)
 
-    seed = stats_dict['seed']
     client_seeds = stats_dict['client_seeds']
     data_config = stats_dict['data_config']
 
