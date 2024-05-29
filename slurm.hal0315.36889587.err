@@ -1,0 +1,2 @@
+slurmstepd: error: execve(): /scratch/sm2370/fedmiss_bench/./scripts/cpu1.sh: Exec format error
+srun: error: hal0315: task 0: Exited with exit code 8
