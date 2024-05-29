@@ -1,1 +1,1 @@
-./scripts/run_scenario_gpu.sh school_pca gain mar-heter,mnar1-homog,mnar1-heter local,fedavg,fedavg_ft,fedprox,central -1
+./scripts/run_scenario_gpu.sh vehicle miwae mnar1-homog local,fedavg,fedavg_ft,fedprox,central -1

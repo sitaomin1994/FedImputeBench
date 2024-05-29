@@ -59,7 +59,6 @@ def my_app(cfg: DictConfig) -> None:
     clients_train_data_ms = np.load(os.path.join(scenario_dir_path, 'clients_train_data_ms.npz'))
     clients_data = []
     for client_id in clients_train_data.keys():
-        print(client_id)
         clients_data.append(
             (clients_train_data[client_id], clients_test_data[client_id], clients_train_data_ms[client_id])
         )
@@ -118,7 +117,7 @@ def my_app(cfg: DictConfig) -> None:
     evaluation_params = config_dict['eval_params']
     evaluator = Evaluator(**evaluation_params)
 
-    X_train_imps = [client.X_train_imp for client in clients]
+    X_train_imps = [client.X_train_imp[: client.X_train.shape[0], :] for client in clients]
     X_train_origins = [client.X_train for client in clients]
     X_train_masks = [client.X_train_mask for client in clients]
     y_trains = [client.y_train for client in clients]

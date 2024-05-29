@@ -6,6 +6,7 @@ import numpy as np
 from src.client import Client
 from copy import deepcopy
 import gc
+import os
 
 
 def formulate_centralized_client(clients: List[Client]) -> Client:
@@ -18,6 +19,7 @@ def formulate_centralized_client(clients: List[Client]) -> Client:
 
     # reset client id and datas
     centralized_client.client_id = len(clients)
+    centralized_client.client_local_dir_path = os.path.join(centralized_client.client_config['local_dir_path'], 'client' + str(centralized_client.client_id))
     centralized_train_datas, centralized_test_datas, centralized_ms_datas, centralized_masks = [], [], [], []
     for client in clients:
         centralized_train_datas.append(np.concatenate([client.X_train, client.y_train.reshape(-1, 1)], axis=1))

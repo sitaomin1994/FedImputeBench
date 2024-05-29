@@ -66,6 +66,7 @@ def fit_fed_nn_model(
                 ########################################################################
                 # fed updates
                 fed_strategy.fed_updates(model)
+                #torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1, error_if_nonfinite=True)
 
                 #########################################################################
                 # backpropagation
