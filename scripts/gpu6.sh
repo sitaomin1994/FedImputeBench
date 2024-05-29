@@ -1,1 +1,1 @@
-./scripts/run_scenario_gpu.sh vehicle miwae mnar1-homog local,fedavg,fedavg_ft,fedprox,central -1
+./scripts/run_scenario_gpu2.sh school_pca miwae niid-f1 central -1

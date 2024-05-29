@@ -1,1 +1,2 @@
-./scripts/run_scenario_gpu.sh hhip gain mcar,mar-homog,mar-heter,mnar1-homog,mnar1-heter,mnar2-homog,mnar2-heter local -1
+./scripts/run_scenario_gpu2.sh school_pca miwae iid-uneven central -1
+./scripts/run_scenario_gpu.sh school_pca gain mcar fedavg_ft,fedprox -1

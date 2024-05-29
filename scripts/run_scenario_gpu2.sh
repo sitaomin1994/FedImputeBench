@@ -3,7 +3,7 @@
 # Read arguments from the command line
 dataset_name=$1
 imputer_name=$2
-ms_scenario=$3
+data_partition_name=$3
 fed_strategy=$4
 n_jobs=$5
 
@@ -27,8 +27,6 @@ if [ "$dataset_name" = "codrna" ]; then
       exit 1
     fi
 
-    data_partition_name="iid-even,iid-uneven,niid-f1,niid-f2"
-
 elif [ "$dataset_name" = "hhip" ]; then
 
     if [ "$imputer_name" = "gain" ]; then
@@ -44,7 +42,6 @@ elif [ "$dataset_name" = "hhip" ]; then
       echo "Error: Unknown imputer name '$imputer_name'"
       exit 1
     fi
-    data_partition_name="iid-even,iid-uneven,niid-t1,niid-t2"
 
 elif [ "$dataset_name" = "california" ]; then
 
@@ -61,7 +58,6 @@ elif [ "$dataset_name" = "california" ]; then
       echo "Error: Unknown imputer name '$imputer_name'"
       exit 1
     fi
-    data_partition_name="iid-even,iid-uneven,niid-t1,niid-t2"
 
 elif [ "$dataset_name" = "dvisits" ]; then
 
@@ -78,7 +74,6 @@ elif [ "$dataset_name" = "dvisits" ]; then
       echo "Error: Unknown imputer name '$imputer_name'"
       exit 1
     fi
-    data_partition_name="iid-even,iid-uneven,niid-t1,niid-t2"
 
 elif [ "$dataset_name" = "vehicle" ]; then
 
@@ -95,7 +90,6 @@ elif [ "$dataset_name" = "vehicle" ]; then
       echo "Error: Unknown imputer name '$imputer_name'"
       exit 1
     fi
-    data_partition_name="iid-even,iid-uneven,niid-f1,niid-f2"
 
 elif [ "$dataset_name" = "school_pca" ]; then
 
@@ -112,7 +106,6 @@ elif [ "$dataset_name" = "school_pca" ]; then
       echo "Error: Unknown imputer name '$imputer_name'"
       exit 1
     fi
-    data_partition_name="iid-even,iid-uneven,niid-f1,niid-f2"
 
 else
     echo "Error: Unknown dataset name '$dataset_name'"
@@ -124,7 +117,7 @@ command="python run_fed_imp_scenario.py --multirun \
         dataset_name=$dataset_name \
         imputer=$imputer_name \
         data_partition_name=$data_partition_name \
-        missing_scenario_name=$ms_scenario \
+        missing_scenario_name=mcar,mar-homog,mar-heter,mnar1-homog,mnar2-homog,mnar1-heter,mnar2-heter \
         fed_strategy=$fed_strategy \
         round_id=$rounds \
         experiment.log_to_file=True \
