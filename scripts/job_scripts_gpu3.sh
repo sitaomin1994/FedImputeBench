@@ -6,8 +6,8 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --gres=gpu:1
-#SBATCH --cpus-per-task=1
-#SBATCH --mem-per-cpu=60G
+#SBATCH --cpus-per-task=8
+#SBATCH --mem-per-cpu=8G
 #SBATCH --time=3-00:00:00
 #SBATCH --nodelist=gpuk001,gpuk002
 
@@ -20,4 +20,4 @@ source /projects/community/miniconda3/bin/activate impute4fair
 cd /scratch/sm2370/fedmiss_bench/
 
 # Your command here
-srun ./scripts/gpu1.sh
+srun ./scripts/gpu3.sh
