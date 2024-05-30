@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 
 import numpy as np
 
@@ -158,11 +159,12 @@ class Experiment(BaseExperiment):
 
         ###########################################################################################################
         # Setup Clients and Server
+        use_default_hyper_params = config['use_default_hyper_params']
         # Imputers
         imputer_name = config['imputer']['imp_name']
         imputer_params = config['imputer']['imp_params']
         imp_model_train_params = config['imputer']['model_train_params']
-        if 'hyper_params' in config['imputer']:
+        if 'hyper_params' in config['imputer'] and use_default_hyper_params:
             imputer_hyper_params = config['imputer']['hyper_params'][dataset_name]
             imputer_params = deep_update(imputer_params, imputer_hyper_params['imp_params'])
             imp_model_train_params = deep_update(
@@ -173,14 +175,16 @@ class Experiment(BaseExperiment):
         fed_strategy_name = config['fed_strategy']['fed_strategy_name']
         fed_strategy_client_params = config['fed_strategy']['fed_strategy_client_params']
         fed_strategy_server_params = config['fed_strategy']['fed_strategy_server_params']
-        if 'hyper_params' in config['fed_strategy']:
+        if 'hyper_params' in config['fed_strategy'] and use_default_hyper_params:
             fed_strategy_hyper_params = config['fed_strategy']['hyper_params'][dataset_name]
-            fed_strategy_client_params = deep_update(
-                fed_strategy_client_params,fed_strategy_hyper_params['fed_strategy_client_params']
-            )
-            fed_strategy_server_params = deep_update(
-                fed_strategy_server_params,fed_strategy_hyper_params['fed_strategy_server_params']
-            )
+            if 'fed_strategy_client_params' in fed_strategy_hyper_params:
+                fed_strategy_client_params = deep_update(
+                    fed_strategy_client_params,fed_strategy_hyper_params['fed_strategy_client_params']
+                )
+            if 'fed_strategy_server_params' in fed_strategy_hyper_params:
+                fed_strategy_server_params = deep_update(
+                    fed_strategy_server_params,fed_strategy_hyper_params['fed_strategy_server_params']
+             )
 
         workflow_name = config['imp_workflow']['workflow_name']
         workflow_params = config['imp_workflow']['workflow_params']
@@ -215,8 +219,9 @@ class Experiment(BaseExperiment):
         ###########################################################################################################
         # Run Federated Imputation
         tracker = workflow.run_fed_imp(
-            clients, server, evaluator, tracker, workflow_run_type, imp_model_train_params
+            clients, server, evaluator, tracker, workflow_run_type, deepcopy(imp_model_train_params)
         )
+
         ret = result_analyzer.clean_and_analyze_results(tracker)  # TODO: result analyzer
 
         return ret

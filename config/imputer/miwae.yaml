@@ -16,7 +16,7 @@ imp_params:
     initializer: 'xavier'
 model_train_params:
   initial_zero_impute: false
-  global_epoch: 500
+  global_epoch: 1
   local_epoch: 10
   batch_size: 512
   learning_rate: 0.001
