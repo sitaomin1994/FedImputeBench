@@ -1,0 +1,18 @@
+codrna:
+  fed_strategy_server_params:
+    fine_tune_steps: 800
+california:
+  fed_strategy_server_params:
+    fine_tune_steps: 800
+dvisits:
+  fed_strategy_server_params:
+    fine_tune_steps: 800
+hhip:
+  fed_strategy_server_params:
+    fine_tune_steps: 800
+vehicle:
+  fed_strategy_server_params:
+    fine_tune_steps: 800
+school_pca:
+  fed_strategy_server_params:
+    fine_tune_steps: 800

@@ -120,11 +120,11 @@ else
 fi
 
 command="python run_fed_imp_scenario.py --multirun \
-        hydra.launcher.n_jobs=$n_jobs \
+        =$n_jobs \
         dataset_name=$dataset_name \
         imputer=$imputer_name \
         data_partition_name=$data_partition_name \
-        missing_scenario_name=$ms_scenario \
+        =$ms_scenario \
         fed_strategy=$fed_strategy \
         round_id=$rounds \
         experiment.log_to_file=True \

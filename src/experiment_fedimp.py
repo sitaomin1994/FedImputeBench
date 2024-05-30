@@ -13,6 +13,7 @@ from src.loaders.load_workflow import load_workflow
 from src.loaders.load_scenario import simulate_scenario
 from config import settings
 import os
+from src.utils.data_persistence import deep_update
 
 
 class Experiment(BaseExperiment):
@@ -156,14 +157,30 @@ class Experiment(BaseExperiment):
             )
 
         ###########################################################################################################
-        # Setup Clients and Server (imputation models and agg strategy)
+        # Setup Clients and Server
+        # Imputers
         imputer_name = config['imputer']['imp_name']
         imputer_params = config['imputer']['imp_params']
         imp_model_train_params = config['imputer']['model_train_params']
+        if 'hyper_params' in config['imputer']:
+            imputer_hyper_params = config['imputer']['hyper_params'][dataset_name]
+            imputer_params = deep_update(imputer_params, imputer_hyper_params['imp_params'])
+            imp_model_train_params = deep_update(
+                imp_model_train_params, imputer_hyper_params['model_train_params']
+            )
 
+        # federated strategy
         fed_strategy_name = config['fed_strategy']['fed_strategy_name']
         fed_strategy_client_params = config['fed_strategy']['fed_strategy_client_params']
         fed_strategy_server_params = config['fed_strategy']['fed_strategy_server_params']
+        if 'hyper_params' in config['fed_strategy']:
+            fed_strategy_hyper_params = config['fed_strategy']['hyper_params'][dataset_name]
+            fed_strategy_client_params = deep_update(
+                fed_strategy_client_params,fed_strategy_hyper_params['fed_strategy_client_params']
+            )
+            fed_strategy_server_params = deep_update(
+                fed_strategy_server_params,fed_strategy_hyper_params['fed_strategy_server_params']
+            )
 
         workflow_name = config['imp_workflow']['workflow_name']
         workflow_params = config['imp_workflow']['workflow_params']

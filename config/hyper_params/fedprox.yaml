@@ -1,0 +1,18 @@
+codrna:
+  fed_strategy_client_params:
+    mu: 0.01
+california:
+  fed_strategy_client_params:
+    mu: 0.01
+dvisits:
+  fed_strategy_client_params:
+    mu: 0.01
+hhip:
+  fed_strategy_client_params:
+    mu: 0.01
+vehicle:
+  fed_strategy_client_params:
+    mu: 0.01
+school:
+  fed_strategy_client_params:
+    mu: 0.01

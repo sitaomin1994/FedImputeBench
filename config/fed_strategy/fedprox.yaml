@@ -1,5 +1,8 @@
+defaults:
+  - /hyper_params: fedprox
+
 fed_strategy_name: 'fedprox'
 fed_strategy_client_params:
-  mu: 0.01
+  mu: 1
 fed_strategy_server_params:
   initial_impute: fedavg

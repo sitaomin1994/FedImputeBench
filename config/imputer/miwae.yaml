@@ -1,5 +1,6 @@
 defaults:
   - /imp_workflow@_group_: jm
+  - /hyper_params: miwae
 
 imp_name: miwae
 imp_params:
