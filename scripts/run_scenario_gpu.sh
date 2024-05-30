@@ -13,7 +13,7 @@ n_jobs=$6
 rounds='0,1,2,3,4'
 
 command="python run_fed_imp_scenario.py --multirun \
-        =$n_jobs \
+        hydra.launcher.n_jobs==$n_jobs \
         dataset_name=$dataset_name \
         imputer=$imputer_name \
         data_partition_name=$data_partition_name \
@@ -27,6 +27,7 @@ command="python run_fed_imp_scenario.py --multirun \
 export CUBLAS_WORKSPACE_CONFIG=":4096:8"
 echo $command
 eval $command
+
 
 
 
