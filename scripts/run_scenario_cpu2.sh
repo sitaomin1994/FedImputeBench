@@ -1,28 +1,15 @@
 #!/bin/bash
-
-scenario=$1
-
-export CUBLAS_WORKSPACE_CONFIG=":4096:8"
-command="python run_fed_imp_scenario.py --multirun \
-hydra.launcher.n_jobs=-1 \
-dataset_name=hhip \
-imputer=missforest \
-data_partition_name=iid-even,iid-uneven,niid-f1,niid-f2 \
-missing_scenario_name=mnar2-homog \
-fed_strategy=local,fedtree,central \
-round_id=0,1,2,3,4,5,6,7,8,9"
-
-echo $command
-eval $command
+dataset_name=$1
+data_partition=$2
 
 export CUBLAS_WORKSPACE_CONFIG=":4096:8"
 command="python run_fed_imp_scenario.py --multirun \
 hydra.launcher.n_jobs=-1 \
-dataset_name=hhip \
-imputer=missforest \
-data_partition_name=iid-uneven \
-missing_scenario_name=mnar1-homog \
-fed_strategy=local,fedtree,central \
+dataset_name=$dataset_name \
+imputer=linear_ice \
+data_partition_name=$data_partition \
+missing_scenario_name=mcar,mar-homog,mar-heter,mnar2-homog,mnar2-heter \
+fed_strategy=local,fedavg,central \
 round_id=0,1,2,3,4,5,6,7,8,9"
 
 echo $command

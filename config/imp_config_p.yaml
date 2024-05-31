@@ -1,7 +1,7 @@
 defaults:
   - _self_
-  - imputer: miwae
-  - fed_strategy: fedprox
+  - imputer: linear_ice
+  - fed_strategy: fedavg
   - tracker: none
   - override hydra/launcher: joblib
 
@@ -31,9 +31,9 @@ experiment:
 # scenarios
 scenario_version: "alpha"
 dataset_name: "vehicle"
-data_partition_name: "iid-uneven"
-missing_scenario_name: "mar-homog"
-round_id: 2
+data_partition_name: "iid-even"
+missing_scenario_name: "mar-heter"
+round_id: 0
 client_config: {}
 server_config: {}  # todo
 evaluator_params: {} # todo

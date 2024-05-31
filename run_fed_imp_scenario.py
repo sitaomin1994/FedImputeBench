@@ -23,4 +23,7 @@ def my_app(cfg: DictConfig) -> None:
 
 
 if __name__ == "__main__":
-    my_app()
+    try:
+        my_app()
+    except Exception as e:
+        logger.error(e)

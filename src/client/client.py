@@ -138,13 +138,7 @@ class Client:
         if self.imputer.model_persistable:
             self.imputer.load_model(self.client_local_dir_path, version)
             self.X_train_imp[self.X_train_mask] = 0
-            if self.imputer.name == 'linear_ice':
-                for feature_idx in range(self.X_train.shape[1]):
-                    self.X_train_imp = self.imputer.impute(
-                        self.X_train_imp, self.y_train, self.X_train_mask, {'feature_idx': feature_idx}
-                    )
-            else:
-                self.X_train_imp = self.imputer.impute(self.X_train_imp, self.y_train, self.X_train_mask, {})
+            self.X_train_imp = self.imputer.impute(self.X_train_imp, self.y_train, self.X_train_mask, {})
         # load imp data
         else:
             self.X_train_imp = np.load(

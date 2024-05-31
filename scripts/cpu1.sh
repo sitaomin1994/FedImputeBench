@@ -1,16 +1,27 @@
 #!/bin/bash
-#./scripts/run_eval.sh dvisits iid-even,iid-uneven,niid-t1,niid-t2 simple,em,linear_ice local,fedavg,central linear,nn -1 fed_imp_pc
-#./scripts/run_eval.sh dvisits iid-even,iid-uneven,niid-t1,niid-t2 missforest local,fedtree,central linear,nn -1 fed_imp_pc
-#./scripts/run_eval.sh dvisits iid-even,iid-uneven,niid-t1,niid-t2 miwae local,fedavg,fedprox,fedavg_ft,central linear,nn -1 fed_imp_pc
-# ./scripts/run_eval.sh dvisits iid-even,iid-uneven,niid-t1,niid-t2 gain local,fedavg,fedprox,fedavg_ft,central linear,nn -1 fed_imp_pc
-#./scripts/run_eval.sh codrna iid-even,iid-uneven,niid-f1,niid-f2 simple,em,linear_ice local,fedavg,central linear,nn -1 fed_imp_pc
-#./scripts/run_eval.sh codrna iid-even,iid-uneven,niid-f1,niid-f2 missforest fedtree linear,nn -1 fed_imp_pc
-#./scripts/run_eval.sh codrna iid-even,iid-uneven,niid-f1,niid-f2 miwae local,fedavg,fedprox,fedavg_ft,central linear,nn -1 fed_imp_pc
-#./scripts/run_eval.sh codrna iid-even,iid-uneven,niid-f1,niid-f2 gain local,fedavg,fedprox,fedavg_ft,central linear,nn -1 fed_imp_pc
-#./scripts/run_eval.sh california iid-even,iid-uneven,niid-t1,niid-t2 simple,em,linear_ice local,fedavg,central linear -1
-#./scripts/run_eval.sh california iid-even,iid-uneven,niid-t1,niid-t2 missforest local,fedtree,central linear -1
-#./scripts/run_eval.sh california iid-even,iid-uneven,niid-t1,niid-t2 miwae,gain local,fedavg,fedprox,fedavg_ft,central linear -1
+# linear_ice
+./scripts/run_scenario_cpu2.sh codrna iid-even,iid-uneven,niid-f1,niid-f2
+./scripts/run_scenario_cpu2.sh california iid-even,iid-uneven,niid-t1,niid-t2
+./scripts/run_scenario_cpu2.sh dvisits iid-even,iid-uneven,niid-t1,niid-t2
+./scripts/run_scenario_cpu2.sh hhip iid-even,iid-uneven,niid-t1,niid-t2
+./scripts/run_scenario_cpu2.sh vehicle iid-even,iid-uneven,niid-f1,niid-f2
+./scripts/run_scenario_cpu2.sh school_pca iid-even,iid-uneven,niid-f1,niid-f2
+# evaluation linear_ice
+./scripts/run_eval.sh codrna iid-even,iid-uneven,niid-f1,niid-f2 linear_ice local,fedavg,central linear,nn -1 fed_imp_pc
+./scripts/run_eval.sh california iid-even,iid-uneven,niid-t1,niid-t2 linear_ice local,fedavg,central linear,nn -1 fed_imp_pc
+./scripts/run_eval.sh dvisits iid-even,iid-uneven,niid-t1,niid-t2 linear_ice local,fedavg,central linear,nn -1 fed_imp_pc
+# evaluation vehicle, school_pca
+./scripts/run_eval.sh california iid-even,iid-uneven,niid-t1,niid-t2 simple,em,linear_ice local,fedavg,central linear,nn -1 fed_imp_pc
+./scripts/run_eval.sh california iid-even,iid-uneven,niid-t1,niid-t2 missforest local,fedtree,central linear,nn -1 fed_imp_pc
+./scripts/run_eval.sh california iid-even,iid-uneven,niid-t1,niid-t2 miwae local,fedavg,fedprox,fedavg_ft,central linear,nn -1 fed_imp_pc
+./scripts/run_eval.sh california iid-even,iid-uneven,niid-t1,niid-t2 gain local,fedavg,fedprox,fedavg_ft,central linear,nn -1 fed_imp_pc
 ./scripts/run_eval.sh vehicle iid-even,iid-uneven,niid-f1,niid-f2 simple,em,linear_ice local,fedavg,central linear,nn -1 fed_imp_pc
 ./scripts/run_eval.sh vehicle iid-even,iid-uneven,niid-f1,niid-f2 missforest local,fedtree,central linear,nn -1 fed_imp_pc
 ./scripts/run_eval.sh vehicle iid-even,iid-uneven,niid-f1,niid-f2 miwae local,fedavg,fedprox,fedavg_ft,central linear,nn -1 fed_imp_pc
 ./scripts/run_eval.sh vehicle iid-even,iid-uneven,niid-f1,niid-f2 gain local,fedavg,fedprox,fedavg_ft,central linear,nn -1 fed_imp_pc
+./scripts/run_eval.sh school_pca iid-even,iid-uneven,niid-f1,niid-f2 simple,em,linear_ice local,fedavg,central linear,nn -1 fed_imp_pc
+./scripts/run_eval.sh school_pca iid-even,iid-uneven,niid-f1,niid-f2 missforest local,fedtree,central linear,nn -1 fed_imp_pc
+./scripts/run_eval.sh school_pca iid-even,iid-uneven,niid-f1,niid-f2 miwae local,fedavg,fedprox,fedavg_ft,central linear,nn -1 fed_imp_pc
+./scripts/run_eval.sh school_pca iid-even,iid-uneven,niid-f1,niid-f2 gain local,fedavg,fedprox,fedavg_ft,central linear,nn -1 fed_imp_pc
+./scripts/run_eval.sh codrna iid-even,iid-uneven,niid-f1,niid-f2 gain local,fedavg,fedprox,fedavg_ft,central linear,nn -1 fed_imp_pc
+

@@ -2,6 +2,8 @@ import json
 import warnings
 import os
 
+import loguru
+
 os.environ['FOR_DISABLE_CONSOLE_CTRL_HANDLER'] = '1'
 warnings.filterwarnings("ignore", category=UserWarning)
 from omegaconf import DictConfig, OmegaConf
@@ -108,4 +110,7 @@ def save_scenario_data(
 
 
 if __name__ == "__main__":
-    my_app()
+    try:
+        my_app()
+    except Exception as e:
+        loguru.logger.error(e)

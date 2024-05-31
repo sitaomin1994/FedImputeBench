@@ -10,6 +10,7 @@ from .twonn import TwoNNRegressor, TwoNNClassifier
 from .pred_model_metrics import task_eval
 from emf.reproduce_utils import set_seed
 import warnings
+
 warnings.filterwarnings("ignore")
 
 
@@ -163,32 +164,22 @@ class Evaluator:
 
         assert task_type in ['classification', 'regression'], f"Invalid task_type: {task_type}"
         if task_type == 'classification':
-            assert clf_type in ['binary-class', 'multi-class'], f"Invalid clf_type: {clf_type}"
+            assert clf_type in ['binary-class', 'multi-class', 'binary'], f"Invalid clf_type: {clf_type}"
 
         ################################################################################################################
         # Loader classification model
         if model == 'linear':
             if task_type == 'classification':
-                if clf_type == 'binary':
-                    clf = LogisticRegressionCV(
-                        Cs=5, class_weight='balanced', solver = 'saga', random_state=seed, max_iter=1000, **model_params
-                    )
-                else:
-                    clf = LogisticRegressionCV(
-                        Cs=5, class_weight='balanced', solver = 'saga', random_state=seed, max_iter=1000, **model_params
-                    )
+                clf = LogisticRegressionCV(
+                    Cs=5, class_weight='balanced', solver='saga', random_state=seed, max_iter=1000, **model_params
+                )
             else:
                 clf = RidgeCV(alphas=[1e-3, 1e-2, 1e-1, 1], **model_params)
         elif model == 'tree':
             if task_type == 'classification':
-                if clf_type == 'binary-class':
-                    clf = RandomForestClassifier(
-                        n_estimators=100, class_weight='balanced', random_state=seed, **model_params
-                    )
-                else:
-                    clf = RandomForestClassifier(
-                        n_estimators=100, class_weight='balanced', random_state=seed, **model_params
-                    )
+                clf = RandomForestClassifier(
+                    n_estimators=100, class_weight='balanced', random_state=seed, **model_params
+                )
             else:
                 clf = RandomForestRegressor(n_estimators=100, random_state=seed, **model_params)
         elif model == 'nn':
