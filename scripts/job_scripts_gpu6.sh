@@ -20,4 +20,4 @@ source /projects/community/miniconda3/bin/activate impute4fair
 cd /scratch/sm2370/fedmiss_bench/
 
 # Your command here
-srun ./scripts/gpu2.sh
+srun ./scripts/gpu6.sh

@@ -1,7 +1,7 @@
 defaults:
   - _self_
-  - imputer: linear_ice
-  - fed_strategy: fedavg
+  - imputer: miwae
+  - fed_strategy: local
   - tracker: none
   - override hydra/launcher: joblib
 
@@ -30,10 +30,10 @@ experiment:
 # Experiment Configuration Content
 # scenarios
 scenario_version: "alpha"
-dataset_name: "vehicle"
+dataset_name: "hhip"
 data_partition_name: "iid-even"
-missing_scenario_name: "mar-heter"
-round_id: 0
+missing_scenario_name: "mcar"
+round_id: 4
 client_config: {}
 server_config: {}  # todo
 evaluator_params: {} # todo

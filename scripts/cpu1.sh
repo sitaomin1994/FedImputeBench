@@ -24,4 +24,3 @@
 ./scripts/run_eval.sh school_pca iid-even,iid-uneven,niid-f1,niid-f2 miwae local,fedavg,fedprox,fedavg_ft,central linear,nn -1 fed_imp_pc
 ./scripts/run_eval.sh school_pca iid-even,iid-uneven,niid-f1,niid-f2 gain local,fedavg,fedprox,fedavg_ft,central linear,nn -1 fed_imp_pc
 ./scripts/run_eval.sh codrna iid-even,iid-uneven,niid-f1,niid-f2 gain local,fedavg,fedprox,fedavg_ft,central linear,nn -1 fed_imp_pc
-

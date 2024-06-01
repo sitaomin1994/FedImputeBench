@@ -1,6 +1,14 @@
 #!/bin/bash
 # 14
-./scripts/run_scenario_gpu.sh hhip iid-even mcar,mar-homog,mnar2-homog miwae fedavg_ft 8
-./scripts/run_scenario_gpu.sh hhip iid-uneven mcar,mar-heter,mnar2-heter,mnar2-homog miwae fedavg_ft 8
-./scripts/run_scenario_gpu.sh hhip niid-t1 mcar,mar-heter,mar-homog,mnar2-heter,mnar2-homog miwae fedavg_ft 8
-./scripts/run_scenario_gpu.sh hhip niid-t2 mcar,mnar2-homog miwae fedavg_ft 8
+# fedprox
+export CUBLAS_WORKSPACE_CONFIG=":4096:8"
+python run_imp_scenario.py dataset_name=hhip imputer=miwae data_partition_name=iid-even missing_scenario_name=mar-homog fed_strategy=central round_id=4
+python run_imp_scenario.py dataset_name=hhip imputer=miwae data_partition_name=iid-even missing_scenario_name=mnar2-homog fed_strategy=central round_id=0
+python run_imp_scenario.py dataset_name=hhip imputer=miwae data_partition_name=iid-even missing_scenario_name=mar-heter fed_strategy=central round_id=0
+python run_imp_scenario.py dataset_name=hhip imputer=miwae data_partition_name=iid-even missing_scenario_name=mar-heter fed_strategy=central round_id=1
+python run_imp_scenario.py dataset_name=hhip imputer=miwae data_partition_name=niid-t2 missing_scenario_name=mar-homog fed_strategy=central round_id=3
+python run_imp_scenario.py dataset_name=hhip imputer=miwae data_partition_name=niid-t2 missing_scenario_name=mar-homog fed_strategy=central round_id=4
+python run_imp_scenario.py dataset_name=hhip imputer=miwae data_partition_name=niid-t2 missing_scenario_name=mnar2-homog fed_strategy=central round_id=2
+python run_imp_scenario.py dataset_name=hhip imputer=miwae data_partition_name=niid-t2 missing_scenario_name=mnar2-homog fed_strategy=central round_id=4
+python run_imp_scenario.py dataset_name=hhip imputer=miwae data_partition_name=niid-t2 missing_scenario_name=mar-heter fed_strategy=central round_id=0
+python run_imp_scenario.py dataset_name=hhip imputer=miwae data_partition_name=niid-t2 missing_scenario_name=mar-heter fed_strategy=central round_id=1
