@@ -100,7 +100,7 @@ hhip:
     use_early_stopping: true
     optimizer: adamw
     model_converge:
-      tolerance: 0.003
+      tolerance: 0.01
 
 ###########################################################################################
 # Vehicle
@@ -126,7 +126,7 @@ vehicle:
     use_early_stopping: true
     optimizer: adamw
     model_converge:
-      tolerance: 0.003
+      tolerance: 0.01
 
 ###########################################################################################
 # School PCA
@@ -152,4 +152,4 @@ school_pca:
     use_early_stopping: true
     optimizer: adamw
     model_converge:
-      tolerance: 0.003
+      tolerance: 0.01

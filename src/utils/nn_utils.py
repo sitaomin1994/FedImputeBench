@@ -71,7 +71,7 @@ class EarlyStopping:
             window_size=5,
             check_steps=1,
             backward_window_size=20,
-            verbose=True
+            verbose=False
     ):
         """
         初始化EarlyStopping对象。

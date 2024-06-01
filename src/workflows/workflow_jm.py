@@ -53,10 +53,11 @@ class WorkflowJM(BaseWorkflow):
         ############################################################################################################
         # Federated Imputation Workflow
         use_early_stopping = train_params['use_early_stopping']
-        if server.fed_strategy.name == 'local':
-            early_stopping_mode = 'local'
-        else:
-            early_stopping_mode = 'global'
+        # if server.fed_strategy.name == 'local':
+        #     early_stopping_mode = 'local'
+        # else:
+        #     early_stopping_mode = 'global'
+        early_stopping_mode = 'local'
 
         model_converge_tol = train_params['model_converge']['tolerance']
         model_converge_tolerance_patience = train_params['model_converge']['tolerance_patience']
@@ -145,6 +146,7 @@ class WorkflowJM(BaseWorkflow):
         loguru.logger.info("start fine tuning ...")
         ################################################################################################################
         # local training of an imputation model
+        print(early_stopping_mode, use_early_stopping)
         early_stoppings, all_clients_converged_sign = self.setup_early_stopping(
             'local', model_converge_tol, model_converge_tolerance_patience,
             model_converge_increase_patience, model_converge_window_size, model_converge_steps,
@@ -187,7 +189,7 @@ class WorkflowJM(BaseWorkflow):
                 )
 
             if use_early_stopping:
-                self.early_stopping_step(clients_fit_res, early_stoppings, all_clients_converged_sign)
+                self.early_stopping_step(clients_fit_res, early_stoppings, all_clients_converged_sign, 'local')
                 if all(all_clients_converged_sign):
                     loguru.logger.info("All clients have converged. Stopping training at {}.".format(epoch))
                     break
