@@ -52,7 +52,7 @@ class WorkflowJM(BaseWorkflow):
 
         ############################################################################################################
         # Federated Imputation Workflow
-        use_early_stopping_global = train_params['use_early_stopping']
+        use_early_stopping = train_params['use_early_stopping']
         if server.fed_strategy.name == 'local':
             early_stopping_mode = 'local'
         else:
@@ -119,7 +119,7 @@ class WorkflowJM(BaseWorkflow):
             if epoch % log_interval == 0:
                 self.logging_loss(clients_fit_res)
 
-            if use_early_stopping_global:
+            if use_early_stopping:
                 self.early_stopping_step(
                     clients_fit_res, early_stoppings, all_clients_converged_sign, early_stopping_mode
                 )
@@ -186,7 +186,7 @@ class WorkflowJM(BaseWorkflow):
                     central_client=server.fed_strategy.name == 'central'
                 )
 
-            if use_early_stopping_global:
+            if use_early_stopping:
                 self.early_stopping_step(clients_fit_res, early_stoppings, all_clients_converged_sign)
                 if all(all_clients_converged_sign):
                     loguru.logger.info("All clients have converged. Stopping training at {}.".format(epoch))

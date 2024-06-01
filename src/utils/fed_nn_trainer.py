@@ -25,8 +25,8 @@ def fit_fed_nn_model(
     except KeyError as e:
         raise ValueError(f"Parameter {str(e)} not found in params")
 
-    torch.backends.cuda.matmul.allow_tf32 = True
-    torch.backends.cudnn.allow_tf32 = True
+    # torch.backends.cuda.matmul.allow_tf32 = True
+    # torch.backends.cudnn.allow_tf32 = True
 
     ######################################################################################
     # model and dataloader

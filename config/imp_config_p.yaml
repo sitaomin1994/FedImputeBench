@@ -1,7 +1,7 @@
 defaults:
   - _self_
   - imputer: miwae
-  - fed_strategy: local
+  - fed_strategy: fedavg_ft
   - tracker: none
   - override hydra/launcher: joblib
 
@@ -21,19 +21,19 @@ experiment:
   output_path: ${scenario_version}/${dataset_name}/${data_partition_name}_${missing_scenario_name}/${imputer.imp_name}/${fed_strategy.fed_strategy_name}/${round_id}
   # Other Options
   seed: 2180279
-  n_rounds: 1
+  n_rounds: 4
   mtp: False
   log_to_file: False
-  logging_level: INFO
+  logging_level: DEBUG
 
 ########################################################################################################################
 # Experiment Configuration Content
 # scenarios
 scenario_version: "alpha"
 dataset_name: "hhip"
-data_partition_name: "iid-even"
-missing_scenario_name: "mcar"
-round_id: 4
+data_partition_name: "iid-uneven"
+missing_scenario_name: "mnar2-homog"
+round_id: 1
 client_config: {}
 server_config: {}  # todo
 evaluator_params: {} # todo
