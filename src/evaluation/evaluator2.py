@@ -4,7 +4,7 @@ import loguru
 import numpy as np
 
 from src.evaluation.imp_quality_metrics import rmse, sliced_ws
-from sklearn.linear_model import RidgeCV, LogisticRegressionCV
+from sklearn.linear_model import RidgeCV, LogisticRegressionCV, LinearRegression
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from .twonn import TwoNNRegressor, TwoNNClassifier
 from .pred_model_metrics import task_eval
@@ -175,7 +175,8 @@ class Evaluator:
                     Cs=5, class_weight='balanced', solver='saga', random_state=seed, max_iter=1000, **model_params
                 )
             else:
-                clf = RidgeCV(alphas=[1e-3, 1e-2, 1e-1, 1], **model_params)
+                #clf = RidgeCV(alphas=[1e-3, 1e-2, 1e-1, 1], **model_params)
+                clf = LinearRegression(**model_params)
         elif model == 'tree':
             if task_type == 'classification':
                 clf = RandomForestClassifier(

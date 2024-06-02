@@ -25,7 +25,7 @@ round_idx: 7
 # Evaluation params
 eval_params:
   imp_quality_metrics: ['rmse', 'sliced-ws']
-  imp_fairness_metrics: ['variance', 'jain-index', 'entropy']
+  imp_fairness_metrics: ['variance', 'jain-index']
   downstream: True
   model: "nn"
   model_params: {}
