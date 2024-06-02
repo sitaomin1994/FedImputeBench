@@ -1,6 +1,10 @@
 #!/bin/bash
-# 5
-export CUBLAS_WORKSPACE_CONFIG=":4096:8"
-python run_fed_imp_scenario.py dataset_name=hhip imputer=miwae data_partition_name=iid-even missing_scenario_name=mnar2-homog fed_strategy=fedprox round_id=1
-python run_fed_imp_scenario.py dataset_name=hhip imputer=miwae data_partition_name=iid-even missing_scenario_name=mnar2-homog fed_strategy=fedprox round_id=2
-python run_fed_imp_scenario.py dataset_name=hhip imputer=miwae data_partition_name=iid-even missing_scenario_name=mnar2-homog fed_strategy=fedprox round_id=3
+
+./scripts/run_eval.sh codrna niid-f2 mar-heter \
+miwae local,fedavg,fedavg_ft,fedprox,central nn -1 fed_imp_pc2
+./scripts/run_eval.sh codrna niid-f2 mar-heter \
+gain local,fedavg,fedavg_ft,fedprox,central nn -1 fed_imp_pc2
+./scripts/run_eval.sh codrna niid-f2 mar-heter \
+missforest local,fedtree,central nn -1 fed_imp_pc2
+./scripts/run_eval.sh codrna niid-f2 mar-heter \
+simple,em,linear_ice local,fedavg,central nn -1 fed_imp_pc2
