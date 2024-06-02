@@ -1,3 +1,5 @@
+from collections import OrderedDict
+from copy import deepcopy
 from typing import List, Dict, Union
 
 import loguru
@@ -10,6 +12,8 @@ from .twonn import TwoNNRegressor, TwoNNClassifier
 from .pred_model_metrics import task_eval
 from emf.reproduce_utils import set_seed
 import warnings
+
+from ..utils.nn_utils import EarlyStopping
 
 warnings.filterwarnings("ignore")
 
@@ -88,6 +92,17 @@ class Evaluator:
 
         return results
 
+    def run_evaluation_fed_pred(
+            self, model_params: dict, train_params: dict,
+            X_train_imps: List[np.ndarray], X_train_origins: List[np.ndarray], y_trains: List[np.ndarray],
+            X_tests: List[np.ndarray], y_tests: List[np.ndarray], X_test_global: np.ndarray, y_test_global: np.ndarray,
+            data_config: dict
+    ):
+         pred_performance = self._eval_downstream_fed_prediction(
+            model_params, train_params, X_train_imps, X_train_origins, y_trains, X_tests, y_tests,
+            X_test_global, y_test_global, data_config, self.seed
+        )
+
     @staticmethod
     def _evaluate_imp_quality(
             metrics: List[str], X_train_imps: List[np.ndarray], X_train_origins: List[np.ndarray],
@@ -154,7 +169,8 @@ class Evaluator:
     def _evaluation_downstream_prediction(
             model: str, model_params: dict,
             X_train_imps: List[np.ndarray], X_train_origins: List[np.ndarray], y_trains: List[np.ndarray],
-            X_tests: List[np.ndarray], y_tests: List[np.ndarray], data_config: dict, seed: int = 0
+            X_tests: List[np.ndarray], y_tests: List[np.ndarray],
+            data_config: dict, seed: int = 0
     ):
 
         try:
@@ -175,7 +191,7 @@ class Evaluator:
                     Cs=5, class_weight='balanced', solver='saga', random_state=seed, max_iter=1000, **model_params
                 )
             else:
-                #clf = RidgeCV(alphas=[1e-3, 1e-2, 1e-1, 1], **model_params)
+                # clf = RidgeCV(alphas=[1e-3, 1e-2, 1e-1, 1], **model_params)
                 clf = LinearRegression(**model_params)
         elif model == 'tree':
             if task_type == 'classification':
@@ -193,6 +209,7 @@ class Evaluator:
         else:
             raise ValueError(f"Invalid model: {model}")
 
+        models = [deepcopy(clf) for _ in range(len(X_train_imps))]
         ################################################################################################################
         # Evaluation
         if task_type == 'classification':
@@ -201,8 +218,8 @@ class Evaluator:
             eval_metrics = ['mse', 'mae', 'r2', 'msle']
 
         ret = {eval_metric: [] for eval_metric in eval_metrics}
-        for idx, (X_train_imp, X_train_origin, y_train, X_test, y_test) in enumerate(zip(
-                X_train_imps, X_train_origins, y_trains, X_tests, y_tests
+        for idx, (X_train_imp, X_train_origin, y_train, X_test, y_test, clf) in enumerate(zip(
+                X_train_imps, X_train_origins, y_trains, X_tests, y_tests, models
         )):
             print(f"Downstream task - Client {idx + 1}")
             clf.fit(X_train_imp, y_train)
@@ -223,10 +240,18 @@ class Evaluator:
 
     @staticmethod
     def _eval_downstream_fed_prediction(
-            model: str, model_params: dict,
+            model_params: dict, train_params: dict,
             X_train_imps: List[np.ndarray], X_train_origins: List[np.ndarray], y_trains: List[np.ndarray],
-            X_tests: List[np.ndarray], y_tests: List[np.ndarray], data_config: dict, seed: int = 0
+            X_tests: List[np.ndarray], y_tests: List[np.ndarray], X_test_global, y_test_global,
+            data_config: dict, seed: int = 0
     ):
+
+        # Federated Prediction
+        global_epoch = train_params['global_epoch']
+        local_epoch = train_params['local_epoch']
+        fine_tune_epoch = train_params['fine_tune_epoch']
+        tol = train_params['tol']
+        patience = train_params['patience']
 
         try:
             task_type = data_config['task_type']
@@ -240,21 +265,11 @@ class Evaluator:
 
         ################################################################################################################
         # Loader classification model
-        # if model == 'linear':
-        #     if task_type == 'classification':
-        #         clf = LogisticRegressionCV(
-        #             Cs=5, class_weight='balanced', solver='saga', random_state=seed, max_iter=1000, **model_params
-        #         )
-        #     else:
-        #         clf = RidgeCV(alphas=[1e-3, 1e-2, 1e-1, 1], **model_params)
-        if model == 'nn':
-            set_seed(seed)
-            if task_type == 'classification':
-                clf = TwoNNClassifier(**model_params)
-            else:
-                clf = TwoNNRegressor(**model_params)
+        set_seed(seed)
+        if task_type == 'classification':
+            clf = TwoNNClassifier(optimizer='sgd', epochs=local_epoch, **model_params)
         else:
-            raise ValueError(f"Invalid model: {model}")
+            clf = TwoNNRegressor(optimizer='sgd', epochs=local_epoch, **model_params)
 
         ################################################################################################################
         # Evaluation
@@ -263,28 +278,64 @@ class Evaluator:
         else:
             eval_metrics = ['mse', 'mae', 'r2']
 
-        ret = {eval_metric: [] for eval_metric in eval_metrics}
+        models = [deepcopy(clf) for _ in range(len(X_train_imps))]
+        weights = [len(X_train_imp) for X_train_imp in X_train_imps]
+        weights = [weight / sum(weights) for weight in weights]
+        early_stoppings = [
+            EarlyStopping(
+                tolerance=tol, tolerance_patience=patience, increase_patience=patience,
+                window_size=1, check_steps=1, backward_window_size=1) for _ in range(len(X_train_imps))
+        ]
+        early_stopping_signs = [False for _ in range(len(X_train_imps))]
 
         ################################################################################################################
-        # Federated Prediction
-        global_epoch = 100
-        local_epoch = 5
+        # Training
         for epoch in range(global_epoch):
             ############################################################################################################
             # Local training
+            losses = []
             for idx, (X_train_imp, X_train_origin, y_train) in enumerate(zip(
                     X_train_imps, X_train_origins, y_trains
             )):
-                clf.fit(X_train_imp, y_train)
+                if early_stopping_signs[idx]:
+                    continue
+                ret = clf.fit(X_train_imp, y_train)
+                losses.append(ret['loss'])
 
             ############################################################################################################
             # Server aggregation the parameters of local models of clients (pytorch model)
+            aggregated_state_dict = OrderedDict()
+
+            for idx, model in enumerate(models):
+                local_state_dict = model.get_parameters()
+                for key, param in local_state_dict.items():
+                    if key in aggregated_state_dict:
+                        aggregated_state_dict[key] += param * weights[idx]
+                    else:
+                        aggregated_state_dict[key] = param * weights[idx]
 
             ############################################################################################################
             # local update
+            for idx, model in enumerate(models):
+                if early_stopping_signs[idx]:
+                    continue
+                model.update_parameters(aggregated_state_dict)
+
+            # early stopping
+            for idx, model in enumerate(models):
+                if early_stopping_signs[idx]:
+                    continue
+                early_stoppings[idx].update(losses[idx])
+                if early_stoppings[idx].check_convergence():
+                    loguru.logger.debug(f"Early stopping at epoch {epoch}")
+                    early_stopping_signs[idx] = True
+
+            if all(early_stopping_signs):
+                break
 
         ################################################################################################################
         # prediction and evaluation
+        local_ret = {eval_metric: [] for eval_metric in eval_metrics}
         for idx, (X_train_imp, X_train_origin, y_train, X_test, y_test) in enumerate(zip(
                 X_train_imps, X_train_origins, y_trains, X_tests, y_tests
         )):
@@ -295,8 +346,47 @@ class Evaluator:
                 y_pred_proba = None
 
             for eval_metric in eval_metrics:
-                ret[eval_metric].append(task_eval(
+                local_ret[eval_metric].append(task_eval(
                     eval_metric, task_type, clf_type, y_pred, y_test, y_pred_proba
                 ))
 
-        return ret
+        y_pred_global = clf.predict(X_test_global)
+        if task_type == 'classification':
+            y_pred_proba_global = clf.predict_proba(X_test_global)
+        else:
+            y_pred_proba_global = None
+
+        global_ret = {}
+        for eval_metric in eval_metrics:
+            global_ret[eval_metric].append(task_eval(
+                eval_metric, task_type, clf_type, y_pred_global, y_test_global, y_pred_proba_global
+            ))
+
+        ################################################################################################################
+        # fine-tuning
+        for idx, (X_train_imp, X_train_origin, y_train, clf) in enumerate(
+                zip(X_train_imps, X_train_origins, y_trains, models)
+        ):
+            clf.epochs = fine_tune_epoch
+            clf.fit(X_train_imp, y_train)
+
+        ret_personalized = {eval_metric: [] for eval_metric in eval_metrics}
+        for idx, (X_train_imp, X_train_origin, y_train, X_test, y_test, clf) in enumerate(zip(
+                X_train_imps, X_train_origins, y_trains, X_tests, y_tests, models
+        )):
+            y_pred = clf.predict(X_test)
+            if task_type == 'classification':
+                y_pred_proba = clf.predict_proba(X_test)
+            else:
+                y_pred_proba = None
+
+            for eval_metric in eval_metrics:
+                ret_personalized[eval_metric].append(task_eval(
+                    eval_metric, task_type, clf_type, y_pred, y_test, y_pred_proba
+                ))
+
+        return {
+            'local': local_ret,
+            'global': global_ret,
+            'personalized': ret_personalized
+        }

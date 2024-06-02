@@ -24,14 +24,14 @@ round_idx: 7
 
 # Evaluation params
 eval_params:
-  fed: False
-  imp_quality_metrics: ['rmse', 'sliced-ws']
-  imp_fairness_metrics: ['variance', 'jain-index']
-  downstream: True
-  model: "nn"
-  model_params: {
-    'optimizer': 'adam',
-    'weight_decay': 0.0,
+  fed: True
+  model_params: {}
+  train_params: {
+    'global_epoch': 100,
+    'local_epoch': 10,
+    'fine_tune_epoch': 200,
+    'tol': 0.0001,
+    'patience': 10
   }
   seed: 2180279
 

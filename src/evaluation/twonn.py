@@ -30,7 +30,7 @@ class TwoLayerNNBase(nn.Module):
 class TwoNNRegressor(nn.Module):
     def __init__(
             self, hidden_size=32, epochs=1000, lr=0.001, batch_size=64, early_stopping_rounds=30,
-            weight_decay=0.00, tol=0.0001, log_interval=10,
+            weight_decay=0.00, tol=0.0001, log_interval=10, optimizer='sgd'
     ):
         super(TwoNNRegressor, self).__init__()
 
@@ -47,6 +47,7 @@ class TwoNNRegressor(nn.Module):
         self.dataset = None
         self.dataloader = None
         self.criterion = nn.MSELoss()
+        self.optimizer = optimizer
 
     def _build_network(self, input_size):
         self.hidden_size = input_size*2
@@ -80,7 +81,10 @@ class TwoNNRegressor(nn.Module):
         if self.network is None:
             self._build_network(input_size=X.shape[1])
 
-        optimizer = optim.SGD(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        if self.optimizer == 'adam':
+            optimizer = optim.Adam(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        else:
+            optimizer = optim.SGD(self.parameters(), lr=self.lr, weight_decay=0, momentum=0)
 
         self.network.to(DEVICE)
         self.train()
@@ -126,9 +130,11 @@ class TwoNNRegressor(nn.Module):
         return outputs.numpy().flatten()
 
     def get_parameters(self):
-        return deepcopy(self.network.state_dict())
+        return self.network.state_dict()
 
     def update_parameters(self, new_params):
+        model_params = self.network.state_dict()
+        model_params.update(new_params)
         self.network.load_state_dict(new_params)
         return self
 
@@ -142,7 +148,7 @@ class TwoNNRegressor(nn.Module):
 class TwoNNClassifier(nn.Module):
     def __init__(
             self, hidden_size=32, epochs=1000, lr=0.001, batch_size=64, early_stopping_rounds=30, weight_decay=0,
-            tol=0.0001, log_interval=10
+            tol=0.0001, log_interval=10, optimizer='sgd'
     ):
         super(TwoNNClassifier, self).__init__()
         self.hidden_size = hidden_size
@@ -156,6 +162,7 @@ class TwoNNClassifier(nn.Module):
         self.network = None
         self.dataset = None
         self.dataloader = None
+        self.optimizer = optimizer
 
     def _build_network(self, input_size, output_size, class_weight):
         
@@ -194,7 +201,10 @@ class TwoNNClassifier(nn.Module):
             unique_classes = np.unique(y)
             self._build_network(input_size=X.shape[1], output_size=len(unique_classes), class_weight=None)
 
-        optimizer = optim.SGD(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        if self.optimizer == 'adam':
+            optimizer = optim.Adam(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        else:
+            optimizer = optim.SGD(self.parameters(), lr=self.lr, weight_decay=0, momentum=0)
 
         self.network.to(DEVICE)
         self.train()
