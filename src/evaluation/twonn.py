@@ -73,9 +73,13 @@ class TwoNNRegressor(nn.Module):
         # Prepare dataset for DataLoader
         if self.dataset is None:
             self.dataset = TensorDataset(X_tensor, y_tensor)
-            self.dataloader = DataLoader(
-                self.dataset, batch_size=self.batch_size, shuffle=True, pin_memory=True, drop_last=True
-            )
+
+            if len(X) < self.batch_size:
+                self.dataloader = DataLoader(self.dataset, batch_size=self.batch_size, shuffle=True, pin_memory=True)
+            else:
+                self.dataloader = DataLoader(
+                    self.dataset, batch_size=self.batch_size, shuffle=True, pin_memory=True, drop_last=True
+                )
 
         # Build the network on first call to fit
         if self.network is None:
@@ -194,7 +198,13 @@ class TwoNNClassifier(nn.Module):
         # Prepare dataset for DataLoader
         if self.dataset is None:
             self.dataset = TensorDataset(X_tensor, y_tensor)
-            self.dataloader = DataLoader(self.dataset, batch_size=self.batch_size, shuffle=True, pin_memory=True)
+
+            if len(X) < self.batch_size:
+                self.dataloader = DataLoader(self.dataset, batch_size=self.batch_size, shuffle=True, pin_memory=True)
+            else:
+                self.dataloader = DataLoader(
+                    self.dataset, batch_size=self.batch_size, shuffle=True, pin_memory=True, drop_last=True
+                )
 
         # Determine the number of unique classes to set output size
         if self.network is None:
@@ -238,7 +248,7 @@ class TwoNNClassifier(nn.Module):
                 break
 
             if epoch % self.log_interval == 0:
-                loguru.logger.info(f'Epoch {epoch + 1}/{self.epochs}, Loss: {avg_epoch_loss}')
+                loguru.logger.debug(f'Epoch {epoch + 1}/{self.epochs}, Loss: {avg_epoch_loss}')
 
         self.network.to('cpu')
 

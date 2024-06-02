@@ -54,6 +54,7 @@ def my_app(cfg: DictConfig) -> None:
     round_idx = config_dict['round_idx']
     eval_dir_name = config_dict['eval_dir_name']
     model = config_dict['eval_params']['model']
+    fed_pred = config_dict['fed']
 
     eval_ret_dir = os.path.join(
         ROOT_DIR, settings['result_dir']['base'], settings['result_dir']['raw'], eval_dir_name, scenario_version,
@@ -79,6 +80,8 @@ def my_app(cfg: DictConfig) -> None:
     clients_train_data = np.load(os.path.join(scenario_dir_path, 'clients_train_data.npz'))
     clients_test_data = np.load(os.path.join(scenario_dir_path, 'clients_test_data.npz'))
     clients_train_data_ms = np.load(os.path.join(scenario_dir_path, 'clients_train_data_ms.npz'))
+    global_test_data = np.load(os.path.join(scenario_dir_path, 'global_test_data.npz'))['global_test']
+
     clients_data = []
     for client_id in clients_train_data.keys():
         clients_data.append(
@@ -150,11 +153,14 @@ def my_app(cfg: DictConfig) -> None:
     X_tests = [client.X_test for client in clients]
     y_tests = [client.y_test for client in clients]
 
-    start = timeit.default_timer()
-    ret = evaluator.run_evaluation(
-        X_train_imps, X_train_origins, X_train_masks, y_trains, X_tests, y_tests, data_config
-    )
-    end = timeit.default_timer()
+    if fed_pred:
+        pass
+    else:
+        start = timeit.default_timer()
+        ret = evaluator.run_evaluation(
+            X_train_imps, X_train_origins, X_train_masks, y_trains, X_tests, y_tests, data_config
+        )
+        end = timeit.default_timer()
 
     ####################################################################################################################
     # Save to Result

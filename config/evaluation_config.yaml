@@ -17,14 +17,14 @@ eval_dir_name: 'eval_results'
 # Scenario params
 dataset_name: "dvisits"
 data_partition_name: "niid-t2"
-missing_scenario_name: "mar-heter"
-imputer_name: "simple"
+missing_scenario_name: "mnar2-heter"
+imputer_name: "miwae"
 fed_strategy_name: "local"
-round_idx: 7
+round_idx: 4
+fed: False
 
 # Evaluation params
 eval_params:
-  fed: False
   imp_quality_metrics: ['rmse', 'sliced-ws']
   imp_fairness_metrics: ['variance', 'jain-index']
   downstream: True

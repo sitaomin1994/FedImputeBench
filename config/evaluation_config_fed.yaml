@@ -21,10 +21,10 @@ missing_scenario_name: "mar-heter"
 imputer_name: "simple"
 fed_strategy_name: "local"
 round_idx: 7
+fed: True
 
 # Evaluation params
 eval_params:
-  fed: True
   model_params: {}
   train_params: {
     'global_epoch': 100,

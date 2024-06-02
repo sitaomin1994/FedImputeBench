@@ -98,10 +98,12 @@ class Evaluator:
             X_tests: List[np.ndarray], y_tests: List[np.ndarray], X_test_global: np.ndarray, y_test_global: np.ndarray,
             data_config: dict
     ):
-         pred_performance = self._eval_downstream_fed_prediction(
+        pred_performance = self._eval_downstream_fed_prediction(
             model_params, train_params, X_train_imps, X_train_origins, y_trains, X_tests, y_tests,
             X_test_global, y_test_global, data_config, self.seed
         )
+
+        return pred_performance
 
     @staticmethod
     def _evaluate_imp_quality(
@@ -169,8 +171,7 @@ class Evaluator:
     def _evaluation_downstream_prediction(
             model: str, model_params: dict,
             X_train_imps: List[np.ndarray], X_train_origins: List[np.ndarray], y_trains: List[np.ndarray],
-            X_tests: List[np.ndarray], y_tests: List[np.ndarray],
-            data_config: dict, seed: int = 0
+            X_tests: List[np.ndarray], y_tests: List[np.ndarray], data_config: dict, seed: int = 0
     ):
 
         try:
@@ -191,8 +192,8 @@ class Evaluator:
                     Cs=5, class_weight='balanced', solver='saga', random_state=seed, max_iter=1000, **model_params
                 )
             else:
-                # clf = RidgeCV(alphas=[1e-3, 1e-2, 1e-1, 1], **model_params)
-                clf = LinearRegression(**model_params)
+                clf = RidgeCV(alphas=[1], **model_params)
+                #clf = LinearRegression(**model_params)
         elif model == 'tree':
             if task_type == 'classification':
                 clf = RandomForestClassifier(
@@ -221,7 +222,7 @@ class Evaluator:
         for idx, (X_train_imp, X_train_origin, y_train, X_test, y_test, clf) in enumerate(zip(
                 X_train_imps, X_train_origins, y_trains, X_tests, y_tests, models
         )):
-            print(f"Downstream task - Client {idx + 1}")
+            print(f"Client {idx} downstream")
             clf.fit(X_train_imp, y_train)
             y_pred = clf.predict(X_test)
             if task_type == 'classification':
