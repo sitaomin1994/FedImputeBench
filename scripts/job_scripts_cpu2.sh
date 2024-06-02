@@ -2,7 +2,7 @@
 #SBATCH --job-name=evalnn
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=sm2370@rutgers.edu
-#SBATCH --partition=p_jsvaidya_1
+#SBATCH --partition=main
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=60

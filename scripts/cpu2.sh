@@ -1,11 +1,10 @@
 #!/bin/bash
 
-# school pca
-./scripts/run_eval.sh school_pca iid-even,iid-uneven,niid-f1,niid-f2 mcar,mar-heter,mar-homog,mnar2-heter,mar-heter \
-simple,linear_ice,em local,fedavg linear 10 fed_imp_pc2
-./scripts/run_eval.sh school_pca iid-even,iid-uneven,niid-f1,niid-f2 mcar,mar-heter,mar-homog,mnar2-heter,mar-heter \
-missforest local,fedtree linear 10 fed_imp_pc2
-./scripts/run_eval.sh school_pca iid-even,iid-uneven,niid-f1,niid-f2 mcar,mar-heter,mar-homog,mnar2-heter,mar-heter \
-miwae local,fedavg linear 10 fed_imp_pc2
-./scripts/run_eval.sh school_pca iid-even,iid-uneven,niid-f1,niid-f2 mcar,mar-heter,mar-homog,mnar2-heter,mar-heter \
-gain local,fedavg linear 10 fed_imp_pc2
+./scripts/run_eval.sh vehicle iid-even,iid-uneven,niid-f1,niid-f2 mcar \
+miwae local,fedavg,fedavg_ft,fedprox,central nn -1 fed_imp_pc2
+./scripts/run_eval.sh vehicle iid-even,iid-uneven,niid-f1,niid-f2 mcar \
+gain local,fedavg,fedavg_ft,fedprox,central nn -1 fed_imp_pc2
+./scripts/run_eval.sh vehicle iid-even,iid-uneven,niid-f1,niid-f2 mcar \
+missforest local,fedtree,central nn -1 fed_imp_pc2
+./scripts/run_eval.sh vehicle iid-even,iid-uneven,niid-f1,niid-f2 mcar \
+simple,em,linear_ice local,fedavg,central nn -1 fed_imp_pc2

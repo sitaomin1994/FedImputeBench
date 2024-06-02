@@ -6,7 +6,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --gres=gpu:1
-#SBATCH --cpus-per-task=1
+#SBATCH --cpus-per-task=30
 #SBATCH --mem-per-cpu=50G
 #SBATCH --time=3-00:00:00
 #SBATCH --nodelist=gpuk001,gpuk002
