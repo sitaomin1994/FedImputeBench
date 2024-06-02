@@ -13,29 +13,6 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
-target_processing_strategies = {
-    'school_pca': {
-        'min': 0,
-        'max': 70,
-        'group_idx': [10, 20, 30, 40, 50 , 60]
-    },
-    'dvisits': {
-        'min': 0,
-        'max': 8,
-        'group_idx': [1, 4]
-    },
-    'california': {
-        'min': 0,
-        'max': 5,
-        'group_idx': None
-    },
-    'hhip': {
-        'min': 0,
-        'max': 15,
-        'group_idx': [2, 3, 4, 5, 6]
-    }
-}
-
 
 class Evaluator:
 
@@ -232,6 +209,8 @@ class Evaluator:
             if task_type == 'classification':
                 y_pred_proba = clf.predict_proba(X_test)
             else:
+                y_pred[y_pred < data_config['target_info']['min']] = data_config['target_info']['min']
+                y_pred[y_pred > data_config['target_info']['max']] = data_config['target_info']['max']
                 y_pred_proba = None
 
             for eval_metric in eval_metrics:

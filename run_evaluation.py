@@ -14,6 +14,28 @@ from emf.logging import setup_logger
 os.environ['FOR_DISABLE_CONSOLE_CTRL_HANDLER'] = '1'
 warnings.filterwarnings("ignore", category=UserWarning)
 
+target_info = {
+    'school_pca': {
+        'min': 0,
+        'max': 70,
+        'group_idx': [10, 20, 30, 40, 50 , 60]
+    },
+    'dvisits': {
+        'min': 0,
+        'max': 8,
+        'group_idx': [1, 4]
+    },
+    'california': {
+        'min': 0,
+        'max': 5,
+        'group_idx': None
+    },
+    'hhip': {
+        'min': 0,
+        'max': 15,
+        'group_idx': [2, 3, 4, 5, 6]
+    }
+}
 
 @hydra.main(version_base=None, config_path="config", config_name="evaluation_config")
 def my_app(cfg: DictConfig) -> None:
@@ -70,6 +92,10 @@ def my_app(cfg: DictConfig) -> None:
 
     client_seeds = stats_dict['client_seeds']
     data_config = stats_dict['data_config']
+    if dataset_name in target_info:
+        data_config['target_info'] = target_info[dataset_name]
+    else:
+        data_config['target_info'] = {'min': 0, 'max': 1000}
 
     loguru.logger.debug(data_config)
 
@@ -139,7 +165,7 @@ def my_app(cfg: DictConfig) -> None:
         json.dump(eval_ret, f)
 
     loguru.logger.info(ret['agg_stats'])
-    print(imputer, fed_strategy, ret['agg_stats'])
+    print(imputer, fed_strategy, round_idx, '====>', ret['agg_stats'])
     loguru.logger.info(f"Time taken: {end - start}")
 
 

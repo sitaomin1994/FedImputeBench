@@ -78,7 +78,7 @@ class TwoNNRegressor(nn.Module):
         if self.network is None:
             self._build_network(input_size=X.shape[1])
 
-        optimizer = optim.AdamW(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        optimizer = optim.SGD(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
 
         self.network.to(DEVICE)
         self.train()
@@ -192,7 +192,7 @@ class TwoNNClassifier(nn.Module):
             unique_classes = np.unique(y)
             self._build_network(input_size=X.shape[1], output_size=len(unique_classes), class_weight=None)
 
-        optimizer = optim.AdamW(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        optimizer = optim.SGD(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
 
         self.network.to(DEVICE)
         self.train()
