@@ -29,8 +29,8 @@ class TwoLayerNNBase(nn.Module):
 
 class TwoNNRegressor(nn.Module):
     def __init__(
-            self, hidden_size=32, epochs=1000, lr=0.001, batch_size=32, early_stopping_rounds=30,
-            weight_decay=0.001, tol=0.0001, log_interval=10,
+            self, hidden_size=32, epochs=1000, lr=0.001, batch_size=64, early_stopping_rounds=30,
+            weight_decay=0.00, tol=0.0001, log_interval=10,
     ):
         super(TwoNNRegressor, self).__init__()
 
@@ -49,13 +49,16 @@ class TwoNNRegressor(nn.Module):
         self.criterion = nn.MSELoss()
 
     def _build_network(self, input_size):
-        self.hidden_size = input_size * 2
+        self.hidden_size = input_size*2
+        self.hidden_size = input_size*2
         self.network = nn.Sequential(
             nn.Linear(input_size, self.hidden_size),
+            nn.BatchNorm1d(self.hidden_size),
             nn.ReLU(),
             nn.Linear(self.hidden_size, self.hidden_size),
+            nn.BatchNorm1d(self.hidden_size),
             nn.ReLU(),
-            nn.Linear(self.hidden_size, 1)  # Output is a single value for regression
+            nn.Linear(self.hidden_size, 1)
         )
 
     def forward(self, X):
@@ -75,7 +78,7 @@ class TwoNNRegressor(nn.Module):
         if self.network is None:
             self._build_network(input_size=X.shape[1])
 
-        optimizer = optim.SGD(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        optimizer = optim.AdamW(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
 
         self.network.to(DEVICE)
         self.train()
@@ -136,7 +139,7 @@ class TwoNNRegressor(nn.Module):
 
 class TwoNNClassifier(nn.Module):
     def __init__(
-            self, hidden_size=32, epochs=1000, lr=0.001, batch_size=32, early_stopping_rounds=30, weight_decay=0.001,
+            self, hidden_size=32, epochs=1000, lr=0.001, batch_size=64, early_stopping_rounds=30, weight_decay=0,
             tol=0.0001, log_interval=10
     ):
         super(TwoNNClassifier, self).__init__()
@@ -151,14 +154,21 @@ class TwoNNClassifier(nn.Module):
         self.network = None
         self.dataset = None
         self.dataloader = None
-        self.criterion = nn.CrossEntropyLoss()
 
-    def _build_network(self, input_size, output_size):
-        self.hidden_size = input_size * 2
+    def _build_network(self, input_size, output_size, class_weight):
+        
+        if class_weight is None:
+            self.criterion = nn.CrossEntropyLoss()
+        else:
+            self.criterion = nn.CrossEntropyLoss(weight=class_weight)
+        
+        self.hidden_size = input_size*2
         self.network = nn.Sequential(
             nn.Linear(input_size, self.hidden_size),
+            nn.BatchNorm1d(self.hidden_size),
             nn.ReLU(),
             nn.Linear(self.hidden_size, self.hidden_size),
+            nn.BatchNorm1d(self.hidden_size),
             nn.ReLU(),
             nn.Linear(self.hidden_size, output_size)
         )
@@ -170,6 +180,7 @@ class TwoNNClassifier(nn.Module):
 
         X_tensor = torch.tensor(X, dtype=torch.float32)
         y_tensor = torch.tensor(y, dtype=torch.long)
+        class_weight = calculate_class_weights(y)
 
         # Prepare dataset for DataLoader
         if self.dataset is None:
@@ -179,9 +190,9 @@ class TwoNNClassifier(nn.Module):
         # Determine the number of unique classes to set output size
         if self.network is None:
             unique_classes = np.unique(y)
-            self._build_network(input_size=X.shape[1], output_size=len(unique_classes))
+            self._build_network(input_size=X.shape[1], output_size=len(unique_classes), class_weight=None)
 
-        optimizer = optim.SGD(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        optimizer = optim.AdamW(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
 
         self.network.to(DEVICE)
         self.train()
@@ -244,3 +255,32 @@ class TwoNNClassifier(nn.Module):
     def update_parameters(self, new_params):
         self.network.load_state_dict(new_params)
         return self
+
+
+def calculate_class_weights(y: np.ndarray) -> torch.Tensor:
+    """
+    Calculate class weights inversely proportional to the class frequencies.
+
+    Parameters:
+    y (array-like): The target labels for the training dataset.
+
+    Returns:
+    torch.Tensor: The weights for each class.
+    """
+
+    # Convert y to a tensor if it isn't one already
+    if not isinstance(y, torch.Tensor):
+        y = torch.tensor(y, dtype=torch.long)
+
+    # Get the number of instances for each class
+    class_counts = torch.bincount(y)
+
+    # Compute the inverse of each count
+    # Avoid division by zero by adding a small epsilon where there are no instances
+    epsilon = 1e-9
+    inverse_weights = 1.0 / (class_counts + epsilon)
+
+    # Normalize the weights so that they sum to 1
+    normalized_weights = inverse_weights / inverse_weights.sum()
+
+    return normalized_weights

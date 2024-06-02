@@ -139,6 +139,7 @@ def my_app(cfg: DictConfig) -> None:
         json.dump(eval_ret, f)
 
     loguru.logger.info(ret['agg_stats'])
+    print(imputer, fed_strategy, ret['agg_stats'])
     loguru.logger.info(f"Time taken: {end - start}")
 
 
