@@ -13,6 +13,29 @@ import warnings
 
 warnings.filterwarnings("ignore")
 
+target_processing_strategies = {
+    'school_pca': {
+        'min': 0,
+        'max': 70,
+        'group_idx': [10, 20, 30, 40, 50 , 60]
+    },
+    'dvisits': {
+        'min': 0,
+        'max': 8,
+        'group_idx': [1, 4]
+    },
+    'california': {
+        'min': 0,
+        'max': 5,
+        'group_idx': None
+    },
+    'hhip': {
+        'min': 0,
+        'max': 15,
+        'group_idx': [2, 3, 4, 5, 6]
+    }
+}
+
 
 class Evaluator:
 
@@ -156,6 +179,7 @@ class Evaluator:
             X_train_imps: List[np.ndarray], X_train_origins: List[np.ndarray], y_trains: List[np.ndarray],
             X_tests: List[np.ndarray], y_tests: List[np.ndarray], data_config: dict, seed: int = 0
     ):
+
         try:
             task_type = data_config['task_type']
             clf_type = data_config['clf_type']
@@ -196,7 +220,7 @@ class Evaluator:
         if task_type == 'classification':
             eval_metrics = ['accuracy', 'f1', 'auc', 'prc']
         else:
-            eval_metrics = ['mse', 'mae', 'r2']
+            eval_metrics = ['mse', 'mae', 'r2', 'msle']
 
         ret = {eval_metric: [] for eval_metric in eval_metrics}
         for idx, (X_train_imp, X_train_origin, y_train, X_test, y_test) in enumerate(zip(
@@ -217,5 +241,82 @@ class Evaluator:
 
         return ret
 
-    def _eval_downstream_fed_prediction(self):
-        pass
+    @staticmethod
+    def _eval_downstream_fed_prediction(
+            model: str, model_params: dict,
+            X_train_imps: List[np.ndarray], X_train_origins: List[np.ndarray], y_trains: List[np.ndarray],
+            X_tests: List[np.ndarray], y_tests: List[np.ndarray], data_config: dict, seed: int = 0
+    ):
+
+        try:
+            task_type = data_config['task_type']
+            clf_type = data_config['clf_type']
+        except KeyError:
+            raise KeyError("task_type is not defined in data_config")
+
+        assert task_type in ['classification', 'regression'], f"Invalid task_type: {task_type}"
+        if task_type == 'classification':
+            assert clf_type in ['binary-class', 'multi-class', 'binary'], f"Invalid clf_type: {clf_type}"
+
+        ################################################################################################################
+        # Loader classification model
+        # if model == 'linear':
+        #     if task_type == 'classification':
+        #         clf = LogisticRegressionCV(
+        #             Cs=5, class_weight='balanced', solver='saga', random_state=seed, max_iter=1000, **model_params
+        #         )
+        #     else:
+        #         clf = RidgeCV(alphas=[1e-3, 1e-2, 1e-1, 1], **model_params)
+        if model == 'nn':
+            set_seed(seed)
+            if task_type == 'classification':
+                clf = TwoNNClassifier(**model_params)
+            else:
+                clf = TwoNNRegressor(**model_params)
+        else:
+            raise ValueError(f"Invalid model: {model}")
+
+        ################################################################################################################
+        # Evaluation
+        if task_type == 'classification':
+            eval_metrics = ['accuracy', 'f1', 'auc', 'prc']
+        else:
+            eval_metrics = ['mse', 'mae', 'r2']
+
+        ret = {eval_metric: [] for eval_metric in eval_metrics}
+
+        ################################################################################################################
+        # Federated Prediction
+        global_epoch = 100
+        local_epoch = 5
+        for epoch in range(global_epoch):
+            ############################################################################################################
+            # Local training
+            for idx, (X_train_imp, X_train_origin, y_train) in enumerate(zip(
+                    X_train_imps, X_train_origins, y_trains
+            )):
+                clf.fit(X_train_imp, y_train)
+
+            ############################################################################################################
+            # Server aggregation the parameters of local models of clients (pytorch model)
+
+            ############################################################################################################
+            # local update
+
+        ################################################################################################################
+        # prediction and evaluation
+        for idx, (X_train_imp, X_train_origin, y_train, X_test, y_test) in enumerate(zip(
+                X_train_imps, X_train_origins, y_trains, X_tests, y_tests
+        )):
+            y_pred = clf.predict(X_test)
+            if task_type == 'classification':
+                y_pred_proba = clf.predict_proba(X_test)
+            else:
+                y_pred_proba = None
+
+            for eval_metric in eval_metrics:
+                ret[eval_metric].append(task_eval(
+                    eval_metric, task_type, clf_type, y_pred, y_test, y_pred_proba
+                ))
+
+        return ret

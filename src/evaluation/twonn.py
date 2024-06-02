@@ -8,7 +8,7 @@ import loguru
 from src.utils.nn_utils import EarlyStopping
 from tqdm import tqdm, trange
 
-#DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
+# DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 DEVICE = 'cpu'
 
 
@@ -29,7 +29,7 @@ class TwoLayerNNBase(nn.Module):
 
 class TwoNNRegressor(nn.Module):
     def __init__(
-            self, hidden_size=32, epochs=500, lr=0.001, batch_size=32, early_stopping_rounds=30,
+            self, hidden_size=32, epochs=1000, lr=0.001, batch_size=32, early_stopping_rounds=30,
             weight_decay=0.001, tol=0.0001, log_interval=10,
     ):
         super(TwoNNRegressor, self).__init__()
@@ -75,7 +75,7 @@ class TwoNNRegressor(nn.Module):
         if self.network is None:
             self._build_network(input_size=X.shape[1])
 
-        optimizer = optim.AdamW(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        optimizer = optim.SGD(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
 
         self.network.to(DEVICE)
         self.train()
@@ -84,6 +84,7 @@ class TwoNNRegressor(nn.Module):
             tolerance=self.tol, tolerance_patience=self.early_stopping_rounds,
             increase_patience=self.early_stopping_rounds, window_size=1, check_steps=1, backward_window_size=1
         )
+
         for epoch in range(self.epochs):
             self.train()
             epoch_loss = 0
@@ -135,7 +136,7 @@ class TwoNNRegressor(nn.Module):
 
 class TwoNNClassifier(nn.Module):
     def __init__(
-            self, hidden_size=32, epochs=500, lr=0.001, batch_size=32, early_stopping_rounds=30, weight_decay=0.001,
+            self, hidden_size=32, epochs=1000, lr=0.001, batch_size=32, early_stopping_rounds=30, weight_decay=0.001,
             tol=0.0001, log_interval=10
     ):
         super(TwoNNClassifier, self).__init__()
@@ -153,7 +154,7 @@ class TwoNNClassifier(nn.Module):
         self.criterion = nn.CrossEntropyLoss()
 
     def _build_network(self, input_size, output_size):
-        self.hidden_size = input_size*2
+        self.hidden_size = input_size * 2
         self.network = nn.Sequential(
             nn.Linear(input_size, self.hidden_size),
             nn.ReLU(),
@@ -180,7 +181,7 @@ class TwoNNClassifier(nn.Module):
             unique_classes = np.unique(y)
             self._build_network(input_size=X.shape[1], output_size=len(unique_classes))
 
-        optimizer = optim.AdamW(self.parameters(), lr=self.lr)
+        optimizer = optim.SGD(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
 
         self.network.to(DEVICE)
         self.train()

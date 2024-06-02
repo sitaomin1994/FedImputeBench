@@ -27,7 +27,7 @@ eval_params:
   imp_quality_metrics: ['rmse', 'sliced-ws']
   imp_fairness_metrics: ['variance', 'jain-index', 'entropy']
   downstream: True
-  model: "linear"
+  model: "nn"
   model_params: {}
   seed: 2180279
 

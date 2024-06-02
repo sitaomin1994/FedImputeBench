@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn.metrics import f1_score, roc_auc_score, mean_squared_error, mean_absolute_error, r2_score, \
-    average_precision_score
+    average_precision_score, mean_squared_log_error
 
 
 def task_eval(metric, task_type, clf_type, y_pred, y_test, y_pred_proba=None):
@@ -33,5 +33,7 @@ def task_eval(metric, task_type, clf_type, y_pred, y_test, y_pred_proba=None):
             return mean_absolute_error(y_test, y_pred)
         elif metric == 'r2':
             return r2_score(y_test, y_pred)
+        elif metric == 'msle':
+            return mean_squared_log_error(y_test, y_pred)
         else:
             raise ValueError(f"Invalid metric: {metric}")
