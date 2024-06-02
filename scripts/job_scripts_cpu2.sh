@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=eval_dvisits
+#SBATCH --job-name=evalnn
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=sm2370@rutgers.edu
 #SBATCH --partition=p_jsvaidya_1
