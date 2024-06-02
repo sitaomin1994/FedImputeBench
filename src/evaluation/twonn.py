@@ -72,7 +72,9 @@ class TwoNNRegressor(nn.Module):
         # Prepare dataset for DataLoader
         if self.dataset is None:
             self.dataset = TensorDataset(X_tensor, y_tensor)
-            self.dataloader = DataLoader(self.dataset, batch_size=self.batch_size, shuffle=True, pin_memory=True)
+            self.dataloader = DataLoader(
+                self.dataset, batch_size=self.batch_size, shuffle=True, pin_memory=True, drop_last=True
+            )
 
         # Build the network on first call to fit
         if self.network is None:

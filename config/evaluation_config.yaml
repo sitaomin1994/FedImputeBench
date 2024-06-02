@@ -15,12 +15,12 @@ experiment_name: "fed_imp_pc2"
 eval_dir_name: 'eval_results'
 
 # Scenario params
-dataset_name: "vehicle"
-data_partition_name: "iid-even"
+dataset_name: "dvisits"
+data_partition_name: "niid-t2"
 missing_scenario_name: "mar-heter"
-imputer_name: "linear_ice"
-fed_strategy_name: "fedavg"
-round_idx: 0
+imputer_name: "simple"
+fed_strategy_name: "local"
+round_idx: 7
 
 # Evaluation params
 eval_params:
