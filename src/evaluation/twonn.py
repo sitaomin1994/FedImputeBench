@@ -8,8 +8,9 @@ import loguru
 from src.utils.nn_utils import EarlyStopping
 from tqdm import tqdm, trange
 
-DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
-# DEVICE = 'cpu'
+#DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
+DEVICE = 'cpu'
+print(DEVICE)
 
 
 class TwoLayerNNBase(nn.Module):
@@ -90,7 +91,7 @@ class TwoNNRegressor(nn.Module):
         else:
             optimizer = optim.SGD(self.parameters(), lr=self.lr, weight_decay=0, momentum=0)
 
-        self.network.to(DEVICE)
+        #self.network
         self.train()
         final_loss = 0
         early_stopping = EarlyStopping(
@@ -102,7 +103,7 @@ class TwoNNRegressor(nn.Module):
             self.train()
             epoch_loss = 0
             for X_batch, y_batch in self.dataloader:
-                X_batch, y_batch = X_batch.to(DEVICE), y_batch.to(DEVICE)
+                X_batch, y_batch = X_batch, y_batch
                 outputs = self(X_batch)
                 loss = self.criterion(outputs, y_batch)
 
@@ -216,7 +217,7 @@ class TwoNNClassifier(nn.Module):
         else:
             optimizer = optim.SGD(self.parameters(), lr=self.lr, weight_decay=0, momentum=0)
 
-        self.network.to(DEVICE)
+        #self.network.to(DEVICE)
         self.train()
         final_loss = 0
         early_stopping = EarlyStopping(
@@ -227,7 +228,7 @@ class TwoNNClassifier(nn.Module):
             self.train()
             epoch_loss = 0
             for X_batch, y_batch in self.dataloader:
-                X_batch, y_batch = X_batch.to(DEVICE), y_batch.to(DEVICE)
+                X_batch, y_batch = X_batch, y_batch
                 outputs = self(X_batch)
                 loss = self.criterion(outputs, y_batch)
 
