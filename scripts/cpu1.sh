@@ -1,10 +1,10 @@
 #!/bin/bash
 
-./scripts/run_eval.sh california iid-even,iid-uneven,niid-t1,niid-t2 mcar,mar-homog,mar-heter,mnar2-homog,mnar2-heter \
+./scripts/run_eval.sh hhip iid-even,iid-uneven,niid-t1,niid-t2 mar-heter,mnar2-heter \
 miwae local,fedavg,fedavg_ft,fedprox nn -1 fed_imp_pc2
-./scripts/run_eval.sh california iid-even,iid-uneven,niid-t1,niid-t2 mcar,mar-homog,mar-heter,mnar2-homog,mnar2-heter \
+./scripts/run_eval.sh hhip iid-even,iid-uneven,niid-t1,niid-t2 mar-heter,mnar2-heter \
 gain local,fedavg,fedavg_ft,fedprox nn -1 fed_imp_pc2
-./scripts/run_eval.sh california iid-even,iid-uneven,niid-t1,niid-t2 mcar,mar-homog,mar-heter,mnar2-homog,mnar2-heter \
+./scripts/run_eval.sh hhip iid-even,iid-uneven,niid-t1,niid-t2 mar-heter,mnar2-heter \
 missforest local,fedtree nn -1 fed_imp_pc2
-./scripts/run_eval.sh california iid-even,iid-uneven,niid-t1,niid-t2 mcar,mar-homog,mar-heter,mnar2-homog,mnar2-heter \
+./scripts/run_eval.sh hhip iid-even,iid-uneven,niid-t1,niid-t2 mar-heter,mnar2-heter \
 simple,em,linear_ice local,fedavg nn -1 fed_imp_pc2
