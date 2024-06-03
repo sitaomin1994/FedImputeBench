@@ -25,7 +25,6 @@ data_partition_name=$dp \
 missing_scenario_name=$missing \
 fed_strategy_name=$fed_strategy \
 round_idx=$rounds \
-eval_params.model=$eval_model \
 log_to_file=False log_level=SUCCESS experiment_name=$experiment_name"
 
 echo $command
