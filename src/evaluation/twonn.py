@@ -8,8 +8,8 @@ import loguru
 from src.utils.nn_utils import EarlyStopping
 from tqdm import tqdm, trange
 
-#DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
-DEVICE = 'cpu'
+DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
+#DEVICE = 'cpu'
 print(DEVICE)
 
 
@@ -31,7 +31,7 @@ class TwoLayerNNBase(nn.Module):
 class TwoNNRegressor(nn.Module):
     def __init__(
             self, hidden_size=32, epochs=1000, lr=0.001, batch_size=64, early_stopping_rounds=30,
-            weight_decay=0.00, tol=0.0001, log_interval=10, optimizer='sgd'
+            weight_decay=0.00, tol=0.0001, log_interval=10, optimizer='sgd', batch_norm=True
     ):
         super(TwoNNRegressor, self).__init__()
 
@@ -49,19 +49,28 @@ class TwoNNRegressor(nn.Module):
         self.dataloader = None
         self.criterion = nn.MSELoss()
         self.optimizer = optimizer
+        self.batch_norm = batch_norm
 
     def _build_network(self, input_size):
         self.hidden_size = input_size*2
-        self.hidden_size = input_size*2
-        self.network = nn.Sequential(
-            nn.Linear(input_size, self.hidden_size),
-            nn.BatchNorm1d(self.hidden_size),
-            nn.ReLU(),
-            nn.Linear(self.hidden_size, self.hidden_size),
-            nn.BatchNorm1d(self.hidden_size),
-            nn.ReLU(),
-            nn.Linear(self.hidden_size, 1)
-        )
+        if self.batch_norm:
+            self.network = nn.Sequential(
+                nn.Linear(input_size, self.hidden_size),
+                nn.BatchNorm1d(self.hidden_size),
+                nn.ReLU(),
+                nn.Linear(self.hidden_size, self.hidden_size),
+                nn.BatchNorm1d(self.hidden_size),
+                nn.ReLU(),
+                nn.Linear(self.hidden_size, 1)
+            )
+        else:
+            self.network = nn.Sequential(
+                nn.Linear(input_size, self.hidden_size),
+                nn.ReLU(),
+                nn.Linear(self.hidden_size, self.hidden_size),
+                nn.ReLU(),
+                nn.Linear(self.hidden_size, 1)
+            )
 
     def forward(self, X):
         return self.network(X)
@@ -92,6 +101,7 @@ class TwoNNRegressor(nn.Module):
             optimizer = optim.SGD(self.parameters(), lr=self.lr, weight_decay=0, momentum=0)
 
         #self.network
+        self.network.to(DEVICE)
         self.train()
         final_loss = 0
         early_stopping = EarlyStopping(
@@ -103,7 +113,7 @@ class TwoNNRegressor(nn.Module):
             self.train()
             epoch_loss = 0
             for X_batch, y_batch in self.dataloader:
-                X_batch, y_batch = X_batch, y_batch
+                X_batch, y_batch = X_batch.to(DEVICE), y_batch.to(DEVICE)
                 outputs = self(X_batch)
                 loss = self.criterion(outputs, y_batch)
 
@@ -114,6 +124,9 @@ class TwoNNRegressor(nn.Module):
 
             avg_epoch_loss = epoch_loss / len(self.dataloader)
             final_loss = avg_epoch_loss
+
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
 
             early_stopping.update(avg_epoch_loss)
             if early_stopping.check_convergence():
@@ -153,7 +166,7 @@ class TwoNNRegressor(nn.Module):
 class TwoNNClassifier(nn.Module):
     def __init__(
             self, hidden_size=32, epochs=1000, lr=0.001, batch_size=64, early_stopping_rounds=30, weight_decay=0,
-            tol=0.0001, log_interval=10, optimizer='sgd'
+            tol=0.0001, log_interval=10, optimizer='sgd', batch_norm=True
     ):
         super(TwoNNClassifier, self).__init__()
         self.hidden_size = hidden_size
@@ -168,6 +181,7 @@ class TwoNNClassifier(nn.Module):
         self.dataset = None
         self.dataloader = None
         self.optimizer = optimizer
+        self.batch_norm = batch_norm
 
     def _build_network(self, input_size, output_size, class_weight):
         
@@ -177,15 +191,24 @@ class TwoNNClassifier(nn.Module):
             self.criterion = nn.CrossEntropyLoss(weight=class_weight)
         
         self.hidden_size = input_size*2
-        self.network = nn.Sequential(
-            nn.Linear(input_size, self.hidden_size),
-            nn.BatchNorm1d(self.hidden_size),
-            nn.ReLU(),
-            nn.Linear(self.hidden_size, self.hidden_size),
-            nn.BatchNorm1d(self.hidden_size),
-            nn.ReLU(),
-            nn.Linear(self.hidden_size, output_size)
-        )
+        if self.batch_norm:
+            self.network = nn.Sequential(
+                nn.Linear(input_size, self.hidden_size),
+                nn.BatchNorm1d(self.hidden_size),
+                nn.ReLU(),
+                nn.Linear(self.hidden_size, self.hidden_size),
+                nn.BatchNorm1d(self.hidden_size),
+                nn.ReLU(),
+                nn.Linear(self.hidden_size, output_size)
+            )
+        else:
+            self.network = nn.Sequential(
+                nn.Linear(input_size, self.hidden_size),
+                nn.ReLU(),
+                nn.Linear(self.hidden_size, self.hidden_size),
+                nn.ReLU(),
+                nn.Linear(self.hidden_size, output_size)
+            )
 
     def forward(self, x):
         return self.network(x)
@@ -217,7 +240,7 @@ class TwoNNClassifier(nn.Module):
         else:
             optimizer = optim.SGD(self.parameters(), lr=self.lr, weight_decay=0, momentum=0)
 
-        #self.network.to(DEVICE)
+        self.network.to(DEVICE)
         self.train()
         final_loss = 0
         early_stopping = EarlyStopping(
@@ -228,7 +251,7 @@ class TwoNNClassifier(nn.Module):
             self.train()
             epoch_loss = 0
             for X_batch, y_batch in self.dataloader:
-                X_batch, y_batch = X_batch, y_batch
+                X_batch, y_batch = X_batch.to(DEVICE), y_batch.to(DEVICE)
                 outputs = self(X_batch)
                 loss = self.criterion(outputs, y_batch)
 

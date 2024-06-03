@@ -18,7 +18,7 @@ target_info = {
     'school_pca': {
         'min': 0,
         'max': 70,
-        'group_idx': [10, 20, 30, 40, 50, 60]
+        'group_idx': [10, 20, 30, 40, 50 , 60]
     },
     'dvisits': {
         'min': 0,
@@ -38,8 +38,9 @@ target_info = {
 }
 
 
-@hydra.main(version_base=None, config_path="config", config_name="evaluation_config")
+@hydra.main(version_base=None, config_path="config", config_name="evaluation_config_fed")
 def my_app(cfg: DictConfig) -> None:
+
     config_dict: dict = OmegaConf.to_container(cfg, resolve=True)
 
     ####################################################################################################################
@@ -52,14 +53,13 @@ def my_app(cfg: DictConfig) -> None:
     imputer = config_dict['imputer_name']
     fed_strategy = config_dict['fed_strategy_name']
     round_idx = config_dict['round_idx']
-    eval_dir_name = config_dict['eval_dir_name']
-    model = config_dict['eval_params']['model']
-    fed_pred = config_dict['fed']
 
+    eval_dir_name = config_dict['eval_dir_name']
     eval_ret_dir = os.path.join(
         ROOT_DIR, settings['result_dir']['base'], settings['result_dir']['raw'], eval_dir_name, scenario_version,
-        dataset_name, scenario_name, imputer, fed_strategy, str(round_idx), model
+        dataset_name, scenario_name, imputer, fed_strategy, str(round_idx),
     )
+
     if not os.path.exists(eval_ret_dir):
         os.makedirs(eval_ret_dir)
 
@@ -76,7 +76,6 @@ def my_app(cfg: DictConfig) -> None:
     )
 
     loguru.logger.debug(scenario_dir_path)
-    #(os.path.join(scenario_dir_path, 'clients_train_data.npz'))
     clients_train_data = np.load(os.path.join(scenario_dir_path, 'clients_train_data.npz'))
     clients_test_data = np.load(os.path.join(scenario_dir_path, 'clients_test_data.npz'))
     clients_train_data_ms = np.load(os.path.join(scenario_dir_path, 'clients_train_data_ms.npz'))
@@ -144,16 +143,23 @@ def my_app(cfg: DictConfig) -> None:
     ####################################################################################################################
     # Evaluation
     evaluation_params = config_dict['eval_params']
+    model_params = config_dict['eval_params']['model_params']
+    train_params = config_dict['eval_params']['train_params']
+    seed = config_dict['eval_params']['seed']
+
+    evaluator = Evaluator()
+
     X_train_imps = [client.X_train_imp[: client.X_train.shape[0], :] for client in clients]
     X_train_origins = [client.X_train for client in clients]
-    X_train_masks = [client.X_train_mask for client in clients]
     y_trains = [client.y_train for client in clients]
     X_tests = [client.X_test for client in clients]
     y_tests = [client.y_test for client in clients]
 
     start = timeit.default_timer()
-    ret = evaluation(
-        evaluation_params, X_train_imps, X_train_origins, X_train_masks, y_trains, X_tests, y_tests, data_config
+    ret = evaluator.run_evaluation_fed_pred(
+        model_params, train_params,
+        X_train_imps, X_train_origins, y_trains, X_tests, y_tests,
+        global_test_data[:, :-1], global_test_data[:, -1], data_config, seed
     )
     end = timeit.default_timer()
 
@@ -165,47 +171,8 @@ def my_app(cfg: DictConfig) -> None:
         eval_ret['results'] = ret
         json.dump(eval_ret, f)
 
-    loguru.logger.info(ret['agg_stats'])
-    print(imputer, fed_strategy, round_idx, '====>', ret['agg_stats'])
+    print(imputer, fed_strategy, round_idx, '====>', ret)
     loguru.logger.info(f"Time taken: {end - start}")
-
-
-def evaluation(
-        evaluation_params, X_train_imps, X_train_origins, X_train_masks, y_trains, X_tests, y_tests, data_config
-):
-    evaluator = Evaluator()
-    imp_quality_metrics = evaluation_params['imp_quality_metrics']
-    imp_fairness_metrics = evaluation_params['imp_fairness_metrics']
-    downstream = evaluation_params['downstream']
-    model = evaluation_params['model']
-    model_params = evaluation_params['model_params']
-    seed = evaluation_params['seed']
-
-    imp_ret = evaluator.run_evaluation_imp(
-        imp_quality_metrics, imp_fairness_metrics, X_train_imps, X_train_origins, X_train_masks, seed
-    )
-
-    if downstream:
-        pred_ret = evaluator.run_evaluation_pred(
-            model, model_params, imp_fairness_metrics,
-            X_train_imps, X_train_origins, y_trains, X_tests, y_tests, data_config, seed
-        )
-    else:
-        pred_ret = {}
-
-    imp_quality_avg = {key: np.mean(value) for key, value in imp_ret['imp_qualities'].items()}
-    imp_quality_std = {key: np.std(value) for key, value in imp_ret['imp_qualities'].items()}
-    pred_performance_avg = {key: np.mean(value) for key, value in pred_ret['pred_performance'].items()}
-    pred_performance_std = {key: np.std(value) for key, value in pred_ret['pred_performance'].items()}
-
-    return {
-        **imp_ret, **pred_ret, "agg_stats": {
-            "imp_quality_avg": imp_quality_avg,
-            "imp_quality_std": imp_quality_std,
-            "pred_performance_avg": pred_performance_avg,
-            "pred_performance_std": pred_performance_std
-        }
-    }
 
 
 if __name__ == "__main__":

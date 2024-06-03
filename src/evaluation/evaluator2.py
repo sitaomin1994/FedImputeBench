@@ -22,88 +22,65 @@ class Evaluator:
 
     def __init__(
             self,
-            imp_quality_metrics: Union[None, List[str]] = None,
-            imp_fairness_metrics: Union[None, List[str]] = None,
-            downstream: bool = False,
-            model: str = 'linear',
-            model_params: Union[None, dict] = None,
-            seed: int = 0
     ):
+        pass
 
-        if model_params is None:
-            model_params = {}
-        if imp_fairness_metrics is None:
-            imp_fairness_metrics = ['variance', 'jain-index']
-        if imp_quality_metrics is None:
-            imp_quality_metrics = ['rmse', 'sliced-ws']
-
-        self.imp_quality_metrics = imp_quality_metrics
-        self.imp_fairness_metrics = imp_fairness_metrics
-        self.model = model
-        self.model_params = model_params
-        self.downstream = downstream
-        self.seed = seed
-
-    def run_evaluation(
-            self, X_train_imps: List[np.ndarray], X_train_origins: List[np.ndarray], X_train_masks: List[np.ndarray],
-            y_trains: List[np.ndarray], X_tests: List[np.ndarray], y_tests: List[np.ndarray], data_config: dict
+    def run_evaluation_imp(
+        self, imp_quality_metrics: List[str], imp_fairness_metrics: List[str],
+        X_train_imps: List[np.ndarray], X_train_origins: List[np.ndarray], X_train_masks: List[np.ndarray],
+        seed: int = 0
     ):
 
         # imputation quality
         imp_qualities = self._evaluate_imp_quality(
-            self.imp_quality_metrics, X_train_imps, X_train_origins, X_train_masks, self.seed
+            imp_quality_metrics, X_train_imps, X_train_origins, X_train_masks, seed
         )
 
         # imputation fairness
-        imp_fairness = self._evaluation_imp_fairness(self.imp_fairness_metrics, imp_qualities)
-
-        # downstream task
-        if self.downstream:
-            pred_performance = self._evaluation_downstream_prediction(
-                self.model, self.model_params,
-                X_train_imps, X_train_origins, y_trains, X_tests, y_tests, data_config, self.seed
-            )
-            pred_performance_fairness = self._evaluation_imp_fairness(self.imp_fairness_metrics, pred_performance)
-        else:
-            pred_performance = {}
-            pred_performance_fairness = {}
+        imp_fairness = self._evaluation_imp_fairness(imp_fairness_metrics, imp_qualities)
 
         # clean results
         for key, value in imp_qualities.items():
             imp_qualities[key] = list(value)
 
-        imp_quality_avg = {key: np.mean(value) for key, value in imp_qualities.items()}
-        imp_quality_std = {key: np.std(value) for key, value in imp_qualities.items()}
-        pred_performance_avg = {key: np.mean(value) for key, value in pred_performance.items()}
-        pred_performance_std = {key: np.std(value) for key, value in pred_performance.items()}
-
         results = {
             'imp_quality': imp_qualities,
             'imp_fairness': imp_fairness,
-            'pred_performance': pred_performance,
-            'pred_performance_fairness': pred_performance_fairness,
-            'agg_stats': {
-                'imp_quality_avg': imp_quality_avg,
-                'imp_quality_std': imp_quality_std,
-                'pred_performance_avg': pred_performance_avg,
-                'pred_performance_std': pred_performance_std
-            }
         }
 
         return results
+
+    def run_evaluation_pred(
+            self, model, model_params, pred_fairness_metrics,
+            X_train_imps: List[np.ndarray], X_train_origins: List[np.ndarray], y_trains: List[np.ndarray],
+            X_tests: List[np.ndarray], y_tests: List[np.ndarray], data_config: dict, seed: int = 0
+    ):
+
+        pred_performance = self._evaluation_downstream_prediction(
+            model, model_params, X_train_imps, X_train_origins, y_trains,
+            X_tests, y_tests, data_config, seed
+        )
+        pred_performance_fairness = self._evaluation_imp_fairness(pred_fairness_metrics, pred_performance)
+
+        return {
+            'pred_performance': pred_performance,
+            'pred_performance_fairness': pred_performance_fairness,
+        }
 
     def run_evaluation_fed_pred(
             self, model_params: dict, train_params: dict,
             X_train_imps: List[np.ndarray], X_train_origins: List[np.ndarray], y_trains: List[np.ndarray],
             X_tests: List[np.ndarray], y_tests: List[np.ndarray], X_test_global: np.ndarray, y_test_global: np.ndarray,
-            data_config: dict
+            data_config: dict, seed: int = 0
     ):
         pred_performance = self._eval_downstream_fed_prediction(
             model_params, train_params, X_train_imps, X_train_origins, y_trains, X_tests, y_tests,
-            X_test_global, y_test_global, data_config, self.seed
+            X_test_global, y_test_global, data_config, seed
         )
 
-        return pred_performance
+        return {
+            'fed_pred_performance': pred_performance
+        }
 
     @staticmethod
     def _evaluate_imp_quality(
@@ -251,6 +228,7 @@ class Evaluator:
         global_epoch = train_params['global_epoch']
         local_epoch = train_params['local_epoch']
         fine_tune_epoch = train_params['fine_tune_epoch']
+        batchnorm_avg = train_params['batchnorm_avg']
         tol = train_params['tol']
         patience = train_params['patience']
 
@@ -294,14 +272,14 @@ class Evaluator:
         for epoch in range(global_epoch):
             ############################################################################################################
             # Local training
-            losses = []
-            for idx, (X_train_imp, X_train_origin, y_train) in enumerate(zip(
-                    X_train_imps, X_train_origins, y_trains
+            losses = {}
+            for idx, (X_train_imp, X_train_origin, y_train, clf) in enumerate(zip(
+                    X_train_imps, X_train_origins, y_trains, models
             )):
                 if early_stopping_signs[idx]:
                     continue
                 ret = clf.fit(X_train_imp, y_train)
-                losses.append(ret['loss'])
+                losses[idx] = ret['loss']
 
             ############################################################################################################
             # Server aggregation the parameters of local models of clients (pytorch model)
@@ -310,17 +288,25 @@ class Evaluator:
             for idx, model in enumerate(models):
                 local_state_dict = model.get_parameters()
                 for key, param in local_state_dict.items():
-                    if key in aggregated_state_dict:
-                        aggregated_state_dict[key] += param * weights[idx]
+                    if batchnorm_avg:
+                        if key in aggregated_state_dict:
+                            aggregated_state_dict[key] += param * weights[idx]
+                        else:
+                            aggregated_state_dict[key] = param * weights[idx]
                     else:
-                        aggregated_state_dict[key] = param * weights[idx]
+                        if key in ['running_mean', 'running_var', 'num_batches_tracked']:
+                            continue
+                        if key in aggregated_state_dict:
+                            aggregated_state_dict[key] += param * weights[idx]
+                        else:
+                            aggregated_state_dict[key] = param * weights[idx]
 
             ############################################################################################################
             # local update
             for idx, model in enumerate(models):
                 if early_stopping_signs[idx]:
                     continue
-                model.update_parameters(aggregated_state_dict)
+                model.update_parameters(aggregated_state_dict.copy())
 
             # early stopping
             for idx, model in enumerate(models):
@@ -333,6 +319,9 @@ class Evaluator:
 
             if all(early_stopping_signs):
                 break
+
+            loguru.logger.debug(f"Epoch {epoch} finished")
+        print("Training finished")
 
         ################################################################################################################
         # prediction and evaluation
@@ -359,6 +348,8 @@ class Evaluator:
 
         global_ret = {}
         for eval_metric in eval_metrics:
+            if eval_metric not in global_ret:
+                global_ret[eval_metric] = []
             global_ret[eval_metric].append(task_eval(
                 eval_metric, task_type, clf_type, y_pred_global, y_test_global, y_pred_proba_global
             ))
@@ -387,7 +378,7 @@ class Evaluator:
                 ))
 
         return {
-            'local': local_ret,
             'global': global_ret,
+            'local': local_ret,
             'personalized': ret_personalized
         }
