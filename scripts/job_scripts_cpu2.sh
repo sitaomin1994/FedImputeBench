@@ -5,7 +5,7 @@
 #SBATCH --partition=main
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=40
+#SBATCH --cpus-per-task=30
 #SBATCH --mem-per-cpu=6G
 #SBATCH --time=3-00:00:00
 #SBATCH --export=ALL
