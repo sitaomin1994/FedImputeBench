@@ -171,7 +171,7 @@ def my_app(cfg: DictConfig) -> None:
         eval_ret['results'] = ret
         json.dump(eval_ret, f)
 
-    print(imputer, fed_strategy, round_idx, '====>', ret)
+    print(dataset_name, data_partition, missing_scenario, imputer, fed_strategy, round_idx, '====>', ret)
     loguru.logger.info(f"Time taken: {end - start}")
 
 
