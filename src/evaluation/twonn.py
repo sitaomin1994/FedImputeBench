@@ -8,8 +8,8 @@ import loguru
 from src.utils.nn_utils import EarlyStopping
 from tqdm import tqdm, trange
 
-DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
-#DEVICE = 'cpu'
+#DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
+DEVICE = 'cpu'
 print(DEVICE)
 
 

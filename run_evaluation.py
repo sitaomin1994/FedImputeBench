@@ -193,8 +193,8 @@ def evaluation(
     else:
         pred_ret = {}
 
-    imp_quality_avg = {key: np.mean(value) for key, value in imp_ret['imp_qualities'].items()}
-    imp_quality_std = {key: np.std(value) for key, value in imp_ret['imp_qualities'].items()}
+    imp_quality_avg = {key: np.mean(value) for key, value in imp_ret['imp_quality'].items()}
+    imp_quality_std = {key: np.std(value) for key, value in imp_ret['imp_quality'].items()}
     pred_performance_avg = {key: np.mean(value) for key, value in pred_ret['pred_performance'].items()}
     pred_performance_std = {key: np.std(value) for key, value in pred_ret['pred_performance'].items()}
 
