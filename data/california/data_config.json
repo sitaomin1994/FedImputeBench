@@ -1,0 +1,1 @@
+{"target": "MedHouseVal", "features_idx": [0, 1, 2, 3, 4, 5, 6, 7], "split_col_idx": [0, 2, 5], "ms_col_idx": [0, 1, 2, 3, 4, 5, 6, 7], "obs_col_idx": [4, 7], "num_cols": 8, "task_type": "regression", "clf_type": "none", "data_type": "tabular"}
