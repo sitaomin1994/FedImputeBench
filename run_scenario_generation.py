@@ -9,8 +9,8 @@ warnings.filterwarnings("ignore", category=UserWarning)
 from omegaconf import DictConfig, OmegaConf
 import hydra
 from emf.reproduce_utils import setup_seeds
-from src.loaders.load_scenario import simulate_scenario
-from src.loaders.load_data import load_data
+from FedImpute.loaders.load_scenario import simulate_scenario
+from FedImpute.loaders.load_data import load_data
 import gc
 from config import settings
 import numpy as np

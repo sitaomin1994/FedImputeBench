@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.loaders.load_missing_simulation_cent import add_missing_central
+from FedImpute.loaders.load_missing_simulation_cent import add_missing_central
 
 
 def run_test_add_missing_central(seed):

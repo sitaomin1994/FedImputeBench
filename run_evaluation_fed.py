@@ -5,8 +5,8 @@ from omegaconf import DictConfig, OmegaConf
 import hydra
 from config import settings, ROOT_DIR
 import numpy as np
-from src.loaders.load_environment import setup_clients, setup_server
-from src.evaluation.evaluator2 import Evaluator
+from FedImpute.loaders.load_environment import setup_clients, setup_server
+from FedImpute.evaluation.evaluator2 import Evaluator
 import timeit
 import loguru
 from emf.logging import setup_logger

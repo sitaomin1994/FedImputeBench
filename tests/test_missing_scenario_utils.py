@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from src.modules.missing_simulate.missing_scenario_utils import (
+from FedImpute.modules.missing_simulate.missing_scenario_utils import (
     generate_missing_cols, generate_missing_mech, generate_missing_mech_funcs,
     generate_missing_ratios
 )

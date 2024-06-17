@@ -64,7 +64,7 @@ print(f"Setting up test directory in {'./' + test_dir}")
 
 ########################################################################################################################
 # create src directory
-src_dir = 'src'
+src_dir = 'FedImpute'
 if not os.path.exists(src_dir):
     os.makedirs(src_dir)
     print(f"Setting up src directory in {'./' + src_dir}")
