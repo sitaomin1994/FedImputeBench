@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from src.imputation.imputers.simple_imputer import SimpleImputer
+from FedImpute.imputation.imputers.simple_imputer import SimpleImputer
 from collections import OrderedDict
 
 

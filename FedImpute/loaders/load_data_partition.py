@@ -1,10 +1,10 @@
 from typing import List, Tuple
 
 from emf.params_utils import parse_strategy_params
-from src.modules.data_paritition.partition_data import (
+from FedImpute.modules.data_paritition.partition_data import (
     separate_data_niid
 )
-from src.modules.data_paritition.partition_data_utils import (
+from FedImpute.modules.data_paritition.partition_data_utils import (
     calculate_data_partition_stats, generate_local_test_data, generate_samples_iid, noniid_sample_dirichlet,
     generate_global_test_data
 )

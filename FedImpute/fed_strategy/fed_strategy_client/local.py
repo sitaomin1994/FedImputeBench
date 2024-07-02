@@ -1,4 +1,4 @@
-from src.fed_strategy.fed_strategy_client.base_strategy import StrategyClient, fit_local_model_base
+from FedImpute.fed_strategy.fed_strategy_client.base_strategy import StrategyClient, fit_local_model_base
 import torch
 from typing import Tuple
 

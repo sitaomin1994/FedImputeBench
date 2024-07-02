@@ -2,7 +2,7 @@ import os
 
 import numpy as np
 
-from src.imputation.base import BaseMLImputer
+from FedImpute.imputation.base import BaseMLImputer
 from collections import OrderedDict
 import pickle
 

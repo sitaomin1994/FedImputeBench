@@ -1,4 +1,4 @@
-from src.imputation.imputers import (
+from FedImpute.imputation.imputers import (
     LinearICEImputer,
     SimpleImputer, EMImputer,
     ICEGradImputer, GAINImputer, MIWAEImputer, MissForestImputer,

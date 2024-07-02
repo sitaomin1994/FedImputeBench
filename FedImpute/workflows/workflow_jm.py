@@ -5,12 +5,12 @@ import loguru
 import numpy as np
 from tqdm import tqdm
 
-import src.utils.nn_utils as nn_utils
+import FedImpute.utils.nn_utils as nn_utils
 
-from src.server import Server
+from FedImpute.server import Server
 from typing import List
-from src.client import Client
-from src.evaluation.evaluator import Evaluator
+from FedImpute.client import Client
+from FedImpute.evaluation.evaluator import Evaluator
 from .utils import formulate_centralized_client, update_clip_threshold
 from .workflow import BaseWorkflow
 from tqdm.auto import trange

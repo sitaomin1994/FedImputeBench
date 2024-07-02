@@ -1,32 +1,32 @@
-from src.modules.data_prep.utils import split_train_test
+from FedImpute.modules.data_prep.utils import split_train_test
 
-from src.modules.data_prep.data_prep_his import (
+from FedImpute.modules.data_prep.data_prep_his import (
     process_NHIS_income, process_heart, process_skin, process_sepsis,
     process_diabetic, process_diabetic2, process_cardio, process_mimiciii_mortality, process_genetic,
     process_mimiciii_mo2, process_mimic_icd, process_mimic_icd2, process_mimic_mo, process_mimic_los,
     process_breast, process_dermatology, process_pima_diabetes
 )
 
-from src.modules.data_prep.data_prep_large import (
+from FedImpute.modules.data_prep.data_prep_large import (
     process_ijcnn, process_susy, process_statlog, process_higgs, process_svm
 )
 
-from src.modules.data_prep.data_prep_fairness import (
+from FedImpute.modules.data_prep.data_prep_fairness import (
     process_adult, process_default_credit, process_bank_market
 )
 
-from src.modules.data_prep.data_prep import (
+from FedImpute.modules.data_prep.data_prep import (
     process_iris, process_ecoli, process_white, process_red, process_wine_three, process_spam, process_blocks,
     process_glass, process_optdigits, process_segmentation, process_sonar, process_sensor, process_waveform,
     process_yeast, process_letter, process_raisin, process_telugu_vowel, process_telugu_tabular, process_wine,
     process_wifi, process_firewall, process_dry_bean, process_avila, process_pendigits
 )
 
-from src.modules.data_prep.data_prep_reg import (
+from FedImpute.modules.data_prep.data_prep_reg import (
     process_diabetes, process_housing, process_red_reg, process_white_reg
 )
 
-from src.modules.data_prep.data_prep_nips import (
+from FedImpute.modules.data_prep.data_prep_nips import (
     process_hhip, process_codrna, process_california, process_dvisits, process_vehicle, process_codon, process_school
 )
 

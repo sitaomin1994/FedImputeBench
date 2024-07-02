@@ -8,7 +8,7 @@ import torch.distributions as td
 from emf.reproduce_utils import set_seed
 from .encoder import BaseEncoder
 from ..common_blocks import LinearLayers
-from src.utils.nn_utils import weights_init
+from FedImpute.utils.nn_utils import weights_init
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

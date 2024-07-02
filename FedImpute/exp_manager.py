@@ -1,7 +1,7 @@
 # This class is responsible for loading the experiment object
 
 from emf.experiment_manager import ExperimentManager
-from src.experiment_fedimp import Experiment
+from FedImpute.experiment_fedimp import Experiment
 
 
 class FedMissExpManager(ExperimentManager):

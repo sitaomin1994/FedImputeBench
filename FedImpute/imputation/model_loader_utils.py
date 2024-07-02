@@ -14,10 +14,10 @@ from sklearn.base import BaseEstimator
 from torch import nn
 
 from emf.reproduce_utils import set_seed
-from src.imputation.models.ml_models.nn_model import (
+from FedImpute.imputation.models.ml_models.nn_model import (
     TwoNNRegressor, TwoNNClassifier
 )
-from src.imputation.models.ml_models.linear_model import (
+from FedImpute.imputation.models.ml_models.linear_model import (
     RidgeRegression, Logistic
 )
 

@@ -7,10 +7,10 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-from src.imputation.base.base_imputer import BaseNNImputer
-from src.imputation.base.jm_imputer import JMImputerMixin
+from FedImpute.imputation.base.base_imputer import BaseNNImputer
+from FedImpute.imputation.base.jm_imputer import JMImputerMixin
 from ..models.gan_models.gain import GainModel
-from src.utils.nn_utils import load_optimizer, load_lr_scheduler
+from FedImpute.utils.nn_utils import load_optimizer, load_lr_scheduler
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

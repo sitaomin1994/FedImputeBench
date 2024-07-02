@@ -5,7 +5,7 @@ from typing import List, Dict, Union
 import loguru
 import numpy as np
 
-from src.evaluation.imp_quality_metrics import rmse, sliced_ws
+from FedImpute.evaluation.imp_quality_metrics import rmse, sliced_ws
 from sklearn.linear_model import RidgeCV, LogisticRegressionCV, LinearRegression
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from .twonn import TwoNNRegressor, TwoNNClassifier

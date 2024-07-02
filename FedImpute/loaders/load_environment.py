@@ -1,13 +1,13 @@
 import numpy as np
 
-from src.client import Client
-from src.server import Server
+from FedImpute.client import Client
+from FedImpute.server import Server
 from typing import List, Tuple
 from typing import Union, List
 
-from src.workflows.workflow_ice import WorkflowICE
-from src.workflows.workflow_icegrad import WorkflowICEGrad
-from src.workflows.workflow_jm import WorkflowJM
+from FedImpute.workflows.workflow_ice import WorkflowICE
+from FedImpute.workflows.workflow_icegrad import WorkflowICEGrad
+from FedImpute.workflows.workflow_jm import WorkflowJM
 
 
 def setup_clients(

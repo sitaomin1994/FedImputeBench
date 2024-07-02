@@ -2,14 +2,14 @@ import json
 import numpy as np
 
 from emf.base_experiment import BaseExperiment
-from src.evaluation.evaluator import Evaluator
-from src.loaders.load_environment import setup_clients, setup_server
-from src.utils.tracker import Tracker
-from src.utils.result_analyzer import ResultAnalyzer
-from src.utils.consistency_checker import check_consistency
-from src.loaders.load_data import load_data
-from src.loaders.load_workflow import load_workflow
-from src.loaders.load_scenario import simulate_scenario
+from FedImpute.evaluation.evaluator import Evaluator
+from FedImpute.loaders.load_environment import setup_clients, setup_server
+from FedImpute.utils.tracker import Tracker
+from FedImpute.utils.result_analyzer import ResultAnalyzer
+from FedImpute.utils.consistency_checker import check_consistency
+from FedImpute.loaders.load_data import load_data
+from FedImpute.loaders.load_workflow import load_workflow
+from FedImpute.loaders.load_scenario import simulate_scenario
 from config import settings
 import os
 

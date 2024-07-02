@@ -3,7 +3,7 @@ from typing import Union
 import numpy as np
 import random
 
-from src.modules.missing_simulate.ms_mech_funcs import (
+from FedImpute.modules.missing_simulate.ms_mech_funcs import (
     mask_sigmoid, mask_quantile
 )
 

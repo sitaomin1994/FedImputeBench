@@ -4,10 +4,10 @@ from typing import Tuple, Union
 import numpy as np
 from scipy import stats
 
-from src.imputation.base import BaseNNImputer
-from src.loaders.load_imputer import load_imputer
-from src.loaders.load_strategy import load_fed_strategy_client
-from src.utils.fed_nn_trainer import fit_fed_nn_model
+from FedImpute.imputation.base import BaseNNImputer
+from FedImpute.loaders.load_imputer import load_imputer
+from FedImpute.loaders.load_strategy import load_fed_strategy_client
+from FedImpute.utils.fed_nn_trainer import fit_fed_nn_model
 import loguru
 
 

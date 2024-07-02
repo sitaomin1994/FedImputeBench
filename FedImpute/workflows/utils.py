@@ -3,7 +3,7 @@ from typing import List
 import loguru
 import numpy as np
 
-from src.client import Client
+from FedImpute.client import Client
 from copy import deepcopy
 import gc
 import os

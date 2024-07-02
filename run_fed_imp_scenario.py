@@ -8,7 +8,7 @@ os.environ['FOR_DISABLE_CONSOLE_CTRL_HANDLER'] = '1'
 warnings.filterwarnings("ignore", category=UserWarning)
 from omegaconf import DictConfig, OmegaConf
 import hydra
-from src.exp_manager import FedMissExpManager
+from FedImpute.exp_manager import FedMissExpManager
 
 
 @hydra.main(version_base=None, config_path="config", config_name="imp_config_p")

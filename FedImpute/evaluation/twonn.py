@@ -5,7 +5,7 @@ import torch
 from torch import nn, optim
 from torch.utils.data import TensorDataset, DataLoader
 import loguru
-from src.utils.nn_utils import EarlyStopping
+from FedImpute.utils.nn_utils import EarlyStopping
 from tqdm import tqdm, trange
 
 #DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'

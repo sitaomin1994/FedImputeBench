@@ -3,7 +3,7 @@ from sklearn.model_selection import train_test_split
 import numpy as np
 from emf.reproduce_utils import set_seed
 from typing import List, Union, Tuple
-from src.modules.data_paritition.partition_data_utils import (
+from FedImpute.modules.data_paritition.partition_data_utils import (
     binning_target, binning_features, noniid_sample_dirichlet, generate_samples_iid
 )
 

@@ -1,7 +1,7 @@
-from src.fed_strategy.fed_strategy_client import StrategyClient
+from FedImpute.fed_strategy.fed_strategy_client import StrategyClient
 import torch
 from typing import Tuple
-from src.fed_strategy.fed_strategy_client.base_strategy import fit_local_model_base
+from FedImpute.fed_strategy.fed_strategy_client.base_strategy import fit_local_model_base
 
 
 class FedAvgStrategyClient(StrategyClient):

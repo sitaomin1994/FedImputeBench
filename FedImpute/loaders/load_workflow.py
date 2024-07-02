@@ -1,11 +1,11 @@
 from typing import Union, List
 
-from src.workflows.workflow import BaseWorkflow
-from src.workflows.workflow_ice import WorkflowICE
-from src.workflows.workflow_icegrad import WorkflowICEGrad
-from src.workflows.workflow_jm import WorkflowJM
-from src.workflows.workflow_simple import WorkflowSimple
-from src.workflows.workflow_em import WorkflowEM
+from FedImpute.workflows.workflow import BaseWorkflow
+from FedImpute.workflows.workflow_ice import WorkflowICE
+from FedImpute.workflows.workflow_icegrad import WorkflowICEGrad
+from FedImpute.workflows.workflow_jm import WorkflowJM
+from FedImpute.workflows.workflow_simple import WorkflowSimple
+from FedImpute.workflows.workflow_em import WorkflowEM
 
 
 def load_workflow(
