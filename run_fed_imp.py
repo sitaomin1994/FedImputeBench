@@ -9,7 +9,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 from omegaconf import DictConfig, OmegaConf
 import hydra
 from hydra.core.hydra_config import HydraConfig
-from src.exp_manager import FedMissExpManager
+from FedImpute.exp_manager import FedMissExpManager
 
 
 @hydra.main(version_base=None, config_path="config", config_name="imp_config")

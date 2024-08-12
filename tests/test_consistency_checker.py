@@ -1,4 +1,4 @@
-from src.utils.consistency_checker import check_consistency
+from FedImpute.utils.consistency_checker import check_consistency
 import pytest
 
 

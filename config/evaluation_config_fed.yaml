@@ -12,28 +12,30 @@ hydra:
 # Configuration Content
 scenario_version: 'alpha'
 experiment_name: "fed_imp_pc2"
-eval_dir_name: 'eval_results'
+eval_dir_name: 'eval_results_fed'
 
 # Scenario params
-dataset_name: "dvisits"
-data_partition_name: "niid-t2"
-missing_scenario_name: "mar-heter"
-imputer_name: "simple"
-fed_strategy_name: "local"
+dataset_name: "codrna"
+data_partition_name: "niid-f2"
+missing_scenario_name: "mnar2-heter"
+imputer_name: "linear_ice"
+fed_strategy_name: "fedavg"
 round_idx: 7
-fed: True
 
 # Evaluation params
 eval_params:
-  model_params: {}
+  model_params: {
+    'batch_norm': True
+  }
   train_params: {
     'global_epoch': 100,
     'local_epoch': 10,
     'fine_tune_epoch': 200,
-    'tol': 0.0001,
-    'patience': 10
+    'tol': 0.001,
+    'patience': 10,
+    'batchnorm_avg': True
   }
   seed: 2180279
 
 log_to_file: False
-log_level: "INFO"
+log_level: "DEBUG"

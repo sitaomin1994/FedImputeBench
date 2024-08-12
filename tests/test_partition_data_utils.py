@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from src.modules.data_paritition.partition_data_utils import calculate_data_partition_stats
+from FedImpute.modules.data_paritition.partition_data_utils import calculate_data_partition_stats
 
 
 class TestCalculateDataPartitionStatsTestSuite:
