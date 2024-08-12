@@ -27,7 +27,8 @@ from FedImpute.modules.data_prep.data_prep_reg import (
 )
 
 from FedImpute.modules.data_prep.data_prep_nips import (
-    process_hhip, process_codrna, process_california, process_dvisits, process_vehicle, process_codon, process_school
+    process_hhip, process_codrna, process_california, process_dvisits, process_vehicle, process_codon, process_school,
+    process_vehicle_np
 )
 
 
@@ -214,6 +215,10 @@ def load_data(dataset_name, normalize=True, verbose=False, threshold=None, outpu
         data, data_config = process_school(verbose, pca = False)
     elif dataset_name == 'school_pca':
         data, data_config = process_school(verbose, pca = True)
+    elif dataset_name == 'vehicle_np':
+        data, data_config = process_vehicle_np(verbose)
+    elif dataset_name == 'school_np':
+        data, data_config = process_school(verbose, pca = False)
     else:
         raise Exception("Unknown dataset name {}".format(dataset_name))
 

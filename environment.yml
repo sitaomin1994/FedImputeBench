@@ -446,8 +446,6 @@ dependencies:
       - pathlib2==2.3.7.post1
       - protobuf==4.24.4
       - pyampute==0.0.3
-      - pydantic==2.7.2
-      - pydantic-core==2.18.3
       - pyreadr==0.5.0
       - python-dotenv==1.0.1
       - regex==2024.4.16
@@ -473,4 +471,4 @@ dependencies:
       - torchvision==0.15.0
       - transformers==4.40.0
       - wrapt==1.14.1
-prefix: M:\miniconda3\envs\fed_imp
+prefix: M:\miniconda\envs\fed_imp

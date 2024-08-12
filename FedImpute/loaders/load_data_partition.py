@@ -14,7 +14,12 @@ import gc
 
 
 def load_data_partition(
-        data, data_config, num_clients, partition_strategy, seeds: List[int], global_seed:int=201031,
+        data: np.ndarray,
+        data_config,
+        num_clients,
+        partition_strategy,
+        seeds: List[int],
+        global_seed:int=201031,
         split_col: str = 'target',
         size_strategy: str = 'even',
         size_niid_alpha: float = 0.2,
@@ -50,6 +55,30 @@ def load_data_partition(
     :param reg_bins: regression bins
     :return: List of training data, List of test data, global test data, statistics
     """
+
+    if partition_strategy == 'natural_partition':
+        split_indices = data_config['client_split_indices']
+        datas = np.split(data, split_indices)
+        train_datas, test_datas = [], []
+        for data in datas:
+            train_data_, test_data_ = generate_global_test_data(data, data_config, test_size=global_test_size, seed=global_seed)
+            train_datas.append(train_data_)
+            test_datas.append(test_data_)
+        # global test data
+        global_test = np.concatenate(test_datas, axis=0)
+
+        # update datas
+        datas = train_datas
+        regression = data_config['task_type'] == 'regression'
+        statistics = calculate_data_partition_stats(datas, regression=regression)
+
+        # generate local test data
+        train_datas, backup_datas, test_datas = generate_local_test_data(
+            datas, seeds=seeds, local_test_size=local_test_size, local_backup_size=local_backup_size,
+            regression=regression
+        )
+
+        return train_datas, backup_datas, test_datas, global_test, statistics
 
     #############################################################################################################
     # split a global test data

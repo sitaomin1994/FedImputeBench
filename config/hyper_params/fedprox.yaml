@@ -13,6 +13,12 @@ hhip:
 vehicle:
   fed_strategy_client_params:
     mu: 0.01
+vehicle_np:
+  fed_strategy_server_params:
+    fine_tune_steps: 800
 school:
   fed_strategy_client_params:
     mu: 0.01
+school_np:
+  fed_strategy_server_params:
+    fine_tune_steps: 800

@@ -51,6 +51,8 @@ def simulate_scenario(
     # setup clients seeds
     global_seed = seed
     global_rng = np.random.default_rng(seed)
+    if data_partition_params['partition_strategy'] == 'natural_partition':
+        num_clients = len(data_config['client_split_indices']) + 1
     client_seeds = setup_clients_seed(num_clients, rng=global_rng)
     client_rngs = [np.random.default_rng(seed) for seed in client_seeds]
 

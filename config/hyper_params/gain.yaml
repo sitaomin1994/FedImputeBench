@@ -124,6 +124,31 @@ vehicle:
       tolerance: 0.001
 
 ###########################################################################################
+# vehicle_np
+vehicle_np:
+  imp_params:
+    clip: true
+    imp_model_params:
+      h_dim: 8
+      n_layers: 2
+      loss_alpha: 20
+      hint_rate: 0.5
+      activation: relu
+      initializer: kaiming
+  model_train_params:
+    initial_zero_impute: true
+    global_epoch: 300
+    local_epoch: 5
+    batch_size: 256
+    learning_rate: 0.001
+    weight_decay: 0.001
+    use_early_stopping: true
+    imp_interval: 1000
+    optimizer: sgd
+    model_converge:
+      tolerance: 0.001
+
+###########################################################################################
 # School PCA
 school_pca:
   imp_params:
@@ -145,5 +170,30 @@ school_pca:
     use_early_stopping: true
     imp_interval: 1000
     optimizer: adam
+    model_converge:
+      tolerance: 0.001
+
+###########################################################################################
+# School np
+school_np:
+  imp_params:
+    clip: true
+    imp_model_params:
+      h_dim: 40
+      n_layers: 2
+      loss_alpha: 100
+      hint_rate: 0.5
+      activation: relu
+      initializer: kaiming
+  model_train_params:
+    initial_zero_impute: true
+    global_epoch: 300
+    local_epoch: 5
+    batch_size: 256
+    learning_rate: 0.001
+    weight_decay: 0.001
+    use_early_stopping: true
+    imp_interval: 1000
+    optimizer: sgd
     model_converge:
       tolerance: 0.001

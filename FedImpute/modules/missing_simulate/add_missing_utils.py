@@ -33,7 +33,7 @@ def generate_missing_ratios(
         raise ValueError('ms_range[1] should be in [0, 1]')
 
     # check num_clients
-    if num_clients > 50:
+    if num_clients > 150:
         raise ValueError('In cross silo settings - num_clients should be less than 100')
 
     # distribution
