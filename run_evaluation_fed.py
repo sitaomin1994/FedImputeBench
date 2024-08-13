@@ -131,9 +131,6 @@ def my_app(cfg: DictConfig) -> None:
     if 'hyper_params' in config['config']['imputer'] and use_default_hyper_params:
         imputer_hyper_params = config['config']['imputer']['hyper_params'][dataset_name]
         imputer_params = deep_update(imputer_params, imputer_hyper_params['imp_params'])
-        imp_model_train_params = deep_update(
-            imp_model_train_params, imputer_hyper_params['model_train_params']
-        )
 
     fed_strategy_name = config['config']['fed_strategy']['fed_strategy_name']
     fed_strategy_client_params = config['config']['fed_strategy']['fed_strategy_client_params']
