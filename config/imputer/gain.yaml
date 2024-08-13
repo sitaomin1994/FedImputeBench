@@ -1,6 +1,6 @@
 defaults:
   - /imp_workflow@_group_: jm
-  - /hyper_params@_here_: gain
+  - /hyper_params: gain
 
 imp_name: gain
 imp_params:

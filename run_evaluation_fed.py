@@ -10,6 +10,7 @@ from FedImpute.evaluation.evaluator2 import Evaluator
 import timeit
 import loguru
 from emf.logging import setup_logger
+from FedImpute.utils.data_persistence import deep_update
 
 os.environ['FOR_DISABLE_CONSOLE_CTRL_HANDLER'] = '1'
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -126,6 +127,13 @@ def my_app(cfg: DictConfig) -> None:
 
     imputer_name = config['config']['imputer']['imp_name']
     imputer_params = config['config']['imputer']['imp_params']
+    use_default_hyper_params = config['config']['use_default_hyper_params']
+    if 'hyper_params' in config['config']['imputer'] and use_default_hyper_params:
+        imputer_hyper_params = config['config']['imputer']['hyper_params'][dataset_name]
+        imputer_params = deep_update(imputer_params, imputer_hyper_params['imp_params'])
+        imp_model_train_params = deep_update(
+            imp_model_train_params, imputer_hyper_params['model_train_params']
+        )
 
     fed_strategy_name = config['config']['fed_strategy']['fed_strategy_name']
     fed_strategy_client_params = config['config']['fed_strategy']['fed_strategy_client_params']
