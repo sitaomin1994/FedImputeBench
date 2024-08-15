@@ -109,6 +109,18 @@ def process_hhip_sp(verbose=False):
 
     return data, data_config
 
+def process_hhip_np(verbose=False):
+    data = pd.read_csv('./data/HHP_herritage_health/data_cleaned_np.csv')
+    with open('./data/HHP_herritage_health/data_config_np.json') as f:
+        data_config = json.load(f)
+    data = data.astype(float)
+
+    if verbose:
+        logger.debug("Data shape {}".format(data.shape))
+        logger.debug(data_config)
+
+    return data, data_config
+
 
 def process_california(verbose=False):
     data = pd.read_csv('./data/california/data_cleaned.csv')

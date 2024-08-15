@@ -1,5 +1,5 @@
 python run_scenario_generation.py -m \
-dataset_name=hhip_sp \
+dataset_name=hhip_np \
 data_partition=natural_partition \
 missing_scenario=mcar,mar-homog,mar-homo,mar-heter,mnar1-homog,mnar1-homo,mnar1-heter,mnar2-homog,mnar2-homo,mnar2-heter
 

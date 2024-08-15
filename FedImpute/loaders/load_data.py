@@ -28,7 +28,7 @@ from FedImpute.modules.data_prep.data_prep_reg import (
 
 from FedImpute.modules.data_prep.data_prep_nips import (
     process_hhip, process_codrna, process_california, process_dvisits, process_vehicle, process_codon, process_school,
-    process_vehicle_np, process_hhip_sp
+    process_vehicle_np, process_hhip_sp, process_hhip_np
 )
 
 
@@ -205,6 +205,8 @@ def load_data(dataset_name, normalize=True, verbose=False, threshold=None, outpu
         data, data_config = process_hhip(verbose)
     elif dataset_name == 'hhip_sp':
         data, data_config = process_hhip_sp(verbose)
+    elif dataset_name == 'hhip_np':
+        data, data_config = process_hhip_np(verbose)
     elif dataset_name == 'california':
         data, data_config = process_california(verbose)
     elif dataset_name == 'dvisits':
