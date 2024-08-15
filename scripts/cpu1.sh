@@ -3,8 +3,8 @@
 export CUBLAS_WORKSPACE_CONFIG=":4096:8"
 
 # imputation
-./scripts/run_scenario_cpu.sh hhip_np natural-partition mcar,mar-homog,mar-heter,mnar2-homog,mnar2-heter simple,em,linear_ice local,fedavg -1
-./scripts/run_scenario_cpu.sh hhip_np natural-partition mcar,mar-homog,mar-heter,mnar2-homog,mnar2-heter missforest local,fedtree -1
+#./scripts/run_scenario_cpu.sh hhip_np natural-partition mcar,mar-homog,mar-heter,mnar2-homog,mnar2-heter simple,em,linear_ice local,fedavg -1
+#./scripts/run_scenario_cpu.sh hhip_np natural-partition mcar,mar-homog,mar-heter,mnar2-homog,mnar2-heter missforest local,fedtree -1
 #./scripts/run_scenario_cpu.sh school_np natural-partition mcar,mar-homog,mar-heter,mnar2-homog,mnar2-heter simple,em,linear_ice local,fedavg -1
 #./scripts/run_scenario_cpu.sh school_np natural-partition mcar,mar-homog,mar-heter,mnar2-homog,mnar2-heter missforest local,fedtree -1
 ./scripts/run_scenario_cpu.sh hhip_np natural-partition mcar,mar-homog,mar-heter,mnar2-homog,mnar2-heter gain local,fedavg,fedavg_ft,fedprox -1
