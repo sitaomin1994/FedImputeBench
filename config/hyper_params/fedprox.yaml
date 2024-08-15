@@ -10,6 +10,9 @@ dvisits:
 hhip:
   fed_strategy_client_params:
     mu: 0.01
+hhip_np:
+  fed_strategy_client_params:
+    mu: 0.01
 vehicle:
   fed_strategy_client_params:
     mu: 0.01
