@@ -115,7 +115,7 @@ hhip_np:
       activation: tanh
       initializer: xavier
   model_train_params:
-    initial_zero_impute: true
+    initial_zero_impute: false
     global_epoch: 300
     local_epoch: 5
     batch_size: 512
