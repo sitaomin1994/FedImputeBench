@@ -102,7 +102,7 @@ hhip_np:
   imp_params:
     clip: true
     imp_model_params:
-      h_dim: 32
+      h_dim: 40
       n_layers: 2
       loss_alpha: 10
       hint_rate: 0.1
