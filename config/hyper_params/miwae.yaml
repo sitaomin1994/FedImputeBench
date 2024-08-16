@@ -115,14 +115,14 @@ hhip_np:
       activation: tanh
       initializer: xavier
   model_train_params:
-    initial_zero_impute: false
+    initial_zero_impute: true
     global_epoch: 500
     local_epoch: 10
     batch_size: 512
     learning_rate: 0.001
     weight_decay: 0.0001
     use_early_stopping: true
-    optimizer: adamw
+    optimizer: sgd
     model_converge:
       tolerance: 0.01
 
