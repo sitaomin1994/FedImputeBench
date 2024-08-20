@@ -74,6 +74,8 @@ class BaseExperiment(ABC):
             "plots": results['plots'] if "plots" in results else None,
             "data": results['data'] if "data" in results else None
         }
+
+        # save path
         save_path = self.save_backend.consolidate_save_path(
             experiment_meta['experiment_name'], experiment_meta['output_path']
         )

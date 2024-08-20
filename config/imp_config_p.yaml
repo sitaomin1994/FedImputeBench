@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - imputer: miwae
+  - imputer: gain
   - fed_strategy: local
   - tracker: none
   - override hydra/launcher: joblib
@@ -16,7 +16,7 @@ hydra:
 debug: false
 experiment:
   # name of prefix of experiments e.g., fed_imp, fed_pred etc.
-  experiment_name: fed_imp_pc2
+  experiment_name: fed_imp_hyper
   # configuration of an output path to save the results
   output_path: ${scenario_version}/${dataset_name}/${data_partition_name}_${missing_scenario_name}/${imputer.imp_name}/${fed_strategy.fed_strategy_name}/${round_id}
   # Other Options
@@ -25,13 +25,14 @@ experiment:
   mtp: False
   log_to_file: False
   logging_level: DEBUG
+  hyper_tune: True
 
 ########################################################################################################################
 # Experiment Configuration Content
 # scenarios
 scenario_version: "alpha"
-dataset_name: "hhip_np"
-data_partition_name: "natural-partition"
+dataset_name: "codrna"
+data_partition_name: "iid-even"
 missing_scenario_name: "mcar"
 round_id: 1
 client_config: {}
@@ -39,4 +40,4 @@ server_config: {}  # todo
 evaluator_params: {} # todo
 imp_workflow: null
 ret_analyze_params: null
-use_default_hyper_params: True
+use_default_hyper_params: False

@@ -31,6 +31,38 @@ class Experiment(BaseExperiment):
         # Scenario already setup just read data and run federated imputation
         if self.scenario_setup:
             # setup scenario
+            # hyper parameter settings
+            if 'hyper_tune' in experiment_meta and experiment_meta['hyper_tune']:
+                core_param_dict = {
+                    'miwae': {
+                        'lr': ['imputer', 'model_train_params', 'learning_rate'],
+                        'le': ['imputer', 'model_train_params', 'local_epoch'],
+                        'opt': ['imputer', 'model_train_params', 'optimizer'],
+                    },
+                    'gain': {
+                        'lr': ['imputer', 'model_train_params', 'learning_rate'],
+                        'le': ['imputer', 'model_train_params', 'local_epoch'],
+                        'opt': ['imputer', 'model_train_params', 'optimizer'],
+                    },
+                }
+
+                imputer = config['imputer']['imp_name']
+                if imputer in core_param_dict:
+                    hypers = []
+                    for key, value in core_param_dict[imputer].items():
+                        hyper_name = key
+                        config_dict = config
+                        for v in value:
+                            print(v, config_dict)
+                            config_dict = config_dict[v]
+                        hyper_value = str(config_dict)
+                        hyper_item = '='.join([hyper_name, hyper_value])
+                        hypers.append(hyper_item)
+                    hyper_str = '_'.join(hypers)
+                    experiment_meta['output_path'] = experiment_meta['output_path'] + '/' + hyper_str
+                    print(experiment_meta['output_path'])
+                else:
+                    raise ValueError(f"Imputer {imputer} is not supported for hyper-parameter tuning")
             return self.single_run_scenario(config)
         ###############################################################################
         # Experiment Setup from laoding data to running federated imputation
@@ -38,6 +70,7 @@ class Experiment(BaseExperiment):
             n_rounds = config['experiment']['n_rounds']
             seed = config['experiment']['seed']
             mtp = config['experiment']['mtp']
+
             if n_rounds == 1:
                 return self.single_run(config, seed)
             else:

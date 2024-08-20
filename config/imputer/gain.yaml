@@ -6,7 +6,7 @@ imp_name: gain
 imp_params:
   clip: true
   imp_model_params:
-    h_dim: 32
+    h_dim: 8
     n_layers: 2
     activation: 'relu'
     initializer: 'kaiming'
@@ -14,17 +14,17 @@ imp_params:
     hint_rate: 0.5
 model_train_params:
   initial_zero_impute: true
-  global_epoch: 300
+  global_epoch: 1500
   local_epoch: 5
   batch_size: 256
   learning_rate: 0.001
-  weight_decay: 0.0001
+  weight_decay: 0.001
   scheduler: "step"
   scheduler_params:
     step_size: 10
     gamma: 0.5
     schedule_last_epoch: -1
-  optimizer: 'adam'
+  optimizer: 'sgd'
   use_early_stopping: true
   early_stopping_mode: 'local'
   model_converge:

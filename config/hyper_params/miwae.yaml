@@ -14,7 +14,7 @@ codrna:
       initializer: xavier
   model_train_params:
     initial_zero_impute: true
-    global_epoch: 500
+    global_epoch: 1
     local_epoch: 10
     batch_size: 512
     learning_rate: 0.001
@@ -115,12 +115,12 @@ hhip_np:
       activation: tanh
       initializer: xavier
   model_train_params:
-    initial_zero_impute: false
+    initial_zero_impute: true
     global_epoch: 300
     local_epoch: 5
     batch_size: 512
     learning_rate: 0.001
-    weight_decay: 0.0001
+    weight_decay: 0.000
     use_early_stopping: true
     optimizer: adamw
     model_converge:

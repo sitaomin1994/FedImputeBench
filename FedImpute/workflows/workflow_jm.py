@@ -74,7 +74,9 @@ class WorkflowJM(BaseWorkflow):
 
         ################################################################################################################
         # Federated Training
-        global_model_epochs = train_params['global_epoch']
+        #global_model_epochs = train_params['global_epoch']
+        global_model_epochs = train_params['global_epoch'] // train_params['local_epoch']
+        print(global_model_epochs)
         log_interval = train_params['log_interval']
         imp_interval = train_params['imp_interval'] if 'imp_interval' in train_params else 1e8
         save_model_interval = train_params['save_model_interval']
