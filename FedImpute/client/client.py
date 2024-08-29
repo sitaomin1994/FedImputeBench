@@ -75,7 +75,7 @@ class Client:
         """
         if not params['fit_model']:
             return self.imputer.get_imp_model_params(params), {
-                'sample_size': self.X_train_imp.shape[0], 'converged': True
+                'sample_size': self.X_train_imp.shape[0], 'converged': True, 'loss': 0
             }
         else:
             # NN based Imputation Models

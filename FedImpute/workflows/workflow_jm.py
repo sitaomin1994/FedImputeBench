@@ -74,7 +74,7 @@ class WorkflowJM(BaseWorkflow):
 
         ################################################################################################################
         # Federated Training
-        #global_model_epochs = train_params['global_epoch']
+        # global_model_epochs = train_params['global_epoch']
         global_model_epochs = train_params['global_epoch'] // train_params['local_epoch']
         print(global_model_epochs)
         log_interval = train_params['log_interval']
@@ -122,6 +122,8 @@ class WorkflowJM(BaseWorkflow):
             if epoch % log_interval == 0:
                 self.logging_loss(clients_fit_res)
 
+            tracker.record_loss([item['loss'] for item in clients_fit_res])
+
             if use_early_stopping:
                 self.early_stopping_step(
                     clients_fit_res, early_stoppings, all_clients_converged_sign, early_stopping_mode
@@ -142,7 +144,7 @@ class WorkflowJM(BaseWorkflow):
                     central_client=server.fed_strategy.name == 'central'
                 )
 
-            #self.pseudo_imp_eval(clients, evaluator)
+            # self.pseudo_imp_eval(clients, evaluator)
 
         ################################################################################################################
         loguru.logger.info("start fine tuning ...")

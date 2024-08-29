@@ -17,6 +17,13 @@ n_jobs=$6
 #missing_scenario_name=$scenario \
 #fed_strategy=local,fedavg,central \
 #round_id=0,1,2,3,4,5,6,7,8,9"
+if [ $imputer == "miwae" ]; then
+    epoch=10
+elif [ $imputer == "gain" ]; then
+    epoch=5
+else
+    epoch=5
+fi
 
 export CUBLAS_WORKSPACE_CONFIG=":4096:8"
 command2="python run_fed_imp_scenario.py --multirun \
@@ -27,9 +34,9 @@ data_partition_name=$dp \
 missing_scenario_name=$scenario \
 fed_strategy=$fed_strategy \
 round_id=0 \
-imputer.model_train_params.learning_rate=0.001,0.01,0.1 \
-imputer.model_train_params.local_epoch=1,5,10,20 \
-imputer.model_train_params.optimizer=sgd,adamw \
+imputer.model_train_params.learning_rate=0.001,0.01,0.1,1,10 \
+imputer.model_train_params.local_epoch=$epoch \
+imputer.model_train_params.optimizer=adamw \
 experiment.log_to_file=True"
 
 #echo $command1

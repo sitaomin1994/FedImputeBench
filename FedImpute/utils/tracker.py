@@ -40,6 +40,7 @@ class Tracker:
         self.imp_data = []  # tracking final imputed data
         self.model_params = []  # tracking final imputation model parameters
         self.misc = []  # tracking other parameters
+        self.losses = []  # tracking loss
 
         self.origin_data = None  # tracking original data
         self.mask = None  # tracking missing mask
@@ -78,12 +79,16 @@ class Tracker:
         if self.track_misc and other_info is not None:
             self.misc.append(other_info)
 
+    def record_loss(self, loss: List[float]):
+        self.losses.append(loss)
+
     def to_dict(self) -> dict:
 
         ret = {
             "results": {
                 'rounds': self.rounds,
                 "imp_quality": self.imp_quality,
+                "losses": self.losses
             }
         }
 

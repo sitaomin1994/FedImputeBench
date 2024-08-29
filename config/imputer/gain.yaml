@@ -14,7 +14,7 @@ imp_params:
     hint_rate: 0.5
 model_train_params:
   initial_zero_impute: true
-  global_epoch: 1500
+  global_epoch: 2500
   local_epoch: 5
   batch_size: 256
   learning_rate: 0.001
@@ -36,4 +36,4 @@ model_train_params:
     back_steps: 1
   log_interval: 10
   imp_interval: 1000
-  save_model_interval: 200
+  save_model_interval: 10
